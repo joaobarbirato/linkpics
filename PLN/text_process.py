@@ -16,6 +16,8 @@ class ThreadPLN(threading.Thread):
         self.pln.ObterPalavrasLegenda()
         self.pln.ObterPalavrasTitulo()
         self.pln.AplicarTreeTagger()
+        # Aplicar chunk
+        self.pln.AplicarChunk()
         self.pln.entidades_legenda()
         # pln.AplicarStanforNER()
         # pega os substantivos que estejam com physical entity na wordnet
