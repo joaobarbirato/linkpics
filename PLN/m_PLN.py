@@ -162,7 +162,10 @@ class AplicadorPLN(object):
             if lst_treetagger_temp[x][0] != "." and lst_treetagger_temp[x][0] != "!" and lst_treetagger_temp[x][0] != "?" and lst_treetagger_temp[x][0] != ":" and lst_treetagger_temp[x][0] != ";" and lst_treetagger_temp[x][0] != "," and lst_treetagger_temp[x][0] != "(" and lst_treetagger_temp[x][0] != ")" and lst_treetagger_temp[x][0] != '"' and lst_treetagger_temp[x][0] != "'" and lst_treetagger_temp[x][0] != "´" and lst_treetagger_temp[x][0] != "`":
                 lst_treetagger.append(lst_treetagger_temp[x])
 
-
+                
+def AplicarChunk(self):
+        global lst_treetagger
+        lst_treetagger = chunk(lst_treetagger)
 
 
     def AplicarStanforNER(self):
