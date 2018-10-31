@@ -45,7 +45,7 @@ class Imagem(object):
             #p = subprocess.Popen(["./darknet","detect","cfg/yolo.cfg","weights/yolo.weights",self.path,">>","noticia_atual/image_result.txt"])
             with open(self.path_projeto + "noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
-                    ["./darknet", "detect", "cfg/yolo.cfg", "/data/alinhador/yolo.weights", self.path,"-thresh","0.4"],
+                    ["./darknet", "detect", "cfg/yolo.cfg", "/data/alinhador/yolo.weights", self.path,"-thresh","0.2"],
                     cwd=self.path_projeto + "IA/YOLO",
                     stdout=out)
                 p.wait()
@@ -133,6 +133,7 @@ class Imagem(object):
     def read_words(self):
         #arquivo_txt= "noticia_atual/image_result.txt"
         arquivo_txt = self.path_diretorio + "/image_result.txt"
+        print(">>>> arquivo txt: >", arquivo_txt)
         open_file = open(arquivo_txt, 'r')
         words_list = []
         contents = open_file.readlines()
@@ -212,6 +213,7 @@ class Imagem(object):
                     ',')  #pega as informações da linha e quebra em pedaços
                 # Preenche a classe bounding box com as informações obtidas
                 objeto = informacoes_bounding[0]
+                print("\n\n\n\n\n\n>>>>>>>>b_box: ", objeto, " ", len(arquivo_informacoes_boundingBox))
                 if objeto != "tie":
                     left = int(informacoes_bounding[1])
                     right = int(informacoes_bounding[2])
@@ -219,6 +221,7 @@ class Imagem(object):
                     bot = int(informacoes_bounding[4])
                     b_box = BoundingBox(i, objeto, left, right, top, bot)
                     # print(str(b_box.centroX)+"-"+str(b_box.centroY))
+                    
                     self.list_boundingBox.append(b_box)
 
     #  print("" + str(len(list_boundingBox)));
@@ -320,8 +323,14 @@ class Imagem(object):
         self.centroY = int(self.height / 2)
 
     def OrganizarBoundingBoxes(self):
+        print("\n\n\n>>>>>>>>>>>>>>>>>>>>VAMO ORGANIZAR UMAS BOUNDING BOXES<<<<<<<<<<<<<<<<<<<\n\n\n")
         numero_repeticoes = len(self.list_boundingBox)  # pega o total de bounding box
         count = 0
+        for elemento in self.list_boundingBox:
+            print("\n\n\n>>bounding box organizar: ", elemento.objeto, "\n\n\n")
+
+        indice_repeticao_bbox = 0
+
         while count < numero_repeticoes:
             menor_distancia = 10000
             indice_menor_distancia = -1          
@@ -336,8 +345,16 @@ class Imagem(object):
             
             self.list_boundingBox[indice_menor_distancia].distanciaCentro = menor_distancia
             
-            self.list_boundingBoxOrganizada.append(
-                self.list_boundingBox[indice_menor_distancia])  # coloca na lista o Bounding box de menor distancia
+            if self.list_boundingBox[indice_menor_distancia] not in self.list_boundingBoxOrganizada:
+                print("nao ta")
+                self.list_boundingBoxOrganizada.append(
+                    self.list_boundingBox[indice_menor_distancia])  # coloca na lista o Bounding box de menor distancia
+            else:
+                print("ta")
+                indice_repeticao_bbox += 1
+                self.list_boundingBoxOrganizada.append(
+                    self.list_boundingBox[indice_menor_distancia])  # coloca na lista o Bounding box de menor distancia
+
             self.list_boundingBoxOrganizada[count].imagem = count
             self.list_boundingBox.remove(self.list_boundingBox[indice_menor_distancia])
             count = count + 1

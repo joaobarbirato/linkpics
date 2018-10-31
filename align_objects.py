@@ -127,6 +127,7 @@ class AlignObjects:
 
     def _experiment_6(self):
         """ WUP com cada objeto detectado """
+        print('experimento 6')
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
         dic_alinhamento = {}
@@ -201,6 +202,7 @@ class AlignObjects:
 
     def _experiment_3(self):
         """WE com cada objeto detectado """
+        print('experimento 3')
 
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
@@ -283,6 +285,7 @@ class AlignObjects:
 
     def _experiment_4(self):
         """ (3 CNN + classe YOLO) -> Se alguma palavra do texto letamizada ou não aparecere entre as 16 sugeridas pelas CNNS -> Alinha """
+        print('experimento 4')
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
         dic_alinhamento = {}
@@ -315,6 +318,7 @@ class AlignObjects:
 
     def _experiment_1(self):
         """Experimento 4 + Experimento 2"""
+        print('experimento 1')
         arquivo_wup = "/wup_top5.txt"
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
@@ -475,6 +479,7 @@ class AlignObjects:
 
     def _experiment_2(self):
         """Experimento 4 + Experimento  3 """
+        print('experimento 2')
         arquivo_embedding = "/embedding_top5.txt"
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
@@ -482,36 +487,8 @@ class AlignObjects:
         lst_palavras_visuais = self.read_words_visual("visual_words.txt")
         num_objeto = 0
 
-        # for bbox in bbox_objects:
-        #     bbox.lst_cnn.remove('torch')
-        #     bbox.lst_cnn.append(bbox.objeto)
-
-        #     for palavra in self.lst_substantivos:
-        #         if palavra in bbox.lst_cnn:
-
-        #             dic_alinhamento[palavra] = num_objeto
-        #             num_objeto += 1
-        #             break
-
         dic_json = {}
 
-        # for palavra, value in dic_alinhamento.items():
-
-        #     dic_json[palavra] = "Objeto " + str(dic_alinhamento[palavra])
-        #     x, y, w, h = bbox_objects[0].Rect()
-
-        #     #draw bounding box in img_original
-        #     cv2.rectangle(img_original, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        #     cv2.putText(img_original, "Objeto" + str(dic_alinhamento[palavra]), (x + 15, y + 30),
-        #                 cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 255, 0), 1)
-
-        #     #remove a bounding box
-        #     print("REMOVIDA:" + palavra)
-        #     bbox_objects.pop(0)
-
-        # cv2.imwrite("static/" + "alinhamento2.jpg", img_original)
-        # img_original = cv2.imread("static/alinhamento2.jpg")
-        #bbox_objects = self._get_bounding_objects()
         dic_alinhamento = {}
 
         #  A P L I C A Ç Ã O  - W O R D   E M B E D D I N G S
@@ -532,8 +509,10 @@ class AlignObjects:
         
         if not bbox_objects:
             return dic_json
-
+        
+        indice_alinhamento = 0
         for bbox in bbox_objects:
+            print(">>> bbox.objeto: ", bbox.objeto)
             #cria uma pasta com nome {num_foto-nome_objeto}
             object_name = str(bbox.imagem) + "-" + bbox.objeto  
             if not os.path.exists(self.path_folder + "/" + object_name):
@@ -589,6 +568,7 @@ class AlignObjects:
                 if sorted_we:
                     if sorted_we[0][1] < distancia_ranqueada:
                         distancia_ranqueada = sorted_we[0][1]
+                        print("palavra ranqueada aqui dentro: ", substantivo)
                         palavra_ranqueada = substantivo
                     dic_top_5[substantivo] = sorted_we[0][1]
                
@@ -608,13 +588,18 @@ class AlignObjects:
                         pass
                     
                     # se estiver sobe uma posicao na lista
+                print("\twe_deque:", we_deque)
                 palavra_ranqueada = we_deque[0]   
 
 
 
-
+            print("palavra ranqueada: ", palavra_ranqueada)
             if palavra_ranqueada != '':
-                dic_alinhamento[palavra_ranqueada] = num_objeto
+                if palavra_ranqueada in dic_alinhamento:
+                    dic_alinhamento[palavra_ranqueada + str(indice_alinhamento)] = num_objeto
+                    indice_alinhamento += 1
+                else:
+                    dic_alinhamento[palavra_ranqueada] = num_objeto
                 num_objeto += 1
                 print(palavra_ranqueada)
             # ESCREVE NO DIRETORIO O TOP-5
@@ -645,10 +630,12 @@ class AlignObjects:
             bbox_objects.pop(0)
 
         cv2.imwrite("static/" + "alinhamento2.jpg", img_original)
+        print(">>>> dic json:\n",dic_json)
         return dic_json
 
     def _experiment_7(self):
         """Experimento 4 + Experimento 3 + Experimento 1"""
+        print('experimento 7')
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
         dic_alinhamento = {}
