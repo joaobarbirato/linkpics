@@ -16,3 +16,4 @@ IA/*.pyc
 static/
 *.tar.gz
 noticias_*/
+.idea/
