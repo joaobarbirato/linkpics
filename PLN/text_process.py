@@ -19,20 +19,16 @@ class ThreadPLN(threading.Thread):
         # Aplicar chunk
         self.pln.AplicarChunk()
         self.pln.entidades_legenda()
-        # pln.AplicarStanforNER()
         # pega os substantivos que estejam com physical entity na wordnet
         self.pln.ObterEntidadesNomeadas_SubstantivosValidos('physical_entity.n.01')
-        #---- Pega as entidades mais importantes do texto
+        # ---- Pega as entidades mais importantes do texto
         self.pln.OrganizarTopEntidadesNomeadas()
-        #----- Pega os substantivos mais importantes do texto
+        # ----- Pega os substantivos mais importantes do texto
         self.pln.OrganizarTopSubstantivos()
         # pega os substantivos que estejam com object na wordnet
         self.pln.ObterEntidadesNomeadas_SubstantivosValidos('object.n.01')
-        #----- Pega os substantivos mais importantes do texto
+        # ----- Pega os substantivos mais importantes do texto
         self.pln.OrganizarTopSubstantivos()
-        #self.pln.InterseccaoListasSubstantivos()  #Interseccao dos objetos
-        #self.pln.DiferencaListasSubstantivos()
         print("---Salvando Lista de substantivos---")
         self.pln.SalvarListasSubstantivos()
-        # print("str(len(pln.lst_diferenca_entidades))")
         print("Exiting " + self.name)
