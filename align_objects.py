@@ -439,8 +439,14 @@ class AlignObjects:
                     # se estiver sobe uma posicao na lista
                 palavra_ranqueada = wup_deque[0]    
 
+            # Tratamento 1:n
+            indice_alinhamento = 0
+            if palavra_ranqueada in dic_alinhamento:
+                dic_alinhamento[palavra_ranqueada + str(indice_alinhamento)] = num_objeto
+                indice_alinhamento += 1
+            else:
+                dic_alinhamento[palavra_ranqueada] = num_objeto
 
-            dic_alinhamento[palavra_ranqueada] = num_objeto
             num_objeto += 1
             print(maior_distancia)
             print(palavra_ranqueada)
@@ -593,7 +599,7 @@ class AlignObjects:
 
 
 
-            print("palavra ranqueada: ", palavra_ranqueada)
+            # Tratamento 1:n
             if palavra_ranqueada != '':
                 if palavra_ranqueada in dic_alinhamento:
                     dic_alinhamento[palavra_ranqueada + str(indice_alinhamento)] = num_objeto
