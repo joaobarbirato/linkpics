@@ -17,3 +17,5 @@ IA/*/
 static/
 *.tar.gz
 noticias_*/
+.idea/
+*venv/
