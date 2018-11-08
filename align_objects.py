@@ -277,7 +277,8 @@ class AlignObjects:
         return dic_json
 
     def _experiment_4(self):
-        """ (3 CNN + classe YOLO) -> Se alguma palavra do texto letamizada ou não aparecere entre as 16 sugeridas pelas CNNS -> Alinha """
+        """ (3 CNN + classe YOLO) -> Se alguma palavra do texto letamizada ou não aparecere entre as 16 sugeridas
+        pelas CNNS -> Alinha """
         print('experimento 4')
         img_original = cv2.imread("static/alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
@@ -365,7 +366,6 @@ class AlignObjects:
 
                                 try:
                                     distancia_wup = word_substantivo.wup_similarity(word_bounding)
-
                                 except:
                                     distancia_wup = 0
                                 if distancia_wup > maior_distancia:
@@ -429,9 +429,6 @@ class AlignObjects:
 
             cv2.rectangle(img_original, (x, y), (x + w, y + h), self.colors_bounding_box[self.index_cor_bounding_box],
                           2)
-            # cv2.rectangle(img_original,(x,y),(x + size_caracters, y + 30),(0,0,0),thickness=-1)
-            # cv2.putText(img_original, palavra, (x + 3, y + 20),
-            #             cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 255), 1)
             self.index_cor_bounding_box += 1
 
             # remove a bounding box
@@ -454,8 +451,6 @@ class AlignObjects:
         dic_alinhamento = {}
 
         #  A P L I C A Ç Ã O  - W O R D   E M B E D D I N G S
-        # w_embeddings = WordEmbeding(100)  #inicializa as word embeddings
-        # w_embeddings.CarregarWordEmbeddings()
         dic_top_5 = {}
         # coloca todos substantivos em Lower Case e
         # Organiza os substantivos por ordem alfabética
@@ -542,7 +537,7 @@ class AlignObjects:
 
             print("palavra ranqueada: ", palavra_ranqueada)
             if palavra_ranqueada != '':
-                if palavra_ranqueada in dic_alinhamento:
+                if palavra_ranqueada in dic_alinhamento: # TODO: (Joao) por os similares aqui com or (?)
                     dic_alinhamento[palavra_ranqueada + str(indice_alinhamento)] = num_objeto
                     indice_alinhamento += 1
                 else:

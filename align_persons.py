@@ -27,8 +27,6 @@ class AlignPersons:
         elif person_choosed == 3:
             return self._experiment_3()
 
-        # elif person_choosed == 4:
-        #     return self._experiment_4()
 
         else:
             return None

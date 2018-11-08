@@ -190,7 +190,6 @@ class AlignTool:
 
     def align_from_url(self, url, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
-
         try:
             self.noticia_sem_imagem = False
             self._get_resources(url)
@@ -198,15 +197,10 @@ class AlignTool:
             if self.noticia_sem_imagem is True:
                 return 0
 
-            print('1')
             self._process_text_image()
-            print('2')
 
             pessoas_noticia = len(self._get_bounding_persons(self.list_boundingBoxOrganizada))
             nomes_noticia = len(self.lst_top_nomeadas_texto)
-
-            # if pessoas_noticia == 0 or nomes_noticia == 0:
-            #     return 0
 
             self.total_pessoas += pessoas_noticia
             self.total_nomes += nomes_noticia
@@ -271,20 +265,20 @@ class AlignTool:
                             self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b> ')
                     self.index_cor_bounding_box += 1
 
-            dic_avaliação = {}
+            dic_avaliacao = {}
             # prepara o dicionario de avaliação
             if persons_aligned:
                 for key, value in persons_aligned.items():
-                    dic_avaliação[key] = ''
+                    dic_avaliacao[key] = ''
 
             if object_aligned:
                 for key, value in object_aligned.items():
-                    dic_avaliação[key] = ''
+                    dic_avaliacao[key] = ''
         except Exception as e:
             print(e)
 
         print("PROCESSO FINALIZADO")
-        return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliação
+        return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao
 
     def align_manual(self, legenda, titulo, texto, img_path, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
