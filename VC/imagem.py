@@ -24,7 +24,9 @@ class Imagem(object):
         self.list_boundingBoxOrganizada_9000 = []
         self.numero_pessoas = 0
         self.path_diretorio = path_projeto + path_dir
-        print("dentro do construtor")
+
+        self.__YOLO_THRESH = .5
+
        # self.classificadorCNN = CnnClassifier("resnet")
         #self.classificador= CnnClassifier("resnet")
 
@@ -45,7 +47,8 @@ class Imagem(object):
             #p = subprocess.Popen(["./darknet","detect","cfg/yolo.cfg","weights/yolo.weights",self.path,">>","noticia_atual/image_result.txt"])
             with open(self.path_projeto + "noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
-                    ["./darknet", "detect", "cfg/yolo.cfg", "/data/alinhador/yolo.weights", self.path,"-thresh","0.2"],
+                    ["./darknet", "detect", "cfg/yolo.cfg", "/data/alinhador/yolo.weights", self.path,"-thresh", 
+                        str(self.__YOLO_THRESH)],
                     cwd=self.path_projeto + "IA/YOLO",
                     stdout=out)
                 p.wait()
