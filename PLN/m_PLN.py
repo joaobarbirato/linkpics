@@ -152,8 +152,6 @@ class AplicadorPLN(object):
     def AplicarTreeTagger(self):
         global lst_treetagger
         lst_treetagger=[]
-        # temporario apagar depois essa linha abaixo
-        self.noticia='Two-time Olympic volleyball champion Fabiana Claudino runs holding the torch, and around her, in the landscape framed by the Planalto Palace, on the left side, and the National Congress, on the right, protesters follow the athlete screaming. They display banners in favor of President Dilma Rousseff and against her. Before passing the Olympic fire to the first torchbearer on national soil, volleyball player Fabiana, Rousseff said in a speech that the country will be able to successfully promote the Rio Games, in spite of the crisis. '
         lst_treetagger_temp=tree_tagger.tag(self.noticia)
         # tree_tagger.tag('Doess thing even work')
         num_palavras_tagger=len(lst_treetagger_temp)
@@ -162,8 +160,8 @@ class AplicadorPLN(object):
             if lst_treetagger_temp[x][0] != "." and lst_treetagger_temp[x][0] != "!" and lst_treetagger_temp[x][0] != "?" and lst_treetagger_temp[x][0] != ":" and lst_treetagger_temp[x][0] != ";" and lst_treetagger_temp[x][0] != "," and lst_treetagger_temp[x][0] != "(" and lst_treetagger_temp[x][0] != ")" and lst_treetagger_temp[x][0] != '"' and lst_treetagger_temp[x][0] != "'" and lst_treetagger_temp[x][0] != "´" and lst_treetagger_temp[x][0] != "`":
                 lst_treetagger.append(lst_treetagger_temp[x])
 
-                
-def AplicarChunk(self):
+
+    def AplicarChunk(self):
         global lst_treetagger
         lst_treetagger = chunk(lst_treetagger)
 
