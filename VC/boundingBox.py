@@ -18,7 +18,7 @@ class BoundingBox(object):
         self.Y = self.top
         self.imagem = -1
         self.label = ""
-        self.lst_cnn= []
+        self.lst_cnn = []
 
     def CalcularTamanho(self):
         self.width = self.right - self.left

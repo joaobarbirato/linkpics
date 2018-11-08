@@ -1,17 +1,12 @@
-
-from flask import Flask, render_template, json, request, url_for
+import json
+import shutil
+from flask import Flask, render_template, json, request
 from flask_cors import CORS
+
+from UTIL import utils
+from UTIL.storage_mongo import StorageMongo
 from align_tool import AlignTool
 from align_tool_bbc import AlignToolObjects
-from flask import make_response
-from functools import wraps, update_wrapper
-from datetime import datetime
-from UTIL.storage_mongo import StorageMongo
-from UTIL import utils
-import os
-import shutil
-import json
-
 
 app = Flask(__name__)
 CORS(app)
@@ -20,6 +15,7 @@ CORS(app)
 @app.route("/")
 def main():
     return render_template('index_alinhamento_noticias_avaliacao.html')
+
 
 @app.route("/objetos")
 def main_objects():
@@ -44,35 +40,30 @@ def add_header(response):
 
 @app.route('/avaliacao', methods=['POST'])
 def salvar_avaliacao():
-
     _link = request.form['link']
 
     _avaliacao = json.loads(request.form['avaliacao'])
     _medida_similaridade = request.form['medida_similaridade']
 
-
     storage = StorageMongo()
-   
+
     dic_avaliacao = dict(link=_link, avaliacao=_avaliacao)
-   
+
     id = None
     #       Similaridade WUP
     if _medida_similaridade == "wup":
         id = storage.insert_one(dic_avaliacao, "avaliacoes_wup")
-        
+
     #     Similaridade Word Embeddings
     elif _medida_similaridade == "we":
-       id =storage.insert_one(dic_avaliacao, "avaliacoes_we")
-
-   
+        id = storage.insert_one(dic_avaliacao, "avaliacoes_we")
 
     print(id)
-    return '',200
+    return '', 200
 
 
 @app.route('/alinhamento', methods=['POST'])
 def alinhar():
-    
     _link = request.form['link']
 
     _experimento_pessoa = int(request.form['pessoas']) + 1
@@ -101,7 +92,6 @@ def alinhar():
 
 @app.route('/alinhamento_objetos', methods=['POST'])
 def alinhar_objetos():
-    
     _link = request.form['link']
 
     _experimento_pessoa = int(request.form['pessoas']) + 1
@@ -127,8 +117,6 @@ def alinhar_objetos():
     except Exception:
         return json.dumps({})
 
-    
-
 
 @app.route('/upload', methods=['POST'])
 def alinhamento_livre():
@@ -137,12 +125,10 @@ def alinhamento_livre():
     urls = utils.file_to_List('urls.txt')
     print(urls)
     _urls = dict(urls=urls)
-  
+
     return json.dumps(_urls)
-    #return json.dumps({'html': "oi"})
 
 
 if __name__ == "__main__":
     app.debug = True
-    app.run(host='127.0.0.1',port=9444)
-    #host='0.0.0.0'
+    app.run(host='127.0.0.1', port=9444)
