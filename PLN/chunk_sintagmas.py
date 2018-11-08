@@ -11,8 +11,9 @@ __CHUNK_NAME = "MWE"
 # (ADVERBIO?|ADJETIVO?|VERBO?)* NOME NOME? (brown fox, lazy dog, volleyball champion)
 # Noun compounds (http://aim-west.imag.fr/what-are-mwes/):
 __CHUNK_GRAM = r""+__CHUNK_NAME + \
-                ": {<RB.?>*<JJ.?>*<VB.?>*<NN><NN.?>|" \
-                "<NN><NN.?>*<RB.?>*<JJ.?>*<VB.?>*}"
+                ": {(<RB.?>|<JJ.?>|<VB.?>)+<NN><NN.?>?|" \
+                "(<RB.?>|<JJ.?>|<VB.?>)*<NN><NN.?>|"     \
+                "<NN>(<NN.?>|<RB.?>|<JJ.?>|<VB.?>)+}" 
 
 
 def chunk(lst_tree_tagger=None):
@@ -21,7 +22,6 @@ def chunk(lst_tree_tagger=None):
     if lst_tree_tagger is not None:
         return_list = []
         word_buffer = ""
-        lemma_buffer = ""
         buffer_mode = False
 
         # transformar a saída do TreeTagger.tag()
@@ -31,18 +31,27 @@ def chunk(lst_tree_tagger=None):
         tree = parser.parse(tagged).pos()
 
         # Restaurar a saída do TreeTagger com o(s) novo(s) chunks
-        for ((word, tag), chunk) in tree:
+        for ((word,tag),chunk) in tree:
             if chunk == "S":
                 if buffer_mode:
-                    return_list.append([word_buffer[:-1], __CHUNK_NAME, lemma_buffer[:-1]])
+                    word_buffer = word_buffer.split(' ')[:-1]
+                    # mapear a expressao multi-palavras
+                    for i in range(len(word_buffer)):
+                        pfix_chunk = None
+                        if i == 0: # primeira palavra
+                            pfix_chunk = "_b"
+                        elif i == mw_size - 1: # última palavra
+                            pfix_chunk = "_o"
+                        else:
+                            pfix_chunk = "_i" # palavras do meio
+                        return_list.append([word_buffer[i], __CHUNK_NAME + pfix_chunk, \
+                                           lemmatizer.lemmatize(word_buffer[i])])
+
                     word_buffer = ""
-                    lemma_buffer = ""
                     buffer_mode = False
-
+                    
                 return_list.append([word, tag, lemmatizer.lemmatize(word)])
-
             elif chunk == __CHUNK_NAME:
                 buffer_mode = True
                 word_buffer += word + " "
-                lemma_buffer += lemmatizer.lemmatize(word) + " "
         return return_list
