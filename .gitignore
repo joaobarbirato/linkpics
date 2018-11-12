@@ -8,6 +8,7 @@ alinhamento_web/
 __pycache__
 *.png
 *.jpg
+IA/__init__.py
 IA/*.pyc
 IA/*/
 *.pyc
