@@ -12,7 +12,19 @@ IA/__init__.py
 IA/*.pyc
 IA/*/
 *.pyc
-*.txt
+
+# auxiliar TXT
+output.txt
+urls.txt
+visual_words.txt
+*titulo.txt
+*noticia.txt
+*embedding*.txt
+*wup*.txt
+*caption.txt
+*image_result.txt
+*alinhamento*.txt
+
 *.json
 *.weights
 static/
