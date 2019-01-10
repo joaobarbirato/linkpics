@@ -30,5 +30,5 @@ class ThreadPLN(threading.Thread):
         # ----- Pega os substantivos mais importantes do texto
         self.pln.OrganizarTopSubstantivos()
         print("---Salvando Lista de substantivos---")
-        self.pln.SalvarListasSubstantivos()
+        # self.pln.SalvarListasSubstantivos()
         print("Exiting " + self.name)
