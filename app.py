@@ -12,19 +12,18 @@ app = Flask(__name__)
 CORS(app)
 
 
+def render_index(action=None):
+    return render_template('index.html', form_action=action)
+
+
 @app.route("/")
 def main():
-    return render_template('index_alinhamento_noticias_avaliacao.html')
-
-
-@app.route("/objetos")
-def main_objects():
-    return render_template('index_alinhamento_noticias_avaliacao_objetos.html')
+    return render_index(action='/alinhamento')
 
 
 @app.route("/baseline")
 def main_baseline():
-    return render_template('index_alinhamento_noticias_avaliacao_baseline.html')
+    return render_index(action='/alinhamento')
 
 
 @app.after_request
@@ -69,7 +68,13 @@ def alinhar():
     _experimento_pessoa = int(request.form['pessoas']) + 1
     _experimento_objeto = int(request.form['objetos']) + 1
 
-    alinhador = AlignTool()
+    if "folha" in _link:
+        alinhador = AlignTool()
+    elif "bbc" in _link:
+        alinhador = AlignToolObjects()
+    else:  # invalid url format
+        return json.dumps({})
+
     try:
         result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao = alinhador.align_from_url(
             _link, _experimento_pessoa, _experimento_objeto)
@@ -85,34 +90,6 @@ def alinhar():
                         titulo=titulo,
                         dic_avaliacao=dic_avaliacao)
         print(response)
-        return json.dumps(response)
-    except Exception:
-        return json.dumps({})
-
-
-@app.route('/alinhamento_objetos', methods=['POST'])
-def alinhar_objetos():
-    _link = request.form['link']
-
-    _experimento_pessoa = int(request.form['pessoas']) + 1
-    _experimento_objeto = int(request.form['objetos']) + 1
-
-    alinhador = AlignToolObjects()
-    try:
-        result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao = alinhador.align_from_url(
-            _link, _experimento_pessoa, _experimento_objeto)
-
-        if img_url != '':
-            shutil.copy2('static/alinhamento2.jpg', img_url)
-
-        response = dict(result_pessoas=result_pessoas,
-                        result_objetos=result_objetos,
-                        img_alinhamento=img_url,
-                        texto=texto,
-                        legenda=legenda,
-                        titulo=titulo,
-                        dic_avaliacao=dic_avaliacao)
-        # print(response)
         return json.dumps(response)
     except Exception:
         return json.dumps({})

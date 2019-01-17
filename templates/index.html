@@ -1,0 +1,63 @@
+{% extends 'helpers/base.html' %}
+{% block conteudo %}
+    <div class="col-lg-4 col-xl-4 ">
+        <h3>Alinhamento de notícia</h3>
+        <div class="info_url" id="info_url">
+            <form enctype="multipart/form-data" id="uploadform">
+                <div class="form-group">
+                    <label for="url_folha">Link da página</label>
+                    <select class="form-control" id="url_folha">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fileupload">Escolha o arquivo</label>
+                    <input type="file" id="choosed_file" name="choosed_file">
+                    <div style="margin-top:5px">
+                        <button type="text" id="btnCarregarLinks" class="btn btn-danger">Carregar Links</button>
+                    </div>
+                </div>
+                <button type="text" id="btnAlignLink" class="btn btn-primary">Alinhamento texto-imagem</button>
+            </form>
+        </div>
+        <h3 id="titulo_noticia">Dados da notícia</h3>
+        <div class="info_manuais">
+            <form enctype="multipart/form-data" id="align-form" action="{{ form_action }}" method="POST">
+                <div class="form-group">
+                    <label for="titulo">Título</label>
+                </div>
+                <p id="titulo" style="height:60px;"></p>
+                <div class="form-group">
+                    <label for="legenda">Legenda</label>
+                </div>
+                <p id="legenda" style="height:60px;"></p>
+                <div class="form-group">
+                    <label for="texto">Texto</label>
+                </div>
+                <p id="texto" style="height:400px; overflow-y:scroll"></p>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block col_direita %}
+    <div class="display_image">
+        <img class="imagem_alinhamento img-thumbnail" id="img_alinhamento" src="static/black_image.png">
+    </div>
+    <div class="info_resultados">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Bounding Box</th>
+                <th>Avaliação - Alinhamento</th>
+            </tr>
+            </thead>
+            <tbody id="line_resultados">
+            </tbody>
+        </table>
+    </div>
+    <button type="text" id="btnFimAvaliacao" style="margin-top:10px" class="btn btn-primary">Finalizar Avaliação</button>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/forms.js') }}"></script>
+{% endblock %}

@@ -72,11 +72,6 @@ class AlignTool:
 
     def _limpar_arquivos(self, noticia, imagem):
         os.remove(noticia)
-        # os.remove(imagem)
-        # os.remove("noticia_atual/darknet_result.txt")
-        # os.remove("noticia_atual/extraction_result.txt")
-        #  os.remove("noticia_atual/image_result.txt")
-        # os.remove("noticia_atual/image_result9000.txt")
         os.remove("noticia_atual/img_original.jpg")
         os.remove("noticia_atual/noticia.txt")
         os.remove("noticia_atual/titulo.txt")
