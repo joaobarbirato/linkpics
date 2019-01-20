@@ -88,10 +88,12 @@ def alinhar():
                         texto=texto,
                         legenda=legenda,
                         titulo=titulo,
+                        message='',
                         dic_avaliacao=dic_avaliacao)
         print(response)
         return json.dumps(response)
-    except Exception:
+    except Exception as e:
+        print(e)
         return json.dumps({})
 
 
