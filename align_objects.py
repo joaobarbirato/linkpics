@@ -207,10 +207,15 @@ class AlignObjects:
                     # se estiver sobe uma posicao na lista
                 palavra_ranqueada = wup_deque[0]
 
-            dic_alinhamento[palavra_ranqueada] = num_objeto
+            indice_alinhamento = 1
+            if palavra_ranqueada in dic_alinhamento:
+                dic_alinhamento[
+                    palavra_ranqueada + "#" + str(indice_alinhamento)
+                ] = num_objeto
+                indice_alinhamento += 1
+            else:
+                dic_alinhamento[palavra_ranqueada] = num_objeto
             num_objeto += 1
-            print(maior_distancia)
-            print(palavra_ranqueada)
             # ESCREVE NO DIRETORIO O TOP-5
             top5 = ""
             for z in range(0, 5):
@@ -225,7 +230,9 @@ class AlignObjects:
             # dic_json[palavra] = "Objeto " + str(dic_alinhamento[palavra])
             palavra_radio_button = palavra.replace(" ", "_")
             dic_json[
-                palavra] = '<label><input type="radio" value="sim" name="radio_' + palavra_radio_button + '">Sim</label><span style="margin: 0 10px 0 10px;"></span>  <label><input type="radio"  value="nao" name="radio_' + palavra_radio_button + '">Não</label>'
+                palavra] =  '<label><input type="radio" value="sim" name="radio_' + palavra_radio_button + \
+                            '">Sim</label><span style="margin: 0 10px 0 10px;"></span>  <label><input type="radio" ' + \
+                            '  value="nao" name="radio_' + palavra_radio_button + '">Não</label>'
             x, y, w, h = bbox_objects[0].Rect()
 
             # draw bounding box in img_original

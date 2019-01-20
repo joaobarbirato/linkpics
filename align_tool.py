@@ -244,20 +244,20 @@ class AlignTool:
 
             if object_aligned:
                 for key, value in object_aligned.items():
-                    palavra = key + " "  # palavra com o espaço depois.
+                    palavra = key.split("#")[0]
                     palavras = [palavra, palavra.title(), palavra.upper(), palavra.lower(), palavra + ".",
-                                palavra + "?", palavra + "!", palavra + ";", palavra.title() + ".",
-                                palavra.title() + "?", palavra.title() + "!", palavra.title() + ";",
-                                palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!",
+                                palavra + "?", palavra + "!", palavra + ";", palavra.title() + ".", palavra.title() + " ",
+                                palavra.title() + "?", palavra.title() + "!", palavra.title() + ";", palavra.lower() + " ",
+                                palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!", palavra.upper() + " ",
                                 palavra.lower() + ";", palavra.upper() + ".", palavra.upper() + "?",
-                                palavra.upper() + "!", palavra.upper() + ";"]
+                                palavra.upper() + "!", palavra.upper() + ";", ]
                     for p in palavras:
                         self.noticia = self.noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b> ')
+                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
                         self.legenda = self.legenda.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b> ')
+                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
                         self.titulo_noticia = self.titulo_noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b> ')
+                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
                     self.index_cor_bounding_box += 1
 
             dic_avaliacao = {}
