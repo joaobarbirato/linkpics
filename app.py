@@ -61,6 +61,10 @@ def salvar_avaliacao():
     return '', 200
 
 
+from UTIL.crawler_bbc import Crawler as crawler_bbc
+from UTIL.crawler import Crawler as crawler_folha
+
+
 @app.route('/alinhamento', methods=['POST'])
 def alinhar():
     _link = request.form['link']
@@ -69,13 +73,14 @@ def alinhar():
     _experimento_objeto = int(request.form['objetos']) + 1
 
     if "folha" in _link:
-        alinhador = AlignTool()
+        alinhador = AlignTool(crawler=crawler_folha)
     elif "bbc" in _link:
-        alinhador = AlignToolObjects()
+        alinhador = AlignTool(crawler=crawler_bbc)
     else:  # invalid url format
         return json.dumps({})
 
     try:
+
         result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao = alinhador.align_from_url(
             _link, _experimento_pessoa, _experimento_objeto)
 

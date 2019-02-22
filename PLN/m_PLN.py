@@ -7,20 +7,39 @@ from .entidade_nomeada import EntidadeNomeada
 from .reconhecimento_nomeada import *
 from .word import Palavra
 
-PATH_LOCATION = os.path.dirname(os.path.abspath(__file__))
-print(PATH_LOCATION)
-
-TREE_TAGGER_PATH = PATH_LOCATION + '/TreeTagger'
-print('exportando tree tagger')
-os.environ["TREETAGGER_HOME"] = TREE_TAGGER_PATH
-
-tree_tagger = TreeTagger(language='english')
 lst_todasNoticias = []
 lst_treetagger = []
 lst_palavras_originais = []
 lst_substantivosValidos = []
 
+lst_chunk = []
+
 lst_ner = []
+
+
+def get_word_from_lemma(lemma=None):
+    global lst_treetagger
+    for [_word, _, _lemma] in lst_treetagger:
+        if _lemma == lemma:
+            return _word
+
+
+def has_mwe():
+    global lst_chunk
+    return False if not lst_chunk else True
+
+
+def belongs_to_mwe(word=None):
+    global lst_chunk
+    res = []
+    found = False
+    if word:
+        for (mwe, _) in lst_chunk:
+            if word in mwe:
+                found = True
+                res.append(' '.join(mwe))
+
+    return res if found else found
 
 
 class AplicadorPLN(object):
@@ -45,6 +64,15 @@ class AplicadorPLN(object):
         self.lst_top_substantivos_objects = []
         self.lst_diferenca_entidades = []
         self.dict_lematizado = {}
+
+        PATH_LOCATION = os.path.dirname(os.path.abspath(__file__))
+        print(PATH_LOCATION)
+
+        TREE_TAGGER_PATH = PATH_LOCATION + '/TreeTagger'
+        print('exportando tree tagger')
+        os.environ["TREETAGGER_HOME"] = TREE_TAGGER_PATH
+
+        self.tree_tagger = TreeTagger(language='english')
 
     def SomentePalavras_physical(self):
         lst_palavras = []
@@ -134,9 +162,9 @@ class AplicadorPLN(object):
         global lst_treetagger
         lst_treetagger = []
         # temporario apagar depois essa linha abaixo
-        #self.noticia = 'Two-time Olympic volleyball champion Fabiana Claudino runs holding the torch, and around her, in the landscape framed by the Planalto Palace, on the left side, and the National Congress, on the right, protesters follow the athlete screaming. They display banners in favor of President Dilma Rousseff and against her. Before passing the Olympic fire to the first torchbearer on national soil, volleyball player Fabiana, Rousseff said in a speech that the country will be able to successfully promote the Rio Games, in spite of the crisis. '
-        lst_treetagger_temp = tree_tagger.tag(self.noticia)
-        # tree_tagger.tag('Doess thing even work')
+        # self.noticia = 'Two-time Olympic volleyball champion Fabiana Claudino runs holding the torch, and around her, in the landscape framed by the Planalto Palace, on the left side, and the National Congress, on the right, protesters follow the athlete screaming. They display banners in favor of President Dilma Rousseff and against her. Before passing the Olympic fire to the first torchbearer on national soil, volleyball player Fabiana, Rousseff said in a speech that the country will be able to successfully promote the Rio Games, in spite of the crisis. '
+        lst_treetagger_temp = self.tree_tagger.tag(self.noticia)
+        # self.tree_tagger.tag('Doess thing even work')
         num_palavras_tagger = len(lst_treetagger_temp)
         # Remove as pontuações do tree tagger gerando uma nova lista
         for x in range(0, num_palavras_tagger):
@@ -148,8 +176,8 @@ class AplicadorPLN(object):
                 lst_treetagger.append(lst_treetagger_temp[x])
 
     def AplicarChunk(self):
-        global lst_treetagger
-        lst_treetagger = chunk(lst_treetagger)
+        global lst_treetagger, lst_chunk
+        [lst_treetagger, lst_chunk] = chunk(lst_treetagger)
 
     def AplicarStanforNER(self):
         lst_ner = self.stanfordner.tag(self.noticia.split())
@@ -161,7 +189,8 @@ class AplicadorPLN(object):
 
         tipo_morfo = treetagger_pos[1]
 
-        if tipo_morfo == "NP" or tipo_morfo == "NPS" or tipo_morfo == "NN" or tipo_morfo == "NNS":  # pega somente substantivos
+        if tipo_morfo == "NP" or tipo_morfo == "NPS" or tipo_morfo == "NN" or tipo_morfo == "NNS" or \
+                "MWE" in tipo_morfo:  # pega somente substantivos
             return 1
         else:
             return -1
@@ -687,7 +716,7 @@ class AplicadorPLN(object):
 
         # ---ADICIONA PALAVRAS DO TITULO SE NAO EXISTIREM NO LST_PALAVRA
         print(self.titulo)
-        lst_treetagger_titulo = tree_tagger.tag(self.titulo)
+        lst_treetagger_titulo = self.tree_tagger.tag(self.titulo)
 
         for x in range(0, len(lst_treetagger_titulo)):
 
@@ -706,7 +735,7 @@ class AplicadorPLN(object):
                     lst_palavra.append(word_filtrada)
 
         # ---ADICIONA PALAVRAS DA LEGENDA SE NAO EXISTIREM NO LST_PALAVRA
-        lst_treetagger_legenda = tree_tagger.tag(self.legenda)
+        lst_treetagger_legenda = self.tree_tagger.tag(self.legenda)
         if len(lst_treetagger_legenda) < 1:
 
             for x in range(0, len(lst_treetagger_legenda)):

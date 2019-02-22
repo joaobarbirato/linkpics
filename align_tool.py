@@ -3,11 +3,11 @@
 import os
 import shutil
 
-from PLN.m_PLN import AplicadorPLN
+from PLN.m_PLN import (AplicadorPLN, get_word_from_lemma, has_mwe, belongs_to_mwe)
 from PLN.text_process import ThreadPLN
 from PLN.word_embeddings import WordEmbeding
+from PLN.get_syns import get_syns
 from UTIL import utils
-from UTIL.crawler import Crawler
 from VC.image_process import ThreadVC
 from VC.imagem import Imagem
 from align_objects import AlignObjects
@@ -15,51 +15,52 @@ from align_persons import AlignPersons
 
 
 class AlignTool:
-    def __init__(self):
-        self.w_embeddings = WordEmbeding(100)  # inicializa as word embeddings
-        self.PATH_PROJETO = os.path.dirname(os.path.abspath(__file__)) + "/"
-        self.crawler = Crawler()
-        self.legenda = ""
-        self.titulo_noticia = ""
-        self.noticia = ""
-        self.titulo_diretorio = ""
-        self.path_imagem = ""
-        self.path_legenda = ""
-        self.path_noticia = ""
-        self.path_titulo = ""
-        self.directory = ""
-        self.nome_arquivo = ""
-        # self.classificador = CnnClassifier("resnet")
-        self.lst_legenda = []
-        self.lst_top_nomeadas_texto = []
-        self.list_boundingBoxOrganizada = []
-        self.lst_top_substantivos_objects = []
-        self.dict_lematizado = {}
-        self.noticia_sem_imagem = False
-        self.total_pessoas = 0
-        self.total_nomes = 0
+    def __init__(self, crawler=None):
+        if crawler:
+            self.w_embeddings = WordEmbeding(100)  # inicializa as word embeddings
+            self.PATH_PROJETO = os.path.dirname(os.path.abspath(__file__)) + "/"
+            self.crawler = crawler()
+            self.legenda = ""
+            self.titulo_noticia = ""
+            self.noticia = ""
+            self.titulo_diretorio = ""
+            self.path_imagem = ""
+            self.path_legenda = ""
+            self.path_noticia = ""
+            self.path_titulo = ""
+            self.directory = ""
+            self.nome_arquivo = ""
+            # self.classificador = CnnClassifier("resnet")
+            self.lst_legenda = []
+            self.lst_top_nomeadas_texto = []
+            self.list_boundingBoxOrganizada = []
+            self.lst_top_substantivos_objects = []
+            self.dict_lematizado = {}
+            self.noticia_sem_imagem = False
+            self.total_pessoas = 0
+            self.total_nomes = 0
 
-        self.index_cor_bounding_box = 0
-        # Red, Blue , Dark Green, Yellow, Black, Orange, Light Blue, Light Green
-        self.colors_bounding_box = [(0, 0, 255),
-                                    (139, 0, 0),
-                                    (154, 205, 50),
-                                    (0, 255, 255),
-                                    (0, 0, 0),
-                                    (0, 165, 255),
-                                    (0, 0, 255),
-                                    (255, 191, 0),
-                                    (144, 238, 144)]
+            self.index_cor_bounding_box = 0
+            # Red, Blue , Dark Green, Yellow, Black, Orange, Light Blue, Light Green
+            self.colors_bounding_box = [(0, 0, 255),
+                                        (139, 0, 0),
+                                        (154, 205, 50),
+                                        (0, 255, 255),
+                                        (0, 0, 0),
+                                        (0, 165, 255),
+                                        (0, 0, 255),
+                                        (255, 191, 0),
+                                        (144, 238, 144)]
 
-        self.colors_html = [(255, 0, 0),
-                            (0, 0, 139),
-                            (50, 205, 154),
-                            (255, 255, 0),
-                            (0, 0, 0),
-                            (255, 165, 0),
-                            (255, 0, 0),
-                            (0, 191, 255),
-                            (144, 238, 144)]
+            self.colors_html = [(255, 0, 0),
+                                (0, 0, 139),
+                                (50, 205, 154),
+                                (255, 255, 0),
+                                (0, 0, 0),
+                                (255, 165, 0),
+                                (255, 0, 0),
+                                (0, 191, 255),
+                                (144, 238, 144)]
 
     def _remover_caracteres_especiais(self, titulo_noticia):
         """Remove caracteres estranhos das noticias"""
@@ -88,18 +89,23 @@ class AlignTool:
                 self.titulo_noticia = self._remover_caracteres_especiais(self.titulo_noticia)
 
                 self.titulo_diretorio = self.titulo_noticia.replace(" ", "")  # titulo do diretorio
-
+                self.titulo_diretorio = self.titulo_diretorio.replace("?", "")  # titulo do diretorio
+                self.titulo_diretorio = self.titulo_diretorio.replace(":", "")  # titulo do diretorio
                 # grava no txt o titulo - noticias/nomenoticia/titulo.txt
                 utils.escrever_arquivo(self.titulo_noticia, "noticia_atual/titulo.txt")
 
                 # grava  a legenda da imagem--noticias/nomenoticia/caption.txt
-                self.legenda = self.crawler.file_to_variavel(self.nome_arquivo + "_caption.txt")
-                self.legenda = self.legenda.replace("\n", "")
+                if os.path.exists(self.nome_arquivo + "_caption.txt"):
+                    self.legenda = self.crawler.file_to_variavel(self.nome_arquivo + "_caption.txt")
+                    self.legenda = self.legenda.replace("\n", "")
+                    self.path_legenda = self.nome_arquivo + "_caption.txt"  # caminho da legenda
+                else:
+                    self.legenda = ""
+                    self.path_legenda = ""
 
                 self.path_imagem = self.nome_arquivo + ".jpg"  # caminho da imagem original
                 shutil.copy2(self.path_imagem, 'static/alinhamento2.jpg')
                 print("imagem copiada")
-                self.path_legenda = self.nome_arquivo + "_caption.txt"  # caminho da legenda
 
                 self.path_titulo = "noticia_atual/titulo.txt"  # caminho do título
 
@@ -114,7 +120,8 @@ class AlignTool:
                     # envia a  noticia original para o dir da noticia
                     os.rename(self.nome_arquivo, self.directory + "/noticia.txt")
                     # envia a  legenda  para o dir da noticia
-                    os.rename(self.path_legenda, self.directory + "/caption.txt")
+                    if os.path.exists(self.nome_arquivo + "_caption.txt"):
+                        os.rename(self.path_legenda, self.directory + "/caption.txt")
                     # envia o titulo para o dir da noticia
                     os.rename(self.path_titulo, self.directory + "/titulo.txt")
                     # novo path da imagem original
@@ -122,7 +129,8 @@ class AlignTool:
                     self.path_noticia = self.directory + "/noticia.txt"  # novo path da noticia
             else:  # Se a noticia não estiver em inglês
                 os.remove(self.nome_arquivo + ".jpg")
-                os.remove(self.nome_arquivo + "_caption.txt")
+                if os.path.exists(self.nome_arquivo + "_caption.txt"):
+                    os.remove(self.nome_arquivo + "_caption.txt")
         else:
             self.noticia_sem_imagem = True
 
@@ -142,6 +150,68 @@ class AlignTool:
         if not os.path.exists(self.directory):  # se a noticia ainda não foi coletada
             os.makedirs(self.directory)  # cria o diretorio da noticia
         shutil.copy2(self.path_imagem, self.directory + "/img_original.jpg")
+
+    """
+        Procedimento para marcar as palavras alinhadas no texto
+    """
+    def _show_align_text(self, persons_aligned=None, object_aligned=None):
+        retorno = [None, None]
+        if persons_aligned:
+            for key, value in persons_aligned.items():
+                nomes = key.split(' ')
+                for nome in nomes:
+                    self._paint_text(nome)
+                self.index_cor_bounding_box += 1
+            retorno[0] = persons_aligned
+
+        if object_aligned:
+            for key, value in object_aligned.items():
+                palavra = get_word_from_lemma(lemma=key.split("#")[0])
+                lst_mwe = belongs_to_mwe(word=palavra)
+                print('#MWE>lst_mwe(): ', lst_mwe)
+                if has_mwe() and lst_mwe is not False:
+                    for mwe in lst_mwe:
+                        self._paint_text(mwe)
+
+                palavras = self._word_to_wordpoint(palavra)
+                for p in palavras:
+                    self._paint_text(p)
+
+
+                # n:1
+                palavra_syn = get_syns(palavra)
+                print('syns: ', palavra_syn)
+                if palavra_syn is not None:
+                    for ps in palavra_syn:
+                        palavras_syn = self._word_to_wordpoint(
+                            ps if get_word_from_lemma(ps) is None else get_word_from_lemma(ps)
+                        )
+                        for p in palavras_syn:
+                            self._paint_text(p)
+
+                self.index_cor_bounding_box += 1
+
+            retorno[1] = object_aligned
+
+        return retorno
+
+    def _word_to_wordpoint(self, palavra):
+        return [
+            palavra + ".",
+            palavra + "?", palavra + "!", palavra + ";", palavra.title() + ".", palavra.title() + " ",
+            palavra.title() + "?", palavra.title() + "!", palavra.title() + ";", palavra.lower() + " ",
+            palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!", palavra.upper() + " ",
+            palavra.lower() + ";", palavra.upper() + ".", palavra.upper() + "?",
+            palavra.upper() + "!", palavra.upper() + ";",
+        ]
+
+    def _paint_text(self, p):
+        self.noticia = self.noticia.replace(' ' + p, ' <b style="color:rgb' + str(
+            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
+        self.legenda = self.legenda.replace(' ' + p, ' <b style="color:rgb' + str(
+            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
+        self.titulo_noticia = self.titulo_noticia.replace(' ' + p, ' <b style="color:rgb' + str(
+            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
 
     def _process_text_image(self):
         # cria uma instancia da classe Imagem, passando o path da imagem
@@ -176,7 +246,6 @@ class AlignTool:
 
         self.lst_top_nomeadas_texto = aplicador_pln.get_list_top_entidades_nomeadas()
         print("Pessoas no texto:" + str(len(self.lst_top_nomeadas_texto)))
-        # print(self.lst_top_nomeadas_texto)
         self.dict_lematizado = aplicador_pln.get_dict_lematizado()
         self.list_boundingBoxOrganizada = imagem.list_boundingBoxOrganizada
         self.lst_top_substantivos_objects = aplicador_pln.lst_top_substantivos_objects
@@ -223,6 +292,7 @@ class AlignTool:
                               self.index_cor_bounding_box, self.colors_bounding_box)
         object_aligned = object.align(object_choose)
 
+        self.titulo_noticia = self.titulo_noticia.replace("?", "")
         img_url = "static/" + self.titulo_noticia + "_" + str(person_choose) + "_" + str(object_choose) + ".jpg"
 
         # reseta o indice
@@ -230,36 +300,12 @@ class AlignTool:
         # Prepara o texto, legenda, titulo que serao destacados
 
         try:
-            if persons_aligned:
-                for key, value in persons_aligned.items():
-                    nomes = key.split(' ')
-                    for nome in nomes:
-                        self.noticia = self.noticia.replace(' ' + nome, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + nome + '</b>')
-                        self.legenda = self.legenda.replace(' ' + nome, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + nome + '</b>')
-                        self.titulo_noticia = self.titulo_noticia.replace(' ' + nome, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + nome + '</b>')
-                    self.index_cor_bounding_box += 1
+            [persons_aligned, object_aligned] = self._show_align_text(
+                persons_aligned=persons_aligned, object_aligned=object_aligned
+            )
 
-            if object_aligned:
-                for key, value in object_aligned.items():
-                    palavra = key.split("#")[0]
-                    palavras = [palavra, palavra.title(), palavra.upper(), palavra.lower(), palavra + ".",
-                                palavra + "?", palavra + "!", palavra + ";", palavra.title() + ".", palavra.title() + " ",
-                                palavra.title() + "?", palavra.title() + "!", palavra.title() + ";", palavra.lower() + " ",
-                                palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!", palavra.upper() + " ",
-                                palavra.lower() + ";", palavra.upper() + ".", palavra.upper() + "?",
-                                palavra.upper() + "!", palavra.upper() + ";", ]
-                    for p in palavras:
-                        self.noticia = self.noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
-                        self.legenda = self.legenda.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
-                        self.titulo_noticia = self.titulo_noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-                            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
-                    self.index_cor_bounding_box += 1
-
+            print('persons: ', persons_aligned)
+            print('objects: ', object_aligned)
             dic_avaliacao = {}
             # prepara o dicionario de avaliação
             if persons_aligned:

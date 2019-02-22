@@ -17,7 +17,7 @@ class ThreadPLN(threading.Thread):
         self.pln.ObterPalavrasTitulo()
         self.pln.AplicarTreeTagger()
         # Aplicar chunk
-        #self.pln.AplicarChunk()
+        self.pln.AplicarChunk()
         self.pln.entidades_legenda()
         # pega os substantivos que estejam com physical entity na wordnet
         self.pln.ObterEntidadesNomeadas_SubstantivosValidos('physical_entity.n.01')
