@@ -2,11 +2,11 @@ import json
 import shutil
 from flask import Flask, render_template, json, request
 from flask_cors import CORS
+from werkzeug.exceptions import BadRequestKeyError
 
 from UTIL import utils
 from UTIL.storage_mongo import StorageMongo
 from align_tool import AlignTool
-from align_tool_bbc import AlignToolObjects
 
 app = Flask(__name__)
 CORS(app)
@@ -77,7 +77,11 @@ def alinhar():
     elif "bbc" in _link:
         alinhador = AlignTool(crawler=crawler_bbc)
     else:  # invalid url format
-        return json.dumps({})
+        return app.response_class(
+            response=json.dumps({'message': 'Bad request'}),
+            status=400,
+            mimetype='application/json'
+        )
 
     try:
 
@@ -95,22 +99,43 @@ def alinhar():
                         titulo=titulo,
                         message='',
                         dic_avaliacao=dic_avaliacao)
+
         print(response)
-        return json.dumps(response)
+
+        return app.response_class(
+            response=json.dumps(response),
+            status=200,
+            mimetype='application/json'
+        )
     except Exception as e:
-        print(e)
-        return json.dumps({})
+        return app.response_class(
+            response=json.dumps({'message': e}),
+            status=600,
+            mimetype='application/json'
+        )
 
 
 @app.route('/upload', methods=['POST'])
 def alinhamento_livre():
-    file = request.files['choosed_file']
+    try:
+        file = request.files['choosed_file']
+    except BadRequestKeyError:
+        return app.response_class(
+            response=json.dumps({'message': 'Você deve selecionar um arquivo'}),
+            status=400,
+            mimetype='application/json'
+        )
+
     file.save('urls.txt')
     urls = utils.file_to_List('urls.txt')
     print(urls)
     _urls = dict(urls=urls)
 
-    return json.dumps(_urls)
+    return app.response_class(
+        response=json.dumps(_urls),
+        status=200,
+        mimetype='application/json'
+    )
 
 
 if __name__ == "__main__":

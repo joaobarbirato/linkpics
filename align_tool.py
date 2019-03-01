@@ -197,21 +197,18 @@ class AlignTool:
 
     def _word_to_wordpoint(self, palavra):
         return [
-            palavra + ".",
-            palavra + "?", palavra + "!", palavra + ";", palavra.title() + ".", palavra.title() + " ",
-            palavra.title() + "?", palavra.title() + "!", palavra.title() + ";", palavra.lower() + " ",
-            palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!", palavra.upper() + " ",
-            palavra.lower() + ";", palavra.upper() + ".", palavra.upper() + "?",
-            palavra.upper() + "!", palavra.upper() + ";",
+            palavra + ".", palavra + "?", palavra + "!", palavra + ";",
+            palavra.title() + ".", palavra.title() + " ", palavra.title() + "?", palavra.title() + "!", palavra.title() + ";", palavra.title() + ",",
+            palavra.lower() + " ", palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!", palavra.lower() + ";",  palavra.lower() + ",",
+            palavra.upper() + " ", palavra.upper() + ".", palavra.upper() + "?", palavra.upper() + "!", palavra.upper() + ";", palavra.upper() + ",",
         ]
 
     def _paint_text(self, p):
-        self.noticia = self.noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
-        self.legenda = self.legenda.replace(' ' + p, ' <b style="color:rgb' + str(
-            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
-        self.titulo_noticia = self.titulo_noticia.replace(' ' + p, ' <b style="color:rgb' + str(
-            self.colors_html[self.index_cor_bounding_box]) + '">' + p + '</b>')
+        _open_tag = ' <b style="color:rgb' + str(self.colors_html[self.index_cor_bounding_box]) + '">'
+        _close_tag = '</b>'
+        self.noticia = self.noticia.replace(' ' + p, _open_tag + p + _close_tag)
+        self.legenda = self.legenda.replace(' ' + p, _open_tag + p + _close_tag)
+        self.titulo_noticia = self.titulo_noticia.replace(' ' + p, _open_tag + p + _close_tag)
 
     def _process_text_image(self):
         # cria uma instancia da classe Imagem, passando o path da imagem
@@ -304,8 +301,6 @@ class AlignTool:
                 persons_aligned=persons_aligned, object_aligned=object_aligned
             )
 
-            print('persons: ', persons_aligned)
-            print('objects: ', object_aligned)
             dic_avaliacao = {}
             # prepara o dicionario de avaliação
             if persons_aligned:

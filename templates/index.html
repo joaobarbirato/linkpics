@@ -1,63 +1,148 @@
 {% extends 'helpers/base.html' %}
+
+{% block header %}
+    <ul class="nav justify-content-center">
+        <li class="nav-item">
+            <h1><a id="linkpics-titulo-header" class="nav-link active" href="#">LinkPICS</a></h1>
+        </li>
+    </ul>
+{% endblock %}
+
 {% block conteudo %}
-    <div class="col-lg-4 col-xl-4 ">
-        <h3>Alinhamento de notícia</h3>
-        <div class="info_url" id="info_url">
-            <form enctype="multipart/form-data" id="uploadform">
-                <div class="form-group">
-                    <label for="url_folha">Link da página</label>
-                    <select class="form-control" id="url_folha">
-                    </select>
+    <div class="modal fade" id="modal-avaliacao" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" aria-expanded="true" data-backdrop="static">
+        <div class="modal-dialog d-flex justify-content-center" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="fileupload">Escolha o arquivo</label>
-                    <input type="file" id="choosed_file" name="choosed_file">
-                    <div style="margin-top:5px">
-                        <button type="text" id="btnCarregarLinks" class="btn btn-danger">Carregar Links</button>
+                <div id="body-modal-avaliacao" class="modal-body card">
+                    <img class="img-responsive m-4 rounded float-right img_alinhamento" id="img_alinhamento_modal" src="static/black_image.png" alt="Card image cap">
+                    <div id="col-direita">
+                        <div class="info_resultados">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Bounding Box</th>
+                                    <th>Avaliação - Alinhamento</th>
+                                </tr>
+                                </thead>
+                                <tbody id="line_resultados">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <button type="text" id="btnAlignLink" class="btn btn-primary">Alinhamento texto-imagem</button>
-            </form>
-        </div>
-        <h3 id="titulo_noticia">Dados da notícia</h3>
-        <div class="info_manuais">
-            <form enctype="multipart/form-data" id="align-form" action="{{ form_action }}" method="POST">
-                <div class="form-group">
-                    <label for="titulo">Título</label>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" id="btnFimAvaliacao" class="btn btn-primary">Finalizar Avaliação</button>
                 </div>
-                <p id="titulo" style="height:60px;"></p>
-                <div class="form-group">
-                    <label for="legenda">Legenda</label>
-                </div>
-                <p id="legenda" style="height:60px;"></p>
-                <div class="form-group">
-                    <label for="texto">Texto</label>
-                </div>
-                <p id="texto" style="height:400px; overflow-y:scroll"></p>
-            </form>
+            </div>
         </div>
     </div>
+    <div class="row" id="resultado-alinhamento">
+        <div class="col-lg-12 my-4">
+            <div id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="card">
+                    <div class="card-header" role="tab" id="heading-alinhamento-termos">
+                        <h5 class="mb-0">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse-alinhamento-termos" aria-expanded="true" aria-controls="collapse-alinhamento-termos">
+                                Alinhamento
+                            </a>
+                            <button id="bttn-modal-avaliacao" type="button" class="float-right" data-toggle="modal" data-target="#exampleModalLong">
+                                Avaliar
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="collapse-alinhamento-termos" class="collapse show" role="tabpanel" aria-labelledby="heading-alinhamento-termos">
+                        <img class="img-responsive m-4 rounded float-right img_alinhamento" id="img_alinhamento_acordeon" src="static/black_image.png" alt="Card image cap">
+                        <div class="card-block">
+                            <form enctype="multipart/form-data" id="align-form" action="{{ form_action }}" method="POST">
+                                <h4 class="card-title" id="titulo">Título</h4>
+                                <h6 class="card-subtitle mb-2 pb-4 text-muted" id="legenda">Legenda</h6>
+                                <p class="card-text" id="texto" align="justify">Texto</p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" role="tab" id="heading-alinhamento-gdi">
+                        <h5 class="mb-0">
+                            <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse-alinhamento-gdi" aria-expanded="false" aria-controls="collapse-alinhamento-gdi">
+                                Descrições da Imagem
+                            </a>
+                        </h5>
+                    </div>
+                    <div id="collapse-alinhamento-gdi" class="collapse" role="tabpanel" aria-labelledby="heading-alinhamento-gdi">
+                        <div class="card-block">
+                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="row-forms">
+        <div class="col col-6 d-flex">
+            <div class="card">
+                <div class="card-block">
+                    <h4 class="card-title">Card title</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col col-6 d-flex">
+            <div class="card">
+                <div class="card-block">
+                    <h4 class="card-title">Alinhamento de notícia</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">Carregue um arquivo contendo URLs</h6>
+                    <form enctype="multipart/form-data" id="uploadform">
+                        <div class="form-group">
+                            <label for="url_folha">Link da página</label>
+                            <select class="form-control" id="url_folha">
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fileupload">Escolha o arquivo</label>
+                            <input type="file" id="choosed_file" name="choosed_file">
+                            <div style="margin-top:5px">
+                                <button type="text" id="btnCarregarLinks" class="btn btn-danger">Carregar Links</button>
+                            </div>
+                        </div>
+                        <button type="text" id="btnAlignLink" class="btn btn-primary">Alinhamento texto-imagem</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 {% endblock %}
 
 {% block col_direita %}
-    <div class="display_image">
-        <img class="imagem_alinhamento img-thumbnail" id="img_alinhamento" src="static/black_image.png">
-    </div>
-    <div class="info_resultados">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Bounding Box</th>
-                <th>Avaliação - Alinhamento</th>
-            </tr>
-            </thead>
-            <tbody id="line_resultados">
-            </tbody>
-        </table>
-    </div>
-    <button type="text" id="btnFimAvaliacao" style="margin-top:10px" class="btn btn-primary">Finalizar Avaliação</button>
+    {#    <div class="display_image">#}
+    {#        <img class="imagem_alinhamento img-thumbnail" id="img_alinhamento" src="static/black_image.png">#}
+    {#    </div>#}
+
+
 {% endblock %}
 
 {% block scripts %}
     <script type="text/javascript" src="{{ url_for('static', filename='js/forms.js') }}"></script>
+    <script type="text/javascript">
+        $('#bttn-modal-avaliacao').click(function(e){
+            $('#modal-avaliacao').modal('toggle');
+        });
+        {#$('#modal-avaliacao').on('show.bs.modal', function(e){#}
+        {#    $('<div>').append($());#}
+        {##}
+        {##}
+        {#    $('#body-modal-avaliacao').html(#}
+        {#        $('<div>').append($('#img_alinhamento').clone()).html() + $('#col-direita').html()#}
+        {#    );#}
+        {#});#}
+    </script>
 {% endblock %}
