@@ -34,4 +34,5 @@ noticias_*/
 *venv/
 
 amr/*/
+amr/Data/
 data/
