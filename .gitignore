@@ -34,5 +34,6 @@ noticias_*/
 *venv/
 
 amr/*/
-amr/Data/
+amr/Data
+amr/stanford-*
 data/
