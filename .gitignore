@@ -32,3 +32,6 @@ static/
 noticias_*/
 .idea/
 *venv/
+
+amr/*/
+data/
