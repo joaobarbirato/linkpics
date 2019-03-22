@@ -1,4 +1,6 @@
 app/IA/face_recognition/boost_1_64_0/
+app/IA/classificadores
+app/IA/YOLO
 app/PLN/stanfordNER/
 app/PLN/TreeTagger*/
 app/TreeTagger_old/
