@@ -25,9 +25,10 @@ visual_words.txt
 
 *.json
 *.weights
-static/
+static/noticias
+
 *.tar.gz
-noticias_*/
+app/noticias_*/
 .idea/
 *venv/
 
