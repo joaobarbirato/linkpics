@@ -37,4 +37,5 @@ app/noticias_*/
 app/amr/*/
 app/amr/Data
 app/amr/stanford-*
+app/amr/glove/
 data/
