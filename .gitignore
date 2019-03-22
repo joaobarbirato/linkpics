@@ -1,15 +1,13 @@
-IA/face_recognition/boost_1_64_0/
-PLN/stanfordNER/
-PLN/TreeTagger*/
-TreeTagger_old/
-PLN/treetagger-python/
-noticia_atual/
-alinhamento_web/
+app/IA/face_recognition/boost_1_64_0/
+app/PLN/stanfordNER/
+app/PLN/TreeTagger*/
+app/TreeTagger_old/
+app/PLN/treetagger-python/
+app/noticia_atual/
+
 __pycache__
 *.png
 *.jpg
-IA/__init__.py
-IA/*.pyc
 IA/*/
 *.pyc
 
@@ -33,7 +31,7 @@ noticias_*/
 .idea/
 *venv/
 
-amr/*/
-amr/Data
-amr/stanford-*
+app/amr/*/
+app/amr/Data
+app/amr/stanford-*
 data/
