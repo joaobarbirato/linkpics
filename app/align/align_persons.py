@@ -1,7 +1,8 @@
-from UTIL import utils
-from UTIL import google_search_images as g_image
+from app.align import align
+from app.UTIL import utils
+from app.UTIL import google_search_images as g_image
 import cv2
-from IA.face_recognition import FaceRecognition
+from app.IA.face_recognition import FaceRecognition
 import os
 
 
@@ -78,6 +79,10 @@ class AlignPersons:
                 cv2.rectangle(img_original, (x, y), (x + w, y + h),
                               self.colors_bounding_box[self.index_cor_bounding_box], 2)
                 self.index_cor_bounding_box += 1
+
+                alignment = align.Alignment(term=entidade, bounding_box=bbox_pessoas[0], is_ne=True)
+                align.ALIGNMENTS.add_alignments(alignment=alignment)
+
                 # remove a pessoa e a bounding box
                 nomes_alinhamento.pop(0)
                 bbox_pessoas.pop(0)
@@ -189,6 +194,9 @@ class AlignPersons:
                 cv2.rectangle(img_original, (x, y), (x + w, y + h),
                               self.colors_bounding_box[self.index_cor_bounding_box], 2)
                 self.index_cor_bounding_box += 1
+
+                alignment = align.Alignment(term=entidade, bounding_box=value, is_ne=True)
+                align.ALIGNMENTS.add_alignments(alignment=alignment)
 
             cv2.imwrite("static/" + "alinhamento2.jpg", img_original)
             path_arquivo = self.path_noticia + "alinhamento_pessoas.txt"

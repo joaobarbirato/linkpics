@@ -4,11 +4,18 @@ from flask import Flask, render_template, json, request
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequestKeyError
 
-from UTIL import utils
-from UTIL.storage_mongo import StorageMongo
-from align_tool import AlignTool
+from app.align import align
+from app.UTIL import utils
+from app.UTIL.storage_mongo import StorageMongo
+
+from app.align.align_tool import AlignTool
+from app.align.align_tool_descr import AlignToolDescr
+
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+db = SQLAlchemy(app)
 CORS(app)
 
 
@@ -61,8 +68,8 @@ def salvar_avaliacao():
     return '', 200
 
 
-from UTIL.crawler_bbc import Crawler as crawler_bbc
-from UTIL.crawler import Crawler as crawler_folha
+from app.UTIL.crawler_bbc import Crawler as crawler_bbc
+from app.UTIL import Crawler as crawler_folha
 
 
 @app.route('/alinhamento', methods=['POST'])
@@ -84,12 +91,15 @@ def alinhar():
         )
 
     try:
-
         result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao = alinhador.align_from_url(
             _link, _experimento_pessoa, _experimento_objeto)
 
         if img_url != '':
             shutil.copy2('static/alinhamento2.jpg', img_url)
+
+        alinhador_descr = AlignToolDescr(
+            title=alinhador.orig_titulo, sub=alinhador.orig_legenda, text=alinhador.orig_texto
+        )
 
         response = dict(result_pessoas=result_pessoas,
                         result_objetos=result_objetos,
@@ -97,6 +107,7 @@ def alinhar():
                         texto=texto,
                         legenda=legenda,
                         titulo=titulo,
+                        descricoes=alinhador_descr.get_descr(),
                         message='',
                         dic_avaliacao=dic_avaliacao)
 
@@ -109,7 +120,7 @@ def alinhar():
         )
     except Exception as e:
         return app.response_class(
-            response=json.dumps({'message': e}),
+            response=json.dumps({'message': str(e)}),
             status=600,
             mimetype='application/json'
         )
@@ -139,5 +150,6 @@ def alinhamento_livre():
 
 
 if __name__ == "__main__":
+    align.init()
     app.debug = True
     app.run(host='127.0.0.1', port=9444)

@@ -57,7 +57,12 @@
                         </h5>
                     </div>
                     <div id="collapse-alinhamento-termos" class="collapse show" role="tabpanel" aria-labelledby="heading-alinhamento-termos">
-                        <img class="img-responsive m-4 rounded float-right img_alinhamento" id="img_alinhamento_acordeon" src="static/black_image.png" alt="Card image cap">
+                        <div class="m-4 rounded float-right card">
+                            <img class="card-img-top img-responsive img_alinhamento" id="img_alinhamento_acordeon" src="static/Project Resorts to App and Traps in order to Map out The Aedes Aegypti Mosquito in Acre_2_1.jpg" alt="Card image cap">
+                            <div class="card-block" id="card-img-gdi">
+                                {# Aqui serão inseridas as descrições geradas #}
+                            </div>
+                        </div>
                         <div class="card-block">
                             <form enctype="multipart/form-data" id="align-form" action="{{ form_action }}" method="POST">
                                 <h4 class="card-title" id="titulo">Título</h4>
@@ -76,30 +81,42 @@
                         </h5>
                     </div>
                     <div id="collapse-alinhamento-gdi" class="collapse" role="tabpanel" aria-labelledby="heading-alinhamento-gdi">
+                        <img class="img-responsive m-4 rounded float-right img_alinhamento" id="img_alinhamento_acordeon_gdi" src="static/black_image.png" alt="Card image cap">
                         <div class="card-block">
-                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                                <h4 class="card-title" id="titulo_gdi">Título</h4>
+                                <h6 class="card-subtitle mb-2 pb-4 text-muted" id="legenda_gdi">Legenda</h6>
+                                <p class="card-text" id="texto_gdi" align="justify">Texto</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {# Digitando um link #}
     <div class="row" id="row-forms">
         <div class="col col-6 d-flex">
             <div class="card">
                 <div class="card-block">
-                    <h4 class="card-title">Card title</h4>
-                    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                    <h4 class="card-title">Alinhamento de notícia</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">Entre com um link para a notícia.</h6>
+                    <form enctype="multipart/form-data" id="linkform">
+                        <div class="form-group">
+                            <label for="input_link">Link para a notícia:</label>
+                            <input id="input_link" name="input_link" style="width: 474.667px" placeholder="Insira um link para a notícia (Folha ou BBC)"/>
+                        </div>
+                        <button type="text" id="btnAlignLink" class="btn btn-primary">Alinhamento texto-imagem</button>
+                    </form>
                 </div>
             </div>
         </div>
+        {# Carregando um arquivo #}
         <div class="col col-6 d-flex">
             <div class="card">
                 <div class="card-block">
                     <h4 class="card-title">Alinhamento de notícia</h4>
                     <h6 class="card-subtitle mb-2 text-muted">Carregue um arquivo contendo URLs</h6>
-                    <form enctype="multipart/form-data" id="uploadform">
+                    <form enctype="multipart/form-data" id="uploadfileform">
                         <div class="form-group">
                             <label for="url_folha">Link da página</label>
                             <select class="form-control" id="url_folha">
@@ -112,22 +129,12 @@
                                 <button type="text" id="btnCarregarLinks" class="btn btn-danger">Carregar Links</button>
                             </div>
                         </div>
-                        <button type="text" id="btnAlignLink" class="btn btn-primary">Alinhamento texto-imagem</button>
+                        <button type="text" id="btnAlignFile" class="btn btn-primary">Alinhamento texto-imagem</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
-
-{% endblock %}
-
-{% block col_direita %}
-    {#    <div class="display_image">#}
-    {#        <img class="imagem_alinhamento img-thumbnail" id="img_alinhamento" src="static/black_image.png">#}
-    {#    </div>#}
-
-
 {% endblock %}
 
 {% block scripts %}
@@ -136,13 +143,5 @@
         $('#bttn-modal-avaliacao').click(function(e){
             $('#modal-avaliacao').modal('toggle');
         });
-        {#$('#modal-avaliacao').on('show.bs.modal', function(e){#}
-        {#    $('<div>').append($());#}
-        {##}
-        {##}
-        {#    $('#body-modal-avaliacao').html(#}
-        {#        $('<div>').append($('#img_alinhamento').clone()).html() + $('#col-direita').html()#}
-        {#    );#}
-        {#});#}
     </script>
 {% endblock %}

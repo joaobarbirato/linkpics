@@ -2,7 +2,7 @@ import os
 from nltk.corpus import wordnet as wn
 from treetagger import TreeTagger
 
-from PLN.chunk_sintagmas import chunk
+from app.PLN.chunk_sintagmas import chunk
 from .entidade_nomeada import EntidadeNomeada
 from .reconhecimento_nomeada import *
 from .word import Palavra
@@ -69,7 +69,7 @@ class AplicadorPLN(object):
         print(PATH_LOCATION)
 
         TREE_TAGGER_PATH = PATH_LOCATION + '/TreeTagger'
-        print('exportando tree tagger')
+        print('exportando tree tagger em ', TREE_TAGGER_PATH)
         os.environ["TREETAGGER_HOME"] = TREE_TAGGER_PATH
 
         self.tree_tagger = TreeTagger(language='english')

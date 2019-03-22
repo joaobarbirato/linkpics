@@ -1,14 +1,14 @@
-from math import sqrt
-
 import cv2
 import operator
 import os
 from collections import deque
 
-from PLN.WordNetClasses import *
-from PLN.trocar_nomes import *
-from PLN.word_embeddings import WordEmbeding
-from UTIL import utils
+from app.PLN.trocar_nomes import *
+from app.PLN.WordNetClasses import TrazerSynsetBoundingBox
+from app.UTIL import utils
+from app.align import align
+from app.align.align import Alignment
+from nltk.corpus import wordnet as wn
 
 
 class AlignObjects:
@@ -211,7 +211,7 @@ class AlignObjects:
             if palavra_ranqueada in dic_alinhamento:
                 dic_alinhamento[
                     palavra_ranqueada + "#" + str(indice_alinhamento)
-                ] = num_objeto
+                ] = dic_alinhamento[palavra_ranqueada]
                 indice_alinhamento += 1
             else:
                 dic_alinhamento[palavra_ranqueada] = num_objeto
@@ -224,6 +224,9 @@ class AlignObjects:
                 except:
                     pass
             utils.escrever_arquivo(top5, dir_objeto + arquivo_wup)
+
+            alignment = Alignment(term=palavra_ranqueada,bounding_box=bbox)
+            align.ALIGNMENTS.add_alignments(alignment=alignment)
 
         # _________________ALINHAMENTO________________
         for palavra, value in dic_alinhamento.items():

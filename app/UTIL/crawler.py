@@ -13,8 +13,9 @@ class Crawler(object):
     socket.setdefaulttimeout(70)  # para evitar time out na página rastreada
     nome_arquivo = ""
 
-    def __init__(self):
+    def __init__(self, dir=''):
         self.noticia = ""
+        self.offset_dir = dir
 
     def file_to_variavel(self, file_name):
         texto = ""
@@ -25,8 +26,8 @@ class Crawler(object):
 
     def crawl_page(self, url):
         global nome_arquivo
-        nome_arquivo = 'noticia_atual/' + self.obter_nome_arquivo(url)
-        path_imagem = 'noticia_atual/' + self.obter_nome_arquivo(url)
+        nome_arquivo = self.offset_dir + 'noticia_atual/' + self.obter_nome_arquivo(url)
+        path_imagem = self.offset_dir + 'noticia_atual/' + self.obter_nome_arquivo(url)
         self.coletar_img(url, path_imagem)
         titulo_noticia = ""
         if encontrou_img == 1:

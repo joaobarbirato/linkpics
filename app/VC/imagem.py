@@ -24,13 +24,14 @@ class Imagem(object):
         self.list_boundingBoxOrganizada_9000 = []
         self.numero_pessoas = 0
         self.path_diretorio = path_projeto + path_dir
+        self.path_yolo = "app/IA/YOLO"
         print("dentro do construtor")
 
     # self.classificadorCNN = CnnClassifier("resnet")
     # self.classificador= CnnClassifier("resnet")
 
     def renomearArquivos(self):
-        os.rename(self.path_projeto + "noticia_atual/image_result.txt", self.path_diretorio + "/image_result.txt")
+        os.rename(self.path_projeto + "app/noticia_atual/image_result.txt", self.path_diretorio + "/image_result.txt")
         print("removido")
 
     # os.rename("noticia_atual/extraction_result.txt", self.path_diretorio + "/extraction_result.txt")
@@ -44,30 +45,30 @@ class Imagem(object):
         try:
             # os.system("./darknet detect cfg/yolo.cfg weights/yolo.weights " + self.path + ">> noticia_atual/image_result.txt")  # aplica a deteccao YOLO
             # p = subprocess.Popen(["./darknet","detect","cfg/yolo.cfg","weights/yolo.weights",self.path,">>","noticia_atual/image_result.txt"])
-            with open(self.path_projeto + "noticia_atual/image_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "detect", "cfg/yolo.cfg", "/data/alinhador/yolo.weights", self.path, "-thresh",
                      "0.2"],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
             print('erro aqui')
             print(str(e))
             pass
-        if os.path.exists(self.path_projeto + "IA/YOLO/predictions.png"):
+        if os.path.exists(self.path_projeto + self.path_yolo + "/predictions.png"):
             os.rename(
-                self.path_projeto + "IA/YOLO/predictions.png",
+                self.path_projeto + self.path_yolo + "/predictions.png",
                 self.path_diretorio + "/img_yolo.png")  # renomeia a imagem yolo e passa para o diretorio da noticia
 
     def aplicarEXTRACTION(self, img_path):
         try:
 
-            with open(self.path_projeto + "noticia_atual/extraction_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/extraction_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/extraction.cfg",
                      "/data/alinhador/extraction.weights", self.path_projeto + img_path],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
@@ -77,11 +78,11 @@ class Imagem(object):
     def aplicarDARKNET(self, img_path):
         try:
 
-            with open(self.path_projeto + "noticia_atual/darknet_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/darknet_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/darknet19.cfg",
                      "/data/alinhador/darknet19.weights", self.path_projeto + img_path],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
@@ -91,11 +92,11 @@ class Imagem(object):
     def aplicarResNet50(self, img_path):
         try:
 
-            with open(self.path_projeto + "noticia_atual/resnet_50_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/resnet_50_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/resnet50.cfg",
                      "/data/alinhador/resnet50.weights", self.path_projeto + img_path],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
@@ -105,11 +106,11 @@ class Imagem(object):
     def aplicarDenseNet(self, img_path):
         try:
 
-            with open(self.path_projeto + "noticia_atual/densenet_201_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/densenet_201_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/densenet201.cfg",
                      "/data/alinhador/densenet201.weights", self.path_projeto + img_path],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
@@ -117,15 +118,13 @@ class Imagem(object):
             pass
 
     def aplicarVgg16(self, img_path):
-
         try:
-
-            with open(self.path_projeto + "noticia_atual/vgg_16_result.txt", "wb") as out:
+            with open(self.path_projeto + "app/noticia_atual/vgg_16_result.txt", "wb") as out:
                 print("ENTROU AQUI")
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/vgg-16.cfg",
                      "/data/alinhador/vgg-16.weights", self.path_projeto + img_path],
-                    cwd=self.path_projeto + "IA/YOLO",
+                    cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
         except OSError as e:
@@ -141,25 +140,25 @@ class Imagem(object):
         return contents
 
     def read_wordsYolo9000(self):
-        arquivo_txt = "noticia_atual/image_result9000.txt"
+        arquivo_txt = "app/noticia_atual/image_result9000.txt"
         open_file = open(arquivo_txt, 'r')
         contents = open_file.readlines()
         return contents
 
     def read_wordsDarkNet(self):
-        arquivo_txt = "noticia_atual/darknet_result.txt"
+        arquivo_txt = "app/noticia_atual/darknet_result.txt"
         open_file = open(arquivo_txt, 'r')
         contents = open_file.readlines()
         return contents
 
     def read_wordsExtraction(self):
-        arquivo_txt = "noticia_atual/extraction_result.txt"
+        arquivo_txt = "app/noticia_atual/extraction_result.txt"
         open_file = open(arquivo_txt, 'r')
         contents = open_file.readlines()
         return contents
 
     def read_wordsDenseNet(self):
-        arquivo_txt = "noticia_atual/densenet_201_result.txt"
+        arquivo_txt = "app/noticia_atual/densenet_201_result.txt"
         open_file = open(arquivo_txt, 'r')
         contents = open_file.readlines()
         return contents
@@ -197,7 +196,6 @@ class Imagem(object):
                     ',')  # pega as informações da linha e quebra em pedaços
                 # Preenche a classe bounding box com as informações obtidas
                 objeto = informacoes_bounding[0]
-                print("\n\n\n\n\n\n>>>>>>>>b_box: ", objeto, " ", len(arquivo_informacoes_boundingBox))
                 if objeto != "tie":
                     left = int(informacoes_bounding[1])
                     right = int(informacoes_bounding[2])
@@ -241,8 +239,6 @@ class Imagem(object):
                 else:
                     palavra = lst_palavra[0]
                 lst_darknet_words.append(palavra)
-        print('palavras dark net')
-        print(lst_darknet_words)
         return lst_darknet_words  # devolve o list de palavras
 
     def ObterTop5Extraction(self):
@@ -260,8 +256,6 @@ class Imagem(object):
                 else:
                     palavra = lst_palavra[0]
                 lst_extraction_words.append(palavra)
-        print('palavras extraction net')
-        print(lst_extraction_words)
         return lst_extraction_words  # devolve o list de palavras
 
     def ObterTop5DenseNet(self):
@@ -279,8 +273,6 @@ class Imagem(object):
                 else:
                     palavra = lst_palavra[0]
                 lst_dense_net_words.append(palavra)
-        print('palavras dense net')
-        print(lst_dense_net_words)
         return lst_dense_net_words  # devolve o list de palavras
 
     def GetImageSize(self):
@@ -295,12 +287,8 @@ class Imagem(object):
         self.centroY = int(self.height / 2)
 
     def OrganizarBoundingBoxes(self):
-        print("\n\n\n>>>>>>>>>>>>>>>>>>>>VAMO ORGANIZAR UMAS BOUNDING BOXES<<<<<<<<<<<<<<<<<<<\n\n\n")
         numero_repeticoes = len(self.list_boundingBox)  # pega o total de bounding box
         count = 0
-        for elemento in self.list_boundingBox:
-            print("\n\n\n>>bounding box organizar: ", elemento.objeto, "\n\n\n")
-
         indice_repeticao_bbox = 0
 
         while count < numero_repeticoes:

@@ -1,19 +1,16 @@
 # bibliotecas do python
 #from __future__ import print_function
-import threading
 import os
-import json
-import shutil
-from UTIL import utils
+from app.UTIL import utils
 
-from UTIL.crawler_bbc import Crawler
-from VC.imagem import Imagem
-from PLN.m_PLN import AplicadorPLN
-from VC.image_process import ThreadVC
-from PLN.text_process import ThreadPLN
-from PLN.word_embeddings import WordEmbeding
-from align_objects import AlignObjects
-from align_persons import AlignPersons
+from app.UTIL.crawler_bbc import Crawler
+from app.VC.imagem import Imagem
+from app.PLN import AplicadorPLN
+from app.VC.image_process import ThreadVC
+from app.PLN.text_process import ThreadPLN
+from app.PLN import WordEmbeding
+from app.align import AlignObjects
+from app.align.align_persons import AlignPersons
 
 
 import shutil
@@ -147,7 +144,7 @@ class AlignToolObjects:
             print("imagem copiada")
 
             self.directory = "noticias/" + self.titulo_diretorio  #nome do diretorio que será criado
-            utils.escrever_arquivo(self.noticia,"noticia_manual.txt")
+            utils.escrever_arquivo(self.noticia, "noticia_manual.txt")
             self.path_noticia = "noticia_manual.txt"  # path da noticia
             # if os.path.exists(self.directory):  # se a noticia ainda não foi coletada
             #             shutil.rmtree(self.directory)
