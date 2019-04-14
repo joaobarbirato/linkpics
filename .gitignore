@@ -1,11 +1,11 @@
-app/IA/face_recognition/boost_1_64_0/
-app/IA/classificadores
-app/IA/YOLO
-app/PLN/stanfordNER/
-app/PLN/TreeTagger*/
-app/TreeTagger_old/
-app/PLN/treetagger-python/
-app/noticia_atual/
+app/src/IA/face_recognition/boost_1_64_0/
+app/src/IA/classificadores
+app/src/IA/YOLO
+app/src/PLN/stanfordNER/
+app/src/PLN/TreeTagger*/
+app/src/TreeTagger_old/
+app/src/PLN/treetagger-python/
+app/src/noticia_atual/
 
 __pycache__
 *.png
@@ -27,15 +27,15 @@ visual_words.txt
 
 *.json
 *.weights
-static/noticias
+app/static/noticias
 
 *.tar.gz
-app/noticias_*/
+app/src/noticias_*/
 .idea/
 *venv/
 
-app/amr/*/
-app/amr/Data
-app/amr/stanford-*
-app/amr/glove/
+app/src/amr/*/
+app/src/amr/Data
+app/src/amr/stanford-*
+app/src/amr/glove/
 data/
