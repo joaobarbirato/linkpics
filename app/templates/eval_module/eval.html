@@ -1,0 +1,163 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Avaliação de alinhamentos</title>
+{% endblock %}
+
+{% block conteudo %}
+    <h1 class="custom-title">Avaliação</h1>
+    {% if batch_list %}
+        <!-- Modal -->
+        <div class="modal fade" id="modal-alignment" tabindex="-1" role="dialog" aria-labelledby="modal-alignmentTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-alignment-title">Modal title</h5>
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <h6 class="modal-title ml-3 mt-2" id="modal-alignment-subt">Modal subtitle</h6>
+                    <div class="modal-body text-justify" id="modal-alignment-text">
+                        ...
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {#  For each batch that hasn't been evaluated  #}
+        {% for batch in batch_list %}{% if not batch.was_eval() %}
+            <div class="row" role="tablist" aria-multiselectable="true" id="row_b{{ batch.id }}">
+                {#  For each evaluate model that hasn't been evaluated  #}
+                {% for eval in batch.eval %}{% if not eval.was_eval() %}
+                    <div class="card col col-12 p-0">
+                        <div class="card-header" role="tab" id="heading_{{ eval.id }}">
+                            <h5 class="mb-0">
+                                <a data-toggle="collapse" data-parent="#row_b{{ batch.id }}" href="#collapse_{{ eval.id }}" aria-expanded="true" aria-controls="collapse_{{ eval.id }}">
+                                    <b>Conjunto {{ batch.name }}#{{ batch.id }}</b> | Avaliação # {{ eval.id }}
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse_{{ eval.id }}" class="collapse" role="tabpanel" aria-labelledby="heading_{{ eval.id }}">
+                            <div class="row">
+                                <div class="col col-5 pl-4">
+                                    <img class="img-fluid rounded img-responsive my-2 ml-2" style="border: solid;" alt="image_{{ eval.eval_id }}_{{ batch.name }}"src="{{ eval.image.replace("app","") }}" />
+                                    <!-- Button trigger modal -->
+                                    <button type="button" class="btn btn-primary modal-btn-eval ml-2" data-toggle="modal" data-target="#modal-alignment" id="activate_modal_btn_{{ eval.id }}">
+                                        Ver texto
+                                    </button>
+                                    <div hidden class="hidden-news-text" id="news_for_activate_modal_btn_{{ eval.id }}">
+                                        <div id="text_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            {{ eval.text }}
+                                        </div>
+                                        <div id="title_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            {{ eval.title }}
+                                        </div>
+                                        <div id="subt_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            {{ eval.subt }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-block col col-7 p-2 pr-4">
+                                    <form id="form_b{{ batch.id }}_e{{ eval.id }}" action="{{ url_for('eval.eval_batch') }}" method="post">
+                                        <input type="hidden" name="csrf_token" id="csrf_b{{ batch.id }}_e{{ eval.id }}" value="{{ csrf_token() }}" />
+                                        <a href="{{ eval.link }}">{{ eval.link }}</a>
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="thead-inverse">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Formulários</th>
+                                            </tr>
+                                            </thead>
+                                            {% for pa in eval.alignments %}
+                                                <tr>
+                                                    <th scope="row">{{ pa.id }}</th>
+                                                    <td>
+                                                        <div class="row my-2">
+                                                            <div class="col col-5 pl-4">
+                                                                <div class="row pl-2">
+                                                                    <b style="color: rgb({{ pa.alignment.colors_model }})">{{ pa.alignment.term }}</b>
+                                                                </div>
+                                                                <div class="row pl-4 my-2">
+                                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}_y">
+                                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}_y" value="True">
+                                                                        Correto
+                                                                    </label>
+                                                                </div>
+                                                                <div class="row pl-4 my-2">
+                                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}">
+                                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_a{{ pa.id }}_n" value="False">
+                                                                        Incorreto
+                                                                    </label>
+                                                                </div>
+                                                                {% if pa.alignment.syns_model or pa.alignment.mwes_model %}
+                                                                    {% if pa.alignment.syns_model %}
+                                                                        <div class="row pl-2 my-2">
+                                                                            <button type="button" class="btn btn-secondary popover-syns" data-container="body"
+                                                                                    data-toggle="popover" data-placement="top" title="Sinônimos encontrados"
+                                                                                    data-content="<ul>{% for syn in pa.alignment.syns_model %}<li>{{ syn }}</li>{% endfor %}</ul>">
+                                                                                Sinônimos
+                                                                            </button>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                    {% if pa.alignment.mwes_model %}
+                                                                        <div class="row pl-2 my-2">
+                                                                            <button type="button" class="btn btn-secondary popover-mwes" data-container="body"
+                                                                                    data-toggle="popover" data-placement="bottom" title="Expr. multipalavras encontradas"
+                                                                                    data-content="<ul>{% for mwe in pa.alignment.mwes_model %}<li>{{ mwe }}</li>{% endfor %}</ul>">
+                                                                                MWEs
+                                                                            </button>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                    </div>
+                                                                    <div class="col col-7 pr-4">
+                                                                        {% if pa.alignment.mwes_model %}
+                                                                            As Expr. multipalavras ajudaram?
+                                                                            <div class="row my-2">
+                                                                                <select id="select_mwe_{{ pa.id }}" class="custom-select select-mwe eval-batch-select">
+                                                                                    <option value=""></option>
+                                                                                    <option value="Sim">Sim</option>
+                                                                                    <option value="Nao">Não</option>
+                                                                                    <option value="Ind">Indiferente</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                        {% if pa.alignment.syns_model %}
+                                                                            Os sinônimos ajudaram?
+                                                                            <div class="row my-2">
+                                                                                <select id="select_syn_{{ pa.id }}" class="custom-select select-syn eval-batch-select">
+                                                                                    <option value=""></option>
+                                                                                    <option value="Sim">Sim</option>
+                                                                                    <option value="Nao">Não</option>
+                                                                                    <option value="Ind">Indiferente</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}</table>
+                                        <button type="submit" id="submit_b{{ batch.id }}_e{{ eval.id }}" class="btn btn-primary submit-eval">Avaliar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}{% endfor %}
+            </div>
+        {% endif %}{% endfor %}
+    {% else %}
+        <div class="row">
+            <h4>Não há conjuntos pra avaliar</h4>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/eval.js') }}"></script>
+{% endblock %}

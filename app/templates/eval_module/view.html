@@ -1,0 +1,91 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Conjuntos Avaliados</title>
+{% endblock %}
+
+{% block conteudo %}
+    <h1 class="custom-title">Visualização</h1>
+    {% if em_list %}
+        <div class="accordion" id="accordion-evaluated">
+            <form id="evaluated_actions" method="post" action="{{ url_for('eval.export_eval') }}">
+                <input type="hidden" name="csrf_token" id="csrf_token_view" value="{{ csrf_token() }}" />
+                <div class="row d-table w-100 mb-3">
+                    <div class="col col-6 my-2 d-table-cell">
+                        <div class="ml-3">
+                        <input type="checkbox" id="check-all"/>
+                        <label id="label-check-all" for="check-all">Marcar todos</label>
+                        </div>
+                    </div>
+                    <div class="col col-4 d-table-cell">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="select-actions">Ações</label>
+                            </div>
+                            <select class="custom-select" name="select-actions" id="select-actions">
+                                <option value=""></option>
+                                <option value="csv">Exportar CSV</option>
+                                <option value="mtr">Métricas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col col-4 d-table-cell align-middle">
+                        <span class="align-middle">
+                            <button type="submit" class="btn btn-primary" id="btn-executar-acao">Executar Ação</button>
+                        </span>
+                    </div>
+                </div>
+                {% for em in em_list %}
+                    {% if em.was_eval() %}
+                        <div class="card">
+                            <div class="card-header" id="heading_eval_{{ em.id }}">
+                                <h2 class="mb-0">
+                                    <input class="checkbox" name="checkbox_e{{ em.id }}" id="checkbox_e{{ em.id }}" type="checkbox" aria-label="Marcar">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ em.id }}" aria-expanded="true" aria-controls="collapse_{{ em.id }}">
+                                        <b>Avaliação #{{ em.id }}</b>
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse_{{ em.id }}" class="collapse" aria-labelledby="heading_eval_{{ em.id }}" data-parent="#accordion-evaluated">
+                                <div class="card-block">
+{#                                    <img class="img-fluid card-img-top img-responsive" alt="image_{{ em.eval_id }}" src="{{ em.image.replace("app","") }}" />#}
+{#                                    <h4 class="card-title">Avaliação # {{ em.id }}</h4>#}
+                                    <table class="table table-hover table-bordered">
+                                        <thead>
+                                            <tr class="table-dark">
+                                                <th scope="col">#</th>
+                                                <th scope="col">Termo</th>
+                                                <th scope="col">MWEs</th>
+                                                <th scope="col">Sinônimos</th>
+                                                <th scope="col">Aprovação</th>
+                                                <th scope="col">Ajuda_MWEs</th>
+                                                <th scope="col">Ajuda_Sinônimos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for pa in em.alignments %}{% if pa.was_eval() %}
+                                            <tr>
+                                                <th scope="row">{{ pa.id }}</th>
+                                                <th style="color: rgb({{ pa.alignment.colors_model }})">{{ pa.label }}</th>
+                                                <th>{% if pa.alignment.mwes_model %}{% for mwe in pa.alignment.mwes_model %}{{ mwe }}, {% endfor %}{% else %}-{% endif %}</th>
+                                                <th>{% if pa.alignment.syns_model %}{% for syn in pa.alignment.syns_model %}{{ syn }}, {% endfor %}{% else %}-{% endif %}</th>
+                                                <th>{{ pa.approval }}</th>
+                                                <th>{% if pa.mwe_contrib == "" or not pa.mwe_contrib %}-{% else %}{{ pa.mwe_contrib }}{% endif %}</th>
+                                                <th>{% if pa.syn_contrib == "" or not pa.syn_contrib %}-{% else %}{{ pa.syn_contrib }}{% endif %}</th>
+                                            </tr>
+                                        {% endif %}{% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/view.js') }}"></script>
+{% endblock %}
