@@ -48,6 +48,7 @@
                             </div>
                             <div id="collapse_{{ em.id }}" class="collapse" aria-labelledby="heading_eval_{{ em.id }}" data-parent="#accordion-evaluated">
                                 <div class="card-block">
+                                {% if em.alignments %}
 {#                                    <img class="img-fluid card-img-top img-responsive" alt="image_{{ em.eval_id }}" src="{{ em.image.replace("app","") }}" />#}
 {#                                    <h4 class="card-title">Avaliação # {{ em.id }}</h4>#}
                                     <table class="table table-hover table-bordered">
@@ -76,6 +77,9 @@
                                         {% endif %}{% endfor %}
                                         </tbody>
                                     </table>
+                                {% else %}
+                                    <h4 class="text-center my-4">Alinhamentos não encontrados</h4>
+                                {% endif %}
                                 </div>
                             </div>
                         </div>

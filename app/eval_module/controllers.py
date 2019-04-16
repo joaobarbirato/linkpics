@@ -22,6 +22,7 @@ from app.eval_module.forms import LoginForm
 from app.eval_module.models import User, PredAlignment, EvalModel, Batch, get_all_batch, query_by_id, get_all_em
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
+from app.src.UTIL.metrics import precision, p_r_f_metrics
 from app.src.align.align_tool import AlignTool
 from config import STATIC_REL, BASE_DIR
 
@@ -238,19 +239,30 @@ def view():
 
 def _download_csv(eval_list):
     with open(file=STATIC_REL + 'avaliacao.csv', encoding='utf-8', mode='w+') as csv_file:
-        fields = ['Link', 'Termo', 'MWEs', 'Sinonimos', 'Aprovação', 'Ajuda_MWEs', 'Ajuda_Sinonimos']
+        fields = ['Link', 'Termo', 'MWEs', 'Sinônimos', 'Aprovação', 'Ajuda_MWEs', 'Ajuda_Sinonimos']
         writer = csv.DictWriter(csv_file, fieldnames=fields)
         writer.writeheader()
         for eval in eval_list:
-            for alignment in eval.alignments:
+            if eval.alignments:
+                for alignment in eval.alignments:
+                    writer.writerow({
+                        "Link": eval.link,
+                        "Termo": alignment.label,
+                        "MWEs": ', '.join(str(m) for m in alignment.alignment.mwes_model) if alignment.alignment.mwes_model else "-",
+                        "Sinônimos": ', '.join(str(s) for s in alignment.alignment.syns_model) if alignment.alignment.syns_model else "-",
+                        "Aprovação": alignment.approval,
+                        "Ajuda_MWEs": alignment.mwe_contrib if alignment.alignment.mwes_model else "-",
+                        "Ajuda_Sinonimos": alignment.syn_contrib
+                    })
+            else:
                 writer.writerow({
                     "Link": eval.link,
-                    "Termo": alignment.label,
-                    "MWEs": ', '.join(str(m) for m in alignment.alignment.mwes_model),
-                    "Sinonimos": ', '.join(str(s) for s in alignment.alignment.syns_model),
-                    "Aprovação": alignment.approval,
-                    "Ajuda_MWEs": alignment.mwe_contrib,
-                    "Ajuda_Sinonimos": alignment.syn_contrib
+                    "Termo": "-",
+                    "MWEs": "-",
+                    "Sinônimos": "-",
+                    "Aprovação": "-",
+                    "Ajuda_MWEs": "-",
+                    "Ajuda_Sinonimos": "-"
                 })
     return send_from_directory(BASE_DIR + "/" + STATIC_REL, 'avaliacao.csv', as_attachment=True)
     # return app.response_class(
@@ -264,24 +276,30 @@ def _download_metrics(eval_list):
     with open(file=STATIC_REL + 'metrics.csv', encoding='utf-8', mode='w+') as metrics_file:
         writer = csv.DictWriter(metrics_file, fieldnames=['Medida', 'Medição'])
         writer.writeheader()
-        corrects = 0
-        incorrects = 0
-        total = 0
+        correct = 0
+        incorrect = 0
+        non_aligned = 0
+        aligned = 0
         for e in eval_list:
-            total += len(e.alignments)
-            for a in e.alignments:
-                if a.approval:
-                    corrects += 1
-                else:
-                    incorrects += 1
-        precision = float(corrects)/(corrects+incorrects)
-        recall = float(corrects)/total
-        writer.writerow({'Medida': 'TOTAL DE ALINHAMENTOS', 'Medição': str(total)})
-        writer.writerow({'Medida': 'ALINHAMENTOS CORRETOS', 'Medição': str(corrects)})
-        writer.writerow({'Medida': 'ALINHAMENTOS INCORRETOS', 'Medição': str(incorrects)})
-        writer.writerow({'Medida': 'PRECISAO', 'Medição': str(precision*100)})
-        writer.writerow({'Medida': 'COBERTURA', 'Medição': str(recall*100)})
-        writer.writerow({'Medida': 'MEDIDA-F', 'Medição': str(2*precision*recall*100/(precision+recall))})
+            if e.alignments:
+                aligned += len(e.alignments)
+                for a in e.alignments:
+                    if a.approval:
+                        correct += 1
+                    else:
+                        incorrect += 1
+            else:
+                non_aligned += 1
+
+        p, r, f = p_r_f_metrics(correct=correct, incorrect=incorrect, total=aligned + non_aligned, as_percent=True)
+        writer.writerow({'Medida': 'TOTAL DE ALINHAMENTOS', 'Medição': str(aligned)})
+        writer.writerow({'Medida': 'NÃO ALINHADOS', 'Medição': str(non_aligned)})
+        writer.writerow({'Medida': 'ALINHAMENTOS CORRETOS', 'Medição': str(correct)})
+        writer.writerow({'Medida': 'ALINHAMENTOS INCORRETOS', 'Medição': str(incorrect)})
+
+        writer.writerow({'Medida': 'PRECISAO', 'Medição': str(p)})
+        writer.writerow({'Medida': 'COBERTURA', 'Medição': str(r)})
+        writer.writerow({'Medida': 'MEDIDA-F', 'Medição': str(f)})
     return send_from_directory(BASE_DIR + "/" + STATIC_REL, 'metrics.csv', as_attachment=True)
 
 
