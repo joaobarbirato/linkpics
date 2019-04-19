@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from nltk import sent_tokenize
 
 from app.src.UTIL.crawler import Crawler as crawler_folha
-from app.src.UTIL.crawler_bbc import Crawler as crawler_bbc
+from app.src.UTIL.crawler_bbc import Crawler as crawler_bbc, file_to_variavel
 
 from config import STATIC_REL
 

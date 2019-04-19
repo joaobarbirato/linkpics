@@ -1,10 +1,20 @@
-from bs4 import BeautifulSoup
-from urllib.request import urlopen
-import urllib
 import socket
-from .general import *
-from .domain import *
+import urllib
 import urllib.request as r
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
+
+from config import SRC_DIR
+from .general import *
+
+
+def file_to_variavel(file_name):
+    texto = ""
+    with open(file_name, 'rt') as f:
+        for line in f:
+            texto = texto + line.replace('\n', '')
+    return texto
 
 
 class Crawler(object):
@@ -13,17 +23,10 @@ class Crawler(object):
     socket.setdefaulttimeout(70)  # para evitar time out na página rastreada
     nome_arquivo = ""
 
-    def __init__(self, dir=''):
+    def __init__(self):
         self.noticia = ""
         self.tipo_crawler = ""
-        self.offset_dir = dir
-
-    def file_to_variavel(self, file_name):
-        texto = ""
-        with open(file_name, 'rt') as f:
-            for line in f:
-                texto = texto + line.replace('\n', '')
-        return texto
+        self.offset_dir = SRC_DIR
 
     def crawl_page(self, url):
         global nome_arquivo
