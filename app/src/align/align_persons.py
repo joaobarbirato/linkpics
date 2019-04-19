@@ -20,6 +20,8 @@ class AlignPersons:
         self.colors_bounding_box = colors_bounding_box
         self.align_group = align_group
         self.palette = palette
+        self.THR_GGL_IMG = 0.6
+        self.THR_DLIB = 0.55
 
     def align(self, person_choosed):
 
@@ -100,20 +102,10 @@ class AlignPersons:
         dic_json = {}
         bbox_pessoas = self._get_bounding_persons()
 
-        qtd_bbox_pessoas = len(bbox_pessoas)
-        qtd_pessoas_legenda = len(self.pessoas_legenda)
-        nomes_alinhamento = []
-
         img_original = None  # imagem original
 
-        if qtd_bbox_pessoas > 0:  # Se existirem pessoas para serem alinhadas
-            if qtd_pessoas_legenda > 0:  # Se não houver nomes na legenda
-                nomes_alinhamento = list(
-                    self.pessoas_legenda)  # copia para a lista oficial de nomes que serão alinhados
-
-            for nome in self.pessoas_texto:  # para cada nome do texto
-                if nome.palavra not in nomes_alinhamento:
-                    nomes_alinhamento.append(nome.palavra)  # adiciona o nome na lista
+        if len(self._get_bounding_persons()) > 0:  # Se existirem pessoas para serem alinhadas
+            nomes_alinhamento = self._cluster_names()
 
             nomes_dlib = utils.file_to_List(BASE_DIR + "/data/alinhador/database_names.txt")
 
@@ -125,26 +117,26 @@ class AlignPersons:
             # Varre a lista de nomes
 
             for nome in nomes_alinhamento:
-                print(nome)
-                nome = utils.removerAcentosECaracteresEspeciais(nome)
-                if nome in nomes_dlib:  # se o nome existir nos dados do DLIB
+                print("[ALIGN_PERSONS|NOME]: ", nome)
+                nome_sem_acento = utils.removerAcentosECaracteresEspeciais(nome)
+                if nome_sem_acento in nomes_dlib:  # se o nome existir nos dados do DLIB
                     img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
                     for bBox in bbox_pessoas:  # para cada bounding box
                         new_sample = img_original.copy()
                         crop = new_sample[bBox.top:bBox.bot, bBox.left:bBox.right]
                         cv2.imwrite("bBoxImage.jpg", crop)
-                        distancia = face_recognition.comparar_pessoas("bBoxImage.jpg", nome)
+                        distancia = face_recognition.comparar_pessoas("bBoxImage.jpg", nome_sem_acento)
                         if isinstance(distancia, int) or isinstance(distancia, float):
 
-                            if distancia < 0.55:  # a face da Bbox corresponde com alguma imagem do nome no dlib
+                            if distancia < self.THR_DLIB and self._add_alignment(ne=nome, bbx=bBox):  # a face da Bbox corresponde com alguma imagem do nome no dlib
                                 names_to_remove.append(nome)
                                 dic_alinhamento[nome] = bBox  # grava o crop da imagem no dicionario
                                 bBox.label = nome  # grava o nome na bBox
-                                DIR_pessoa = BASE_DIR + "/data/alinhador/faceDB/lfw/" + nome.replace(" ", "_") + "/"
+                                DIR_pessoa = BASE_DIR + "/data/alinhador/faceDB/lfw/" + nome_sem_acento.replace(" ", "_") + "/"
                                 qtd_imagens = len([i for i in os.listdir(DIR_pessoa)]) + 1
                                 # envia a crop da imagem para a pasta do dlib correspondente
                                 os.rename("bBoxImage.jpg",
-                                          DIR_pessoa + nome.replace(" ", "_") + "_" + str(qtd_imagens) + ".jpg")
+                                          DIR_pessoa + nome_sem_acento.replace(" ", "_") + "_" + str(qtd_imagens) + ".jpg")
                                 removed_Bbox = bBox
                                 names_to_remove.append(nome)
                                 break  # vai para o proximo nome
@@ -153,28 +145,29 @@ class AlignPersons:
                         bbox_pessoas.remove(removed_Bbox)  # remove das Bbox uma face já alinhada
                 else:
                     # busca as imagens da pessoa no google imagens
-                    folder_g_image = g_image.get_images(nome)
-                    print("CRIOU NOME: " + nome)
+                    folder_g_image = g_image.get_images(nome_sem_acento)
+                    print("CRIOU NOME: " + nome_sem_acento)
                     img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
                     face_recognition.criar_db_g_images(folder_g_image)
                     for bBox in bbox_pessoas:  # para cada bounding box
                         new_sample = img_original.copy()
                         crop = new_sample[bBox.top:bBox.bot, bBox.left:bBox.right]  # corta a Bbox
                         cv2.imwrite("bBoxImage.jpg", crop)  # cria a imagem da Bbox
-                        distancia = face_recognition.comparar_pessoas_google_imagens("bBoxImage.jpg", nome)
+                        distancia = face_recognition.comparar_pessoas_google_imagens("bBoxImage.jpg", nome_sem_acento)
                         if isinstance(distancia, int) or isinstance(distancia, float):
 
-                            if distancia < 0.6:  # a face da Bbox corresponde com alguma imagem do google imagens
+                            if distancia < self.THR_GGL_IMG and self._add_alignment(ne=nome, bbx=bBox):
+                                # a face da Bbox  corresponde com alguma imagem do google imagens
                                 names_to_remove.append(nome)
                                 dic_alinhamento[nome] = bBox  # grava o crop da imagem no dicionario
-                                bBox.label = nome  # grava o nome na bBox
-                                DIR_pessoa = BASE_DIR + "/data/alinhador/faceDB/lfw/" + nome.replace(" ", "_") + "/"
+                                # bBox.label = nome  # grava o nome na bBox
+                                DIR_pessoa = BASE_DIR + "/data/alinhador/faceDB/lfw/" + nome_sem_acento.replace(" ", "_") + "/"
                                 if not os.path.exists(DIR_pessoa):
                                     os.makedirs(DIR_pessoa)
                                 qtd_imagens = len([i for i in os.listdir(DIR_pessoa)]) + 1
                                 # envia a crop da imagem para a pasta do dlib correspondente
                                 os.rename("bBoxImage.jpg",
-                                          DIR_pessoa + nome.replace(" ", "_") + "_" + str(qtd_imagens) + ".jpg")
+                                          DIR_pessoa + nome_sem_acento.replace(" ", "_") + "_" + str(qtd_imagens) + ".jpg")
                                 nomes_dlib.append(nome)
                                 utils.escrever_arquivo_from_list(nomes_dlib, BASE_DIR + "/data/alinhador/database_names.txt")
                                 removed_Bbox = bBox
@@ -199,10 +192,30 @@ class AlignPersons:
                               self.palette.next_color(type="bb", inc=True), 2)
                 self.index_cor_bounding_box += 1
 
-                alignment = models.Alignment(term=entidade, bounding_box=value, is_ne=True)
-                self.align_group.add_alignments(alignment=alignment)
+
 
             cv2.imwrite(STATIC_REL + "/" + "alinhamento2.jpg", img_original)
             path_arquivo = self.path_noticia + "alinhamento_pessoas.txt"
             utils.escrever_arquivo(texto, path_arquivo)
             return dic_json
+
+    def _add_alignment(self, ne="", bbx=None):
+        if ne and bbx is not None:
+            if not self.align_group.has_alignment(term=ne):
+                bbx.label = ne
+                alignment = models.Alignment(term=ne, bounding_box=bbx, is_ne=True)
+                self.align_group.add_alignments(alignment=alignment)
+                return True
+
+        return False
+
+    def _cluster_names(self):
+        nomes_alinhamento = list(set(self.pessoas_legenda).union(set([en.palavra for en in self.pessoas_texto])))
+        for na_1 in nomes_alinhamento:
+            for na_2 in nomes_alinhamento:
+                if na_2 != na_1:
+                    if na_2 != na_1 and na_2 in na_1 or na_2 == utils.removerAcentosECaracteresEspeciais(na_1):
+                        nomes_alinhamento.remove(na_2)
+                        break
+
+        return nomes_alinhamento

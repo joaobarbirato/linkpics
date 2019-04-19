@@ -156,7 +156,7 @@ class AlignTool:
         if encontrou_img == 1 and os.path.exists(self.nome_arquivo):  # se achou imagem na notícia
             if self.titulo_noticia != "":  # se a noticia existe em ingles
                 # le o arquivo e guarda na variavel
-                self.noticia = self.crawler.file_to_variavel(self.nome_arquivo)
+                self.noticia = file_to_variavel(self.nome_arquivo)
                 self.noticia = self.noticia.replace(".", ". ")
                 self.noticia = self.noticia.replace(". . . ", "... ")
                 self.noticia = self.noticia.replace(",", ", ")
@@ -177,7 +177,7 @@ class AlignTool:
 
                 # grava  a legenda da imagem--noticias/nomenoticia/caption.txt
                 if os.path.exists(self.nome_arquivo + "_caption.txt"):
-                    self.legenda = self.crawler.file_to_variavel(self.nome_arquivo + "_caption.txt")
+                    self.legenda = file_to_variavel(self.nome_arquivo + "_caption.txt")
                     self.legenda = self.legenda.replace("\n", "")
                     self.legenda = self.legenda.replace(".", ". ")
                     self.legenda = self.legenda.replace(". . . ", "... ")
@@ -296,13 +296,13 @@ class AlignTool:
     @staticmethod
     def _word_to_wordpoint(palavra):
         return [
-            palavra + ".", palavra + "?", palavra + "!", palavra + ";",
+            palavra + ".", palavra + "?", palavra + "!", palavra + ";", palavra + "'",
             palavra.title() + ".", palavra.title() + " ", palavra.title() + "?", palavra.title() + "!",
-            palavra.title() + ";", palavra.title() + ",",
+            palavra.title() + ";", palavra.title() + ",", palavra.title() + "'",
             palavra.lower() + " ", palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!",
-            palavra.lower() + ";", palavra.lower() + ",",
+            palavra.lower() + ";", palavra.lower() + ",", palavra.lower() + "'",
             palavra.upper() + " ", palavra.upper() + ".", palavra.upper() + "?", palavra.upper() + "!",
-            palavra.upper() + ";", palavra.upper() + ",",
+            palavra.upper() + ";", palavra.upper() + ",", palavra.upper() + "'"
         ]
 
     def _paint_text(self, p, alinhamento=None):
@@ -351,7 +351,7 @@ class AlignTool:
         self.lst_legenda = aplicador_pln.entidades_legenda()
 
         self.lst_top_nomeadas_texto = aplicador_pln.get_list_top_entidades_nomeadas()
-        print("Pessoas no texto:" + str(len(self.lst_top_nomeadas_texto)))
+        print("Pessoas no texto:",  [ne.palavra for ne in self.lst_top_nomeadas_texto])#str(len(self.lst_top_nomeadas_texto)))
         self.dict_lematizado = aplicador_pln.get_dict_lematizado()
         self.list_boundingBoxOrganizada = imagem.list_boundingBoxOrganizada
         self.lst_top_substantivos_objects = aplicador_pln.lst_top_substantivos_objects

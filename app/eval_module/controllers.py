@@ -147,8 +147,9 @@ def align_batch():
                 pa_list.append(_aem)
 
             em = EvalModel(image=img_url, link=_link, text=texto, title=titulo, subtitle=legenda)
-            em.add_aems(pa_list)
-            em_list.append(em)
+            if pa_list:
+                em.add_aems(pa_list)
+                em_list.append(em)
             response[str(increment)] = {"eval": dic_avaliacao, "img_url": img_url}
             increment += 1
             # except Exception as e:
@@ -278,7 +279,6 @@ def _download_metrics(eval_list):
         writer.writeheader()
         correct = 0
         incorrect = 0
-        non_aligned = 0
         aligned = 0
         for e in eval_list:
             if e.alignments:
@@ -288,12 +288,9 @@ def _download_metrics(eval_list):
                         correct += 1
                     else:
                         incorrect += 1
-            else:
-                non_aligned += 1
 
-        p, r, f = p_r_f_metrics(correct=correct, incorrect=incorrect, total=aligned + non_aligned, as_percent=True)
+        p, r, f = p_r_f_metrics(correct=correct, incorrect=incorrect, total=aligned, as_percent=True)
         writer.writerow({'Medida': 'TOTAL DE ALINHAMENTOS', 'Medição': str(aligned)})
-        writer.writerow({'Medida': 'NÃO ALINHADOS', 'Medição': str(non_aligned)})
         writer.writerow({'Medida': 'ALINHAMENTOS CORRETOS', 'Medição': str(correct)})
         writer.writerow({'Medida': 'ALINHAMENTOS INCORRETOS', 'Medição': str(incorrect)})
 
