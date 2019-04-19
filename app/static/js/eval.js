@@ -1,23 +1,39 @@
 optionsSelected = $('.eval-batch-select option:selected');
 allRadios = $(':radio');
-var activate_modal_button;
+// var activate_modal_button;
 $(document).ready(function () {
-    $('#modal-alignment').on('show.bs.modal', function (e) {
-        console.log("iae");
-        news_title = $('#title_for_news_for_'+activate_modal_button.attr("id"));
-        news_subtitle = $('#subt_for_news_for_'+activate_modal_button.attr("id"));
-        news_text = $('#text_for_news_for_'+activate_modal_button.attr("id"));
+    $('.modal-btn-eval').each(function (index, item) {
+        $object = $("#news_for_" + $(item).attr("id"));
+        $object.toggle();
+        if ($object.is(":visible")){
+            $(item).text("Esconder texto")
+        }else {
+            $(item).text("Exibir texto")
+        }
+    });
 
-        $('#modal-alignment-title').html(news_title.text());
-        $('#modal-alignment-subt').html(news_subtitle.text());
-        $('#modal-alignment-text').html(news_text.text());
+    function flaskTextToHTML (index, item) {
+        $(item).html($(item).text());
+    }
+    $('.flask-text h4').each(function (index, item) {
+        flaskTextToHTML(index, item)
+    });
+    $('.flask-text h5').each(function (index, item) {
+        flaskTextToHTML(index, item)
+    });
+    $('.flask-text p').each(function (index, item) {
+        flaskTextToHTML(index, item)
     });
 });
 $('.modal-btn-eval').each(function (index, item) {
     $(item).click(function(){
-        activate_modal_button = $(item);
-        $('#modal-alignment').modal('toggle');
-
+        $object = $("#news_for_" + $(item).attr("id"));
+        $object.toggle();
+        if ($object.is(":visible")){
+            $(item).text("Esconder texto")
+        }else {
+            $(item).text("Exibir texto")
+        }
     });
 });
 

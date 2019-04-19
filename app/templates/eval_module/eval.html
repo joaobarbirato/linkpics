@@ -46,18 +46,19 @@
                                 <div class="col col-5 pl-4">
                                     <img class="img-fluid rounded img-responsive my-2 ml-2" style="border: solid;" alt="image_{{ eval.eval_id }}_{{ batch.name }}"src="{{ eval.image.replace("app","") }}" />
                                     <!-- Button trigger modal -->
-                                    <button type="button" class="btn btn-primary modal-btn-eval ml-2" data-toggle="modal" data-target="#modal-alignment" id="activate_modal_btn_{{ eval.id }}">
-                                        Ver texto
+                                    <button type="button" class="btn btn-primary modal-btn-eval ml-2 mb-2" id="activate_modal_btn_{{ eval.id }}">
+                                        Exibir texto
                                     </button>
-                                    <div hidden class="hidden-news-text" id="news_for_activate_modal_btn_{{ eval.id }}">
-                                        <div id="text_for_news_for_activate_modal_btn_{{ eval.id }}">
-                                            {{ eval.text }}
+                                    <div class="hidden-news-text border border-primary m-2 p-2" id="news_for_activate_modal_btn_{{ eval.id }}">
+                                        <div class="flask-text" id="title_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <h4 class="font-weight-bold">{{ eval.title }}</h4>
                                         </div>
-                                        <div id="title_for_news_for_activate_modal_btn_{{ eval.id }}">
-                                            {{ eval.title }}
+                                        <div class="flask-text" id="subt_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <h5 class="text-secondary">{{ eval.subt }}</h5>
                                         </div>
-                                        <div id="subt_for_news_for_activate_modal_btn_{{ eval.id }}">
-                                            {{ eval.subt }}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="flask-text" id="text_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <p class="text-justify">{{ eval.text }}</p>
                                         </div>
                                     </div>
                                 </div>
