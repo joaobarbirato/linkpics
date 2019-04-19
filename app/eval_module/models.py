@@ -144,6 +144,9 @@ class EvalModel(Base):
             self.alignments.extend(aems)
             db.session.add(self)
 
+    def has_aems(self):
+        return self.alignments != []
+
     def was_eval(self):
         for aem in self.alignments:
             if not aem.was_eval():

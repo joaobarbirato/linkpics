@@ -36,7 +36,7 @@
                     </div>
                 </div>
                 {% for em in em_list %}
-                    {% if em.was_eval() %}
+                    {% if em.was_eval() and em.has_aems() %}
                         <div class="card">
                             <div class="card-header" id="heading_eval_{{ em.id }}">
                                 <h2 class="mb-0">
