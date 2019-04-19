@@ -30,7 +30,7 @@
         </div>
         {#  For each batch that hasn't been evaluated  #}
         {% for batch in batch_list %}{% if not batch.was_eval() %}
-            <div class="row" role="tablist" aria-multiselectable="true" id="row_b{{ batch.id }}">
+            <div class="row" role="tablist" aria-multiselectable="false" id="row_b{{ batch.id }}">
                 {#  For each evaluate model that hasn't been evaluated  #}
                 {% for eval in batch.eval %}{% if not eval.was_eval() %}
                     <div class="card col col-12 p-0">

@@ -249,7 +249,8 @@ class AlignmentGroup:
     def _query_term(self, x):
         return [algn for algn in self.list_alignments if
                 algn.term == x or algn.is_syn(x) or (algn.is_ne and x in algn.term) or
-                (not algn.is_ne and x.replace(" ", "") == algn.term)]
+                (not algn.is_ne and x.replace(" ", "") == algn.term) or
+                (algn.is_ne and algn.term in x)]
 
     def add_alignments(self, alignment=None):
         if alignment is not None:
