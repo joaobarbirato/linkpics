@@ -46,6 +46,9 @@ class ColorPalette:
     def inc_index(self):
         self.index += 1
 
+    def set_index(self, new_index):
+        self.index = new_index
+
     def next_color(self, type="html", inc=False):
         if self.index > len(self.colors_html) - 1:
             # create random different color
@@ -310,9 +313,11 @@ class AlignTool:
 
         _open_tag = ' <b style="color:rgb(' + str(alinhamento.get_color()) + ');">'
         _close_tag = '</b>'
-        self.noticia = self.noticia.replace(' ' + p, _open_tag + p + _close_tag)
-        self.legenda = self.legenda.replace(' ' + p, _open_tag + p + _close_tag)
-        self.titulo_noticia = self.titulo_noticia.replace(' ' + p, _open_tag + p + _close_tag)
+        _pre_char_list = ['(', ' ']
+        for pre_char in _pre_char_list:
+            self.noticia = self.noticia.replace(pre_char + p, _open_tag + p + _close_tag)
+            self.legenda = self.legenda.replace(pre_char + p, _open_tag + p + _close_tag)
+            self.titulo_noticia = self.titulo_noticia.replace(' ' + p, _open_tag + p + _close_tag)
 
     def _process_text_image(self):
         # cria uma instancia da classe Imagem, passando o path da imagem
@@ -384,7 +389,7 @@ class AlignTool:
             persons_aligned = {}
 
         # O indice das cores continua de onde parou o indice realizado no alinhamento de pessoas.
-        self.index_cor_bounding_box = len(persons_aligned.keys())
+        self.palette.set_index(new_index=len(persons_aligned.keys()))
 
         print("INDEX -- " + str(self.index_cor_bounding_box))
         print(self.colors_bounding_box[2])
