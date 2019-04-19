@@ -3,6 +3,7 @@ DEBUG = True
 
 # Define the application directory
 import os
+from secrets import token_urlsafe
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 SRC_DIR = 'app/src/'
@@ -25,7 +26,7 @@ CSRF_ENABLED = True
 
 # Use a secure, unique and absolutely secret key for
 # signing the data.
-CSRF_SESSION_KEY = "secret"
+CSRF_SESSION_KEY = token_urlsafe(16)
 
 # Secret key for signing cookies
 SECRET_KEY = os.urandom(12)
