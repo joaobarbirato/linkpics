@@ -9,12 +9,7 @@ from config import SRC_DIR
 from .general import *
 
 
-def file_to_variavel(file_name):
-    texto = ""
-    with open(file_name, 'rt') as f:
-        for line in f:
-            texto = texto + line.replace('\n', '')
-    return texto
+
 
 
 class Crawler(object):
@@ -27,6 +22,13 @@ class Crawler(object):
         self.noticia = ""
         self.tipo_crawler = ""
         self.offset_dir = SRC_DIR
+
+    def file_to_variavel(self, file_name):
+        texto = ""
+        with open(file_name, 'rt') as f:
+            for line in f:
+                texto = texto + line.replace('\n', '')
+        return texto
 
     def crawl_page(self, url):
         global nome_arquivo

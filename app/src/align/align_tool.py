@@ -4,7 +4,7 @@ import os
 import random
 import shutil
 
-from app.align_module import models
+from app.align_module.models import AlignmentGroup
 from app.src.PLN.get_syns import get_syns
 from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma, has_mwe, belongs_to_mwe)
 from app.src.PLN.text_process import ThreadPLN
@@ -12,7 +12,6 @@ from app.src.PLN.word_embeddings import WordEmbeding
 from app.src.UTIL import utils
 from app.src.VC.image_process import ThreadVC
 from app.src.VC.imagem import Imagem
-from app.align_module.models import AlignmentGroup, Alignment
 from app.src.align.align_objects import AlignObjects
 from app.src.align.align_persons import AlignPersons
 from config import STATIC_REL, SRC_DIR
@@ -35,7 +34,6 @@ class ColorPalette:
                             (255, 255, 0),
                             (0, 0, 0),
                             (255, 165, 0),
-                            (255, 0, 0),
                             (0, 191, 255),
                             (144, 238, 144)]
         self.index = 0
@@ -44,7 +42,9 @@ class ColorPalette:
         return self.colors_html[self.index] if type == "html" else self.colors_bounding_box[self.index]
 
     def inc_index(self):
+        print("[INC_INDEX]index agora:", self.index)
         self.index += 1
+        print("[INC_INDEX]index depois:", self.index)
 
     def set_index(self, new_index):
         self.index = new_index
@@ -156,7 +156,7 @@ class AlignTool:
         if encontrou_img == 1 and os.path.exists(self.nome_arquivo):  # se achou imagem na notícia
             if self.titulo_noticia != "":  # se a noticia existe em ingles
                 # le o arquivo e guarda na variavel
-                self.noticia = file_to_variavel(self.nome_arquivo)
+                self.noticia = self.crawler.file_to_variavel(self.nome_arquivo)
                 self.noticia = self.noticia.replace(".", ". ")
                 self.noticia = self.noticia.replace(". . . ", "... ")
                 self.noticia = self.noticia.replace(",", ", ")
@@ -177,7 +177,7 @@ class AlignTool:
 
                 # grava  a legenda da imagem--noticias/nomenoticia/caption.txt
                 if os.path.exists(self.nome_arquivo + "_caption.txt"):
-                    self.legenda = file_to_variavel(self.nome_arquivo + "_caption.txt")
+                    self.legenda = self.crawler.file_to_variavel(self.nome_arquivo + "_caption.txt")
                     self.legenda = self.legenda.replace("\n", "")
                     self.legenda = self.legenda.replace(".", ". ")
                     self.legenda = self.legenda.replace(". . . ", "... ")
@@ -317,7 +317,7 @@ class AlignTool:
         for pre_char in _pre_char_list:
             self.noticia = self.noticia.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
             self.legenda = self.legenda.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
-            self.titulo_noticia = self.titulo_noticia.replace(' ' + p, _open_tag + p + _close_tag)
+            self.titulo_noticia = self.titulo_noticia.replace(pre_char + p, _open_tag + p + _close_tag)
 
     def _process_text_image(self):
         # cria uma instancia da classe Imagem, passando o path da imagem
@@ -389,7 +389,7 @@ class AlignTool:
             persons_aligned = {}
 
         # O indice das cores continua de onde parou o indice realizado no alinhamento de pessoas.
-        self.palette.set_index(new_index=len(persons_aligned.keys()))
+        # self.palette.set_index(new_index=len(persons_aligned.keys()))
 
         print("INDEX -- " + str(self.index_cor_bounding_box))
         print(self.colors_bounding_box[2])
