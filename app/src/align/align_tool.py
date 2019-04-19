@@ -311,12 +311,12 @@ class AlignTool:
             print("\tPAINTING TEXT FOR ", p, " WITH ", color)
             alinhamento.add_color(color)
 
-        _open_tag = ' <b style="color:rgb(' + str(alinhamento.get_color()) + ');">'
+        _open_tag = '<b style="color:rgb(' + str(alinhamento.get_color()) + ');">'
         _close_tag = '</b>'
         _pre_char_list = ['(', ' ']
         for pre_char in _pre_char_list:
-            self.noticia = self.noticia.replace(pre_char + p, _open_tag + p + _close_tag)
-            self.legenda = self.legenda.replace(pre_char + p, _open_tag + p + _close_tag)
+            self.noticia = self.noticia.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
+            self.legenda = self.legenda.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
             self.titulo_noticia = self.titulo_noticia.replace(' ' + p, _open_tag + p + _close_tag)
 
     def _process_text_image(self):
