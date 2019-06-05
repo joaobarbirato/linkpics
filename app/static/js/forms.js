@@ -101,13 +101,17 @@ function successFunction(response){
     let descricoes = response["descricoes"];
     console.log(descricoes);
     card_img_gdi = $('#card-img-gdi');
+    let html_para_inserir;
     if (typeof descricoes !== 'undefined' && descricoes.length > 0) { // se existem descricoes
-        card_img_gdi.append("<h4 class=\"card-title\">Descrições geradas</h4><ul>");
-        for (var descr in descricoes){
-            card_img_gdi.append("<li>" + descricoes[descr] + "</li>")
+        html_para_inserir = "";
+        html_para_inserir += "<h4 class=\"card-title\">Descrições geradas</h4><ul>\n";
+        for (var descr in descricoes) {
+            html_para_inserir += "\t<li>" + descricoes[descr] + "</li>"
         }
-        card_img_gdi.append("</ul>")
-    }else{
+        html_para_inserir += "\n</ul>";
+        console.log(html_para_inserir)
+        card_img_gdi.append(html_para_inserir)
+    } else {
         card_img_gdi.append("<h4 class=\"card-title\">Sem descrições geradas</h4><ul>");
     }
 
