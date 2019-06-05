@@ -124,12 +124,14 @@ class EvalModel(Base):
     subt = db.Column(db.String, nullable=False, default='Subtitle')
     alignments = db.relationship('PredAlignment', backref='eval', cascade="all, delete-orphan", lazy=True)
     batch_id = db.Column(db.Integer, db.ForeignKey('batch.id'), nullable=False)
+    restrictions = db.Column(db.String, nullable=False, default="")
 
-    def __init__(self, image, link, text, title, subtitle):
+    def __init__(self, image, link, text, title, subtitle, restrictions):
         self.link = link
         self.text = text
         self.title = title
         self.subt = subtitle
+        self.restrictions = restrictions
         if os.path.exists(image):
             self.image = image
 

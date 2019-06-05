@@ -1,4 +1,4 @@
-optionsSelected = $('.eval-batch-select option:selected');
+// optionsSelected = $('.eval-batch-select option:selected');
 allRadios = $(':radio');
 // var activate_modal_button;
 $(document).ready(function () {
@@ -54,26 +54,14 @@ $('.submit-eval').each(function (index, item) {
 function radiosAreChecked(form) {
     const selector_checked = '#' + $(form).attr("id") + " :radio:checked";
     const selector_all = '#' + $(form).attr("id") + " :radio";
+    console.log($(selector_checked).length);
+    console.log($(selector_all).length);
     return ($(selector_checked).length === $(selector_all).length / 2);
 }
 
-function selectsHaveValue(form) {
-    returnVal = true;
-    const selector = '#' + $(form).attr("id") + ' .eval-batch-select option:selected';
-    $(selector).each( function (index, item) {
-        if ($(item).val() === ""){
-            returnVal = false;
-        }
-    });
-    return returnVal;
-}
-
 function submitFunction (form, item) {
-    if(radiosAreChecked(form) && selectsHaveValue(form)){
+    if(radiosAreChecked(form)){
         var data = new FormData(form[0]);
-        optionsSelected.each(function (index, item) {
-            data.append($(item).parents("select").attr("id"), $(item).val());
-        });
         $.ajax({
             url: form.attr("action"),
             data: data,
@@ -82,17 +70,19 @@ function submitFunction (form, item) {
             contentType: false,
             success: function(response){
                 $(item).prop("disabled", true);
-                alert($(form).attr("id") + " success!");
+                alert($(form).attr("id") + " avaliado com sucesso!");
                 card = $(form).parents(".card");
                 $(card).remove();
-                console.log($(form).attr("id") + " success!");
-                console.log(response)
+                console.log($(form).attr("id") + " avaliado com sucesso!");
+                console.log(response);
             },
             error: function(response){
-                alert(form.attr("id") + " failed D:");
-                console.log(form.attr("id") + " failed D:");
-                console.log(response)
+                alert(form.attr("id") + " falhou D:");
+                console.log(form.attr("id") + " falhou D:");
+                console.log(response);
             }
         });
+    } else {
+        alert("É preciso assinalar todos os campos!");
     }
 }

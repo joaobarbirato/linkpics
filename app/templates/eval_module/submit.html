@@ -25,6 +25,26 @@
                 <div class="form-group">
                     <input type="hidden" name="csrf_token" id="align-batch-csrf" value="{{ csrf_token() }}" />
                     <div class="row">
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_all" value="all" checked>
+                                Objetos e Entidades Nomeadas
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_ne" value="ne">
+                                Apenas entidades nomeadas
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_obj" value="obj">
+                                Apenas objetos
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col col-12">
                             <label for="name-batch">Nome do conjunto</label>
                             <input class="form-control" type="text" name="batch_name" id="batch_name" placeholder="Nome do batch" />
