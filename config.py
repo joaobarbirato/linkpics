@@ -5,6 +5,10 @@ DEBUG = True
 import os
 from secrets import token_urlsafe
 
+# Thresholds
+WUP_THR = 0.82
+WUP_SYN_THR = 0.63
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 SRC_DIR = 'app/src/'
 STATIC_REL = 'app/static/'
