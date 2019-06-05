@@ -6,7 +6,7 @@ import shutil
 
 from app.align_module.models import AlignmentGroup
 from app.src.PLN.get_syns import get_syns
-from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma, has_mwe, belongs_to_mwe)
+from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma)
 from app.src.PLN.text_process import ThreadPLN
 from app.src.PLN.word_embeddings import WordEmbeding
 from app.src.UTIL import utils
@@ -131,7 +131,10 @@ class AlignTool:
             self.group = None
             self.palette = ColorPalette()
 
-    def _remover_caracteres_especiais(self, titulo_noticia):
+            self.aplicador_pln = None
+
+    @staticmethod
+    def _remover_caracteres_especiais(titulo_noticia):
         """Remove caracteres estranhos das noticias"""
         titulo_noticia = titulo_noticia.replace('"', "")
         titulo_noticia = titulo_noticia.replace(",", "")
@@ -140,14 +143,15 @@ class AlignTool:
         titulo_noticia = titulo_noticia.replace("$", "")
         return titulo_noticia
 
-    def _limpar_arquivos(self, noticia, imagem):
+    @staticmethod
+    def _limpar_arquivos(noticia, imagem):
         os.remove(noticia)
         os.remove(SRC_DIR + "noticia_atual/img_original.jpg")
         os.remove(SRC_DIR + "noticia_atual/noticia.txt")
         os.remove(SRC_DIR + "noticia_atual/titulo.txt")
 
     def _text_contains(self, substring=None):
-        return self.titulo_noticia.find(substring) >= 0 or self.noticia.find(substring) >= 0 or self.legenda.find(substring)
+        return substring in self.titulo_noticia or substring in self.noticia or substring in self.legenda
 
     def _get_resources(self, url):
         # rastreia a página
@@ -189,7 +193,7 @@ class AlignTool:
                     self.path_legenda = ""
 
                 self.path_imagem = self.nome_arquivo + ".jpg"  # caminho da imagem original
-                shutil.copy2(self.path_imagem, STATIC_REL + '/alinhamento2.jpg')
+                shutil.copy2(self.path_imagem, STATIC_REL + 'alinhamento2.jpg')
                 print("imagem copiada")
 
                 self.path_titulo = SRC_DIR + "noticia_atual/titulo.txt"  # caminho do título
@@ -228,7 +232,7 @@ class AlignTool:
         # grava no txt o titulo - noticias/nomenoticia/titulo.txt
         utils.escrever_arquivo(self.titulo_noticia, SRC_DIR + "noticia_atual/titulo.txt")
 
-        shutil.copy2(self.path_imagem, STATIC_REL + '/alinhamento2.jpg')
+        shutil.copy2(self.path_imagem, STATIC_REL + 'alinhamento2.jpg')
         print("imagem copiada")
 
         self.directory = SRC_DIR + "noticias/" + self.titulo_diretorio  # nome do diretorio que será criado
@@ -261,13 +265,17 @@ class AlignTool:
                 palavra = get_word_from_lemma(lemma=key.split("#")[0])
                 index = 0 if len(key.split("#")) == 1 else key.split("#")[1]
                 alinhamento = self.group.get_alignment(term=key.split("#")[0], index=int(index))
-                lst_mwe = belongs_to_mwe(word=palavra)
+                lst_mwe = self.aplicador_pln.chunker.get_mwes_from_aligned(word=key.split("#")[0])
 
-                if has_mwe() and lst_mwe is not False:
+                if self.aplicador_pln.chunker.has_mwe() and lst_mwe is not False:
                     for mwe in lst_mwe:
-                        if self._text_contains(mwe):  # a detecção de MWEs ignora pontuação no texto
-                            alinhamento.add_mwe(mwe=mwe)
-                            self._paint_text(mwe, alinhamento)
+                        mwe_with_separators = self._mwe_with_separators(mwe)
+                        for mwe_w_s in mwe_with_separators:
+                            print("[_SHOW_ALIGN_TEXT | if has_mwe: for mwe in lst_mwe | mwe_w_s]: ", mwe)
+                            if self._text_contains(mwe_w_s):  # a detecção de MWEs ignora pontuação no texto
+                                print("\t[_SHOW_ALIGN_TEXT | if has_mwe: for mwe in lst_mwe | contains]: True")
+                                alinhamento.add_mwe(mwe=mwe_w_s)
+                                self._paint_text(mwe_w_s, alinhamento)
 
                 palavras = self._word_to_wordpoint(palavra)
                 for p in palavras:
@@ -275,17 +283,19 @@ class AlignTool:
                         self._paint_text(p, alinhamento)
 
                 # n:1
-                palavra_syns = get_syns(palavra)
+                palavra_syns = get_syns(key.split("#")[0])
                 if palavra_syns is not None:
                     for ps in palavra_syns:
+                        print("[_SHOW_ALIGN_TEXT | ps]: ", ps)
                         palavras_syns_points = self._word_to_wordpoint(
                             ps if get_word_from_lemma(ps) is None else get_word_from_lemma(ps)
                         )
                         for p in palavras_syns_points:
+                            print("\t[_SHOW_ALIGN_TEXT | syn]: ", p)
                             if self._text_contains(p):
+                                print("\t[_SHOW_ALIGN_TEXT | if self.contains(syn):syn]: ", p)
                                 self._paint_text(p, alinhamento)
-
-                        alinhamento.add_syn(syn=ps)
+                                alinhamento.add_syn(syn=ps)
 
                 self.palette.inc_index()
 
@@ -294,15 +304,23 @@ class AlignTool:
         return retorno
 
     @staticmethod
+    def _mwe_with_separators(mwe):
+        SEPARATORS = [' ', '-']
+        return [separator.join(mwe.split(' ')) for separator in SEPARATORS]
+
+    @staticmethod
     def _word_to_wordpoint(palavra):
         return [
-            palavra + ".", palavra + "?", palavra + "!", palavra + ";", palavra + "'",
+            palavra + ".", palavra + "?", palavra + "!", palavra + ";", palavra + "'", palavra + "-", palavra + '"',
             palavra.title() + ".", palavra.title() + " ", palavra.title() + "?", palavra.title() + "!",
-            palavra.title() + ";", palavra.title() + ",", palavra.title() + "'",
+            palavra.title() + ";", palavra.title() + ",", palavra.title() + "'", palavra.title() + "-",
+            palavra.title() + '"',
             palavra.lower() + " ", palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!",
-            palavra.lower() + ";", palavra.lower() + ",", palavra.lower() + "'",
+            palavra.lower() + ";", palavra.lower() + ",", palavra.lower() + "'", palavra.lower() + "-",
+            palavra.lower() + '"',
             palavra.upper() + " ", palavra.upper() + ".", palavra.upper() + "?", palavra.upper() + "!",
-            palavra.upper() + ";", palavra.upper() + ",", palavra.upper() + "'"
+            palavra.upper() + ";", palavra.upper() + ",", palavra.upper() + "'", palavra.upper() + "-",
+            palavra.upper() + '"'
         ]
 
     def _paint_text(self, p, alinhamento=None):
@@ -313,11 +331,11 @@ class AlignTool:
 
         _open_tag = '<b style="color:rgb(' + str(alinhamento.get_color()) + ');">'
         _close_tag = '</b>'
-        _pre_char_list = ['(', ' ']
+        _pre_char_list = ['(', ' ', '-', '"']
         for pre_char in _pre_char_list:
             self.noticia = self.noticia.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
             self.legenda = self.legenda.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
-            self.titulo_noticia = self.titulo_noticia.replace(pre_char + p, _open_tag + p + _close_tag)
+            self.titulo_noticia = self.titulo_noticia.replace(pre_char + p, pre_char + _open_tag + p + _close_tag)
 
     def _process_text_image(self):
         # cria uma instancia da classe Imagem, passando o path da imagem
@@ -325,15 +343,15 @@ class AlignTool:
         print(self.path_noticia)
         imagem = Imagem(self.path_imagem, self.directory, self.PATH_PROJETO)
         # cria uma instancia do processador de texto
-        aplicador_pln = AplicadorPLN(self.PATH_PROJETO, self.noticia, self.legenda, self.titulo_noticia,
-                                     self.path_noticia, self.directory, self.w_embeddings)
+        self.aplicador_pln = AplicadorPLN(self.PATH_PROJETO, self.noticia, self.legenda, self.titulo_noticia,
+                     self.path_noticia, self.directory, self.w_embeddings)
 
-        self.lst_top_nomeadas_texto = aplicador_pln.get_list_top_entidades_nomeadas()
+        self.lst_top_nomeadas_texto = self.aplicador_pln.get_list_top_entidades_nomeadas()
 
         print("[BEFORE]Pessoas no texto:" + str(len(self.lst_top_nomeadas_texto)))
         #####CRIA AS THREADS DE PLN E VC#####
         threads = []
-        thread_pln = ThreadPLN(1, "PLN", aplicador_pln)
+        thread_pln = ThreadPLN(1, "PLN", self.aplicador_pln)
         thread_vc = ThreadVC(2, "VC", imagem)
 
         # Inicializa as threads
@@ -348,13 +366,13 @@ class AlignTool:
 
         ##########################################
         # Alinhar as pessoas
-        self.lst_legenda = aplicador_pln.entidades_legenda()
+        self.lst_legenda = self.aplicador_pln.entidades_legenda()
 
-        self.lst_top_nomeadas_texto = aplicador_pln.get_list_top_entidades_nomeadas()
+        self.lst_top_nomeadas_texto = self.aplicador_pln.get_list_top_entidades_nomeadas()
         print("Pessoas no texto:",  [ne.palavra for ne in self.lst_top_nomeadas_texto])#str(len(self.lst_top_nomeadas_texto)))
-        self.dict_lematizado = aplicador_pln.get_dict_lematizado()
+        self.dict_lematizado = self.aplicador_pln.get_dict_lematizado()
         self.list_boundingBoxOrganizada = imagem.list_boundingBoxOrganizada
-        self.lst_top_substantivos_objects = aplicador_pln.lst_top_substantivos_objects
+        self.lst_top_substantivos_objects = self.aplicador_pln.lst_top_substantivos_objects
         print("--------------SUBSTANTIVOS-------------")
         print(self.lst_top_substantivos_objects)
 

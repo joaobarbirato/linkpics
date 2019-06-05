@@ -65,7 +65,8 @@ class AlignPersons:
         except Exception as e:
             print(e)
 
-        img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
+        img_original = cv2.imread(STATIC_REL + "alinhamento2.jpg")
+
         dic_json = {}
         num_pessoa = 0
 
@@ -94,8 +95,8 @@ class AlignPersons:
                 bbox_pessoas.pop(0)
             except Exception as e:
                 print(e)
-
-        cv2.imwrite(STATIC_REL + "/" + "alinhamento2.jpg", img_original)
+        if img_original is not None:
+            cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
         return dic_json
 
     def _experiment_2(self):
@@ -117,18 +118,18 @@ class AlignPersons:
             # Varre a lista de nomes
 
             for nome in nomes_alinhamento:
-                print("[ALIGN_PERSONS|NOME]: ", nome)
                 nome_sem_acento = utils.removerAcentosECaracteresEspeciais(nome)
                 if nome_sem_acento in nomes_dlib:  # se o nome existir nos dados do DLIB
-                    img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
+                    img_original = cv2.imread(STATIC_REL + "alinhamento2.jpg")
                     for bBox in bbox_pessoas:  # para cada bounding box
                         new_sample = img_original.copy()
                         crop = new_sample[bBox.top:bBox.bot, bBox.left:bBox.right]
                         cv2.imwrite("bBoxImage.jpg", crop)
                         distancia = face_recognition.comparar_pessoas("bBoxImage.jpg", nome_sem_acento)
                         if isinstance(distancia, int) or isinstance(distancia, float):
-
-                            if distancia < self.THR_DLIB and self._add_alignment(ne=nome, bbx=bBox):  # a face da Bbox corresponde com alguma imagem do nome no dlib
+                            print(nome, ": distancia < THR_DLIB: ", distancia < self.THR_DLIB)
+                            if distancia < self.THR_DLIB and self._add_alignment(ne=nome, bbx=bBox):
+                                # a face da Bbox corresponde com alguma imagem do nome no dlib
                                 names_to_remove.append(nome)
                                 dic_alinhamento[nome] = bBox  # grava o crop da imagem no dicionario
                                 bBox.label = nome  # grava o nome na bBox
@@ -147,7 +148,7 @@ class AlignPersons:
                     # busca as imagens da pessoa no google imagens
                     folder_g_image = g_image.get_images(nome_sem_acento)
                     print("CRIOU NOME: " + nome_sem_acento)
-                    img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
+                    img_original = cv2.imread(STATIC_REL + "alinhamento2.jpg")
                     face_recognition.criar_db_g_images(folder_g_image)
                     for bBox in bbox_pessoas:  # para cada bounding box
                         new_sample = img_original.copy()
@@ -192,9 +193,9 @@ class AlignPersons:
                               self.palette.next_color(type="bb", inc=True), 2)
                 self.index_cor_bounding_box += 1
 
+            if img_original is not None:
+                cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
 
-
-            cv2.imwrite(STATIC_REL + "/" + "alinhamento2.jpg", img_original)
             path_arquivo = self.path_noticia + "alinhamento_pessoas.txt"
             utils.escrever_arquivo(texto, path_arquivo)
             return dic_json
@@ -218,4 +219,5 @@ class AlignPersons:
                         nomes_alinhamento.remove(na_2)
                         break
 
+        print('[EXP_2|_CLUSTER_NAMES nomes_alinhamento]:', nomes_alinhamento)
         return nomes_alinhamento
