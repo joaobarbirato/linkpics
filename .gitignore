@@ -6,6 +6,7 @@ app/src/PLN/TreeTagger*/
 app/src/TreeTagger_old/
 app/src/PLN/treetagger-python/
 app/src/noticia_atual/*
+app/src/noticias/
 
 __pycache__
 *.png
