@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from .word_embeddings import WordEmbeding
 from nltk.corpus import wordnet as wn
+from nltk.corpus.reader.wordnet import Synset
 
 """
     Autor: Joao Gabriel Melo Barbirato
@@ -9,38 +9,33 @@ from nltk.corpus import wordnet as wn
 
 
 def get_syns(word=None):
-    THR = 50
-    words = []
-    distances = []
-    best_w = []
+    """
+    Obtain synonyms of a word in order to perform a n:1 alignment
+    :param word: target word
+    :return: a list containing the best candidates for synonyms of targeted word
+    """
+    WUP_SYN_THR = 0.63
 
-    try:
-        # find related words
-        for ss in wn.synsets(word, pos=wn.NOUN):
-            for name in ss.lemma_names()[1:]:  # first is always the searched word
-                if name not in words:
-                    words.append(name)
+    def _is_similar(obj1, obj2):
+        """
+        Determine whether or not two Synset objects are similar using WUP similarity and the WUP_SYN_THR threshold
+        :param obj1: First Synset object
+        :param obj2: Second Synset object
+        :return: boolean True if is greater than the threshold, False otherwise
+        """
+        if isinstance(obj1, Synset) and isinstance(obj2, Synset):
+            similarity = wn.wup_similarity(obj1, obj2)
+            return similarity > WUP_SYN_THR if similarity is not None else False
 
-        we = WordEmbeding(100)
+    target_synset = wn.synsets(word, pos=wn.NOUN)[0]  # first is always the searched word
+    candidate_synsets = [(lemma, wn.synsets(lemma)[0]) for lemma in target_synset.lemma_names()[1:]]
+    best_candidates = []
+    for lemma, ss in candidate_synsets:
+        if _is_similar(target_synset, ss):
+            best_candidates.append(lemma.replace('_', ' '))
 
-        we.CarregarWordEmbeddings()
-        vec_word = we.RetornarVetor(word)
-        n_vecw_none = 0
-        if words is not None:
-            for w in words:
-                distance_we = 0
-                vec_w = we.RetornarVetor(w)
-                if vec_w is not None:
-                    for x in range(0, 100):
-                        distance_we += abs(vec_word[x] - vec_w[x])
-                    distances.append(distance_we)
-                else:
-                    n_vecw_none += 1
+    # Make sure that there's no redundancy
+    if word in best_candidates:
+        best_candidates.remove(word)
 
-            for i in range(len(words) - n_vecw_none):
-                if distances[i] <= THR:
-                    best_w.append(words[i])
-    except Exception as e:
-        pass
-
-    return best_w
+    return best_candidates
