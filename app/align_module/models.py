@@ -2,6 +2,9 @@
     Register every alignment occurred, as well as it's elements
     @author: João Gabriel Melo Barbirato
 """
+from sqlalchemy.orm.collections import InstrumentedList
+
+from app.eval_module.models import query_by_id, PredAlignment
 from app.src.VC.boundingBox import BoundingBox
 
 
@@ -36,6 +39,10 @@ def _add_session(object):
 from app import db
 
 
+def add_db_alignments_from_list(list_alignments):
+    db.session.add_all(list_alignments)
+
+
 class Base(db.Model):
     __abstract__ = True
 
@@ -48,10 +55,23 @@ class Base(db.Model):
 class MWE(Base):
     __tablename__ = 'mwe'
     mwe = db.Column(db.String, nullable=False, default='')
+    approval = db.Column(db.Boolean, nullable=True)
     aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
 
     def __init__(self, mwe):
         self.mwe = mwe
+
+    def get_parent(self):
+        return query_by_id(PredAlignment, self.aligment_id)
+
+    def set_approval(self, appr):
+        if isinstance(appr, bool):
+            self.approval = appr
+            return True
+        return False
+
+    def add_self(self):
+        _add_session(self)
 
     def __eq__(self, other):
         if isinstance(other, MWE):
@@ -69,10 +89,23 @@ class MWE(Base):
 class Synonym(Base):
     __tablename__ = 'synonym'
     syn = db.Column(db.String, nullable=False, default='')
+    approval = db.Column(db.Boolean, nullable=True)
     aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
 
     def __init__(self, syn):
         self.syn = syn
+
+    def get_parent(self):
+        return query_by_id(PredAlignment, self.aligment_id)
+
+    def set_approval(self, appr):
+        if isinstance(appr, bool):
+            self.approval = appr
+            return True
+        return False
+
+    def add_self(self):
+        _add_session(self)
 
     def __eq__(self, other):
         if isinstance(other, Synonym):
@@ -135,6 +168,8 @@ class Alignment(Base):
     syns_model = db.relationship('Synonym', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                  lazy=True)
 
+    is_ne = db.Column(db.Boolean, nullable=True)
+
     def __init__(self, bounding_box, term, mwe=None, syns=None, is_ne=False, html_color=None, img_color=None):
         self.term = term
         self.is_ne = is_ne
@@ -179,6 +214,16 @@ class Alignment(Base):
 
             return self.list_mwe
 
+    def add_mwe_model(self, mwe=None):
+        """
+
+        :param mwe:
+        :return:
+        """
+        if isinstance(mwe, InstrumentedList):
+            self.mwes_model = _add_relation(self.mwes_model, mwe)
+            return self.mwes_model
+
     def add_syn(self, syn=None):
         """
         Add syn to an alignment
@@ -214,6 +259,41 @@ class Alignment(Base):
         """
         return [_syn for _syn in self.list_syns if _syn == syn] != [] if self.list_syns is not None else False
 
+    def get_is_ne(self):
+        """
+        Inform if an alignment is a named entity
+        :return: true if it is, false if it isn't
+        """
+        return self.is_ne
+
+    def get_has_syns_model(self):
+        """
+        Inform if an alignment is associated with synonyms found at the text
+        :return: true if it is, false if it isn't
+        """
+        return bool(self.syns_model)
+
+    def get_len_syns_model(self):
+        """
+        Inform how many synonyms are associated with an alignment
+        :return: length of syns_model relationship array
+        """
+        return len(self.syns_model) if self.syns_model else 0
+
+    def get_has_mwes_model(self):
+        """
+        Inform if an alignment is associated with multi-word expressions found at the text
+        :return: true if it is, false if it isn't
+        """
+        return bool(self.mwes_model)
+
+    def get_len_mwes_model(self):
+        """
+        Inform how many multi-word expressions are associated with an alignment
+        :return: length of mwes_model relationship array
+        """
+        return len(self.mwes_model) if self.mwes_model else 0
+
     def has_color(self):
         """
         Inform if an alignment has a color
@@ -235,6 +315,7 @@ class Alignment(Base):
         _add_session(self.color)
         _add_session(self.list_syns)
         _add_session(self.list_mwe)
+        _add_session(self)
 
     def save(self):
         db.session.add(self)
@@ -274,6 +355,9 @@ class AlignmentGroup:
 
     def get_list_terms(self):
         return [algn.term for algn in self.list_alignments]
+
+    def get_all_alignments(self):
+        return self.list_alignments
 
     def __str__(self):
         return self.name
