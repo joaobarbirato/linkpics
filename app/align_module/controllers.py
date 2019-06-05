@@ -1,5 +1,6 @@
 import shutil
 from flask import Blueprint, render_template, request, json
+from flask_login import login_required
 from werkzeug.exceptions import BadRequestKeyError
 
 from app.align_module import models
@@ -17,11 +18,13 @@ def render_index(action=None):
 
 
 @mod_align.route("/")
+@login_required
 def main():
     return render_index(action='/alinhamento')
 
 
 @mod_align.route("/baseline")
+@login_required
 def main_baseline():
     return render_index(action='/alinhamento')
 
@@ -61,18 +64,18 @@ def add_header(response):
 #     return '', 200
 
 
-from app.src.UTIL import Crawler as crawler_bbc
-from app.src.UTIL import Crawler as crawler_folha
+from app.src.UTIL.crawler_bbc import Crawler as crawler_bbc
+from app.src.UTIL.crawler import Crawler as crawler_folha
 from app.src.UTIL import utils
 
 
 @mod_align.route('/alinhamento', methods=['POST'])
+@login_required
 def alinhar():
     _link = request.form['link']
 
     _experimento_pessoa = int(request.form['pessoas']) + 1
     _experimento_objeto = int(request.form['objetos']) + 1
-
     if "folha" in _link:
         alinhador = AlignTool(crawler=crawler_folha)
     elif "bbc" in _link:
@@ -91,9 +94,9 @@ def alinhar():
     if img_url != '':
         shutil.copy2(STATIC_REL + 'alinhamento2.jpg', img_url)
 
-    # alinhador_descr = AlignToolDescr(
-    #     title=alinhador.orig_titulo, sub=alinhador.orig_legenda, text=alinhador.orig_texto, align_group=grupo
-    # )
+    alinhador_descr = AlignToolDescr(
+        title=alinhador.orig_titulo, sub=alinhador.orig_legenda, text=alinhador.orig_texto, align_group=grupo
+    )
 
     response = dict(result_pessoas=result_pessoas,
                     result_objetos=result_objetos,
@@ -101,7 +104,7 @@ def alinhar():
                     texto=texto,
                     legenda=legenda,
                     titulo=titulo,
-                    descricoes=[],
+                    descricoes=alinhador_descr.get_descr(),
                     message='',
                     dic_avaliacao=dic_avaliacao)
 
