@@ -1,11 +1,13 @@
 import numpy as np
 import os
 
+from config import BASE_DIR
+
 
 class WordEmbeding(object):
     def __init__(self, tam):
         self.EMBEDDING_DIM = tam
-        self.GLOVE_DIR = "/data/alinhador/"
+        self.GLOVE_DIR = BASE_DIR + "/data/alinhador/"
 
     # Carrega todos os WordEmbeddings em um dictonary contendo->{palavra,vetor}
     def CarregarWordEmbeddings(self):
