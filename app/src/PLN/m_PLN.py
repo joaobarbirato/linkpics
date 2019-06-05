@@ -2,7 +2,7 @@ import os
 from nltk.corpus import wordnet as wn
 from treetagger import TreeTagger
 
-from app.src.PLN.chunk_sintagmas import chunk
+from app.src.PLN.chunk_sintagmas import MWEChunker
 from .entidade_nomeada import EntidadeNomeada
 from .reconhecimento_nomeada import *
 from .word import Palavra
@@ -12,35 +12,14 @@ lst_treetagger = []
 lst_palavras_originais = []
 lst_substantivosValidos = []
 
-lst_chunk = []
-
 lst_ner = []
 
 
 def get_word_from_lemma(lemma=None):
     global lst_treetagger
-    print(lst_treetagger)
     for [_word, _, _lemma] in lst_treetagger:
         if _lemma == lemma or _lemma == lemma.upper() or _lemma == lemma.title():
             return _word
-
-
-def has_mwe():
-    global lst_chunk
-    return False if not lst_chunk else True
-
-
-def belongs_to_mwe(word=None):
-    global lst_chunk
-    res = []
-    found = False
-    if word:
-        for (mwe, _) in lst_chunk:
-            if word in mwe:
-                found = True
-                res.append(' '.join(mwe))
-
-    return res if found else found
 
 
 class AplicadorPLN(object):
@@ -65,6 +44,7 @@ class AplicadorPLN(object):
         self.lst_top_substantivos_objects = []
         self.lst_diferenca_entidades = []
         self.dict_lematizado = {}
+        self.chunker = MWEChunker()
 
         PATH_LOCATION = os.path.dirname(os.path.abspath(__file__))
         print(PATH_LOCATION)
@@ -162,10 +142,7 @@ class AplicadorPLN(object):
     def AplicarTreeTagger(self):
         global lst_treetagger
         lst_treetagger = []
-        # temporario apagar depois essa linha abaixo
-        # self.noticia = 'Two-time Olympic volleyball champion Fabiana Claudino runs holding the torch, and around her, in the landscape framed by the Planalto Palace, on the left side, and the National Congress, on the right, protesters follow the athlete screaming. They display banners in favor of President Dilma Rousseff and against her. Before passing the Olympic fire to the first torchbearer on national soil, volleyball player Fabiana, Rousseff said in a speech that the country will be able to successfully promote the Rio Games, in spite of the crisis. '
         lst_treetagger_temp = self.tree_tagger.tag(self.noticia)
-        # self.tree_tagger.tag('Doess thing even work')
         num_palavras_tagger = len(lst_treetagger_temp)
         # Remove as pontuações do tree tagger gerando uma nova lista
         for x in range(0, num_palavras_tagger):
@@ -177,8 +154,9 @@ class AplicadorPLN(object):
                 lst_treetagger.append(lst_treetagger_temp[x])
 
     def AplicarChunk(self):
-        global lst_treetagger, lst_chunk
-        [lst_treetagger, lst_chunk] = chunk(lst_treetagger)
+        global lst_treetagger
+        if self.chunker.set_list_tt(lst_treetagger):
+            lst_treetagger = self.chunker.chunk()
 
     def AplicarStanforNER(self):
         lst_ner = self.stanfordner.tag(self.noticia.split())
