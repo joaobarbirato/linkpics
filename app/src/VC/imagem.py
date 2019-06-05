@@ -27,13 +27,15 @@ class Imagem(object):
         self.numero_pessoas = 0
         self.path_diretorio = path_projeto + path_dir
         self.path_yolo = SRC_DIR + "IA/YOLO"
+        self.YOLO_THR= 0.4
+        self.YOLO_THR = str(self.YOLO_THR)
         print("dentro do construtor")
 
     # self.classificadorCNN = CnnClassifier("resnet")
     # self.classificador= CnnClassifier("resnet")
 
     def renomearArquivos(self):
-        os.rename(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", self.path_diretorio + "/image_result.txt")
+        os.rename(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", self.path_diretorio + "image_result.txt")
         print("removido")
 
     # os.rename("noticia_atual/extraction_result.txt", self.path_diretorio + "/extraction_result.txt")
@@ -50,7 +52,7 @@ class Imagem(object):
             with open(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "detect", "cfg/yolo.cfg", BASE_DIR + "/data/alinhador/yolo.weights", self.path, "-thresh",
-                     "0.2"],
+                     self.YOLO_THR],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
@@ -135,7 +137,7 @@ class Imagem(object):
 
     def read_words(self):
         # arquivo_txt= "noticia_atual/image_result.txt"
-        arquivo_txt = self.path_diretorio + "/image_result.txt"
+        arquivo_txt = self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt"
         print(">>>> arquivo txt: >", arquivo_txt)
         open_file = open(arquivo_txt, 'r')
         contents = open_file.readlines()
@@ -189,9 +191,7 @@ class Imagem(object):
                 bBox.lst_cnn = lst_cnn
 
     def ObterBoundingBox(self):
-        self.renomearArquivos()
         arquivo_informacoes_boundingBox = self.read_words()  # le as informações geradas pela YOLO
-
         for i in range(len(arquivo_informacoes_boundingBox)):
             if i != 0:
                 informacoes_bounding = arquivo_informacoes_boundingBox[i].split(
@@ -458,6 +458,7 @@ class Imagem(object):
             h = self.list_boundingBoxOrganizada[i].height
             try:
                 cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                print("[GERARFOTOS | path estranho]: ", self.path_diretorio + "/" + str(i) + ".jpg")
                 cv2.imwrite(self.path_diretorio + "/" + str(i) + ".jpg", image)
             except:
                 print("erro")
