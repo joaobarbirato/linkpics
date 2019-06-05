@@ -20,9 +20,9 @@ class AlignToolDescr:
 
         image_desc_gen = Generator(
             title=self.title, sub=self.sub, text=self.text,
-            aligned_subs=self.group.get_list_terms()
+            aligned_subs=self.group.get_all_alignments()
         )
-        image_desc_gen.generate_descriptions()
+        image_desc_gen.generate_descriptions(type="N-MATCH")
         self.descr = image_desc_gen.get_gen_descr()
 
     def get_descr(self):

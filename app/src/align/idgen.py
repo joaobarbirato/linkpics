@@ -19,6 +19,26 @@ class Generator:
         self._amr_list = []
         self._aligned_subs = aligned_subs
 
+    def _paint_alignment(self, snt, alignment):
+        if not isinstance(alignment, list):
+            _open_tag = '<b style="color:rgb(' + str(alignment.get_color()) + ');">'
+            _close_tag = '</b>'
+            _pre_char_list = ['(', ' ', '-', '"']
+            painted_snt = snt
+            for pc in _pre_char_list:
+                painted_snt = painted_snt.replace(pc + alignment, pc + _open_tag + alignment + _close_tag)
+            return painted_snt
+        else:
+            painted_snt = snt
+            for a in alignment:
+                _open_tag = '<b style="color:rgb(' + str(a.get_color()) + ');">'
+                _close_tag = '</b>'
+                _pre_char_list = ['(', ' ', '-', '"']
+                _snt = ''
+                for pc in _pre_char_list:
+                    painted_snt = painted_snt.replace(pc + a.term, pc + _open_tag + a.term   + _close_tag)
+            return painted_snt
+
     def _two_match_gen(self):
         """
         Generate descriptions by finding two aligned terms in a single sentence
@@ -29,10 +49,11 @@ class Generator:
         if self._amr_list:
             for amr in self._amr_list:
                 for pair in combinations(self._aligned_subs, r=2):
-                    if amr.is_node(pair[0]) and amr.is_node(pair[1]):
+                    if amr.is_node(pair[0].term) and amr.is_node(pair[1].term):
                         _worked = True
                         if amr.snt not in self._gen_descr:
-                            self._gen_descr.append(amr.snt)
+                            painted_snt = self._paint_alignment(amr.snt, [pair[0], pair[1]])
+                            self._gen_descr.append(painted_snt)
 
         return _worked
 
@@ -70,8 +91,29 @@ class Generator:
             if sub in summary_descr:
                 _worked = True
                 self._gen_descr.append(
-                    summary_descr
+                    self._paint_alignment(summary_descr, self._aligned_subs)
                 )
+
+        return _worked
+
+    def _n_match_gen(self):
+        self._snts_to_amr()
+        _alignments = []
+        _snt_chosen = []
+        _worked = False
+        if self._amr_list:
+            for amr in self._amr_list:
+                for pair in combinations(self._aligned_subs, r=2):
+                    if amr.is_node(pair[0].term) and amr.is_node(pair[1].term):
+                        _worked = True
+                        if amr.snt not in self._gen_descr:
+                            _snt_chosen.append(amr.snt)
+                            _alignments += [pair[0], pair[1]]
+
+        _snt_chosen = list(set(_snt_chosen))
+        for snt in _snt_chosen:
+            painted_snt = self._paint_alignment(snt, _alignments)
+            self._gen_descr.append(painted_snt)
 
         return _worked
 
@@ -88,6 +130,8 @@ class Generator:
                 _worked = self._two_match_gen()
             elif crit_type.upper() == "SUMMARIZING":
                 _worked = self._summarizing_gen()
+            elif crit_type.upper() == "N-MATCH":
+                _worked = self._n_match_gen()
 
         return _worked
 
@@ -110,3 +154,4 @@ class Generator:
 
     def get_gen_descr(self):
         return self._gen_descr
+
