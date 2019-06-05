@@ -61,6 +61,7 @@ class AlignObjects:
         self.colors_bounding_box = colors_bounding_box
         self.align_group = align_group
         self.palette = palette
+        self.thr = 0.82
 
     def align(self, object_choosed):
 
@@ -123,7 +124,7 @@ class AlignObjects:
         bbox_objects = self._get_bounding_objects()
         bbox_objects = self._ordenar_bbox_tamanho(bbox_objects)
 
-        img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
+        img_original = cv2.imread(STATIC_REL + "alinhamento2.jpg")
         dic_json = {}
 
         # return dic_json
@@ -148,8 +149,9 @@ class AlignObjects:
                 bbox_objects.pop(0)
             except Exception as e:
                 print(e)
-
-        cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
+                
+        if img_original is not None:
+            cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
         return dic_json
 
     def _experiment_1(self):
@@ -157,7 +159,7 @@ class AlignObjects:
         global maior_distancia
         print('experimento 1')
         arquivo_wup = "/wup_top5.txt"
-        img_original = cv2.imread(STATIC_REL + "/alinhamento2.jpg")
+        img_original = cv2.imread(STATIC_REL + "alinhamento2.jpg")
         bbox_objects = self._get_bounding_objects()
         num_objeto = 0
         lst_palavras_visuais = self.read_words_visual("visual_words.txt")
@@ -222,44 +224,49 @@ class AlignObjects:
                                 distancia_wup = 0
                                 if distancia_wup > maior_distancia:
                                     maior_distancia = distancia_wup
-                dicionario_distancias_wup[substantivo] = maior_distancia
 
-            sorted_wup = sorted(
-                dicionario_distancias_wup.items(), key=operator.itemgetter(1), reverse=True)
+                print("maior distancia: ", maior_distancia)
+                if maior_distancia > self.thr:
+                    dicionario_distancias_wup[substantivo] = maior_distancia
+                print(dicionario_distancias_wup)
 
-            wup_deque = deque()
+            if dicionario_distancias_wup:
+                sorted_wup = sorted(
+                    dicionario_distancias_wup.items(), key=operator.itemgetter(1), reverse=True)
 
-            palavra_ranqueada = sorted_wup[0][0]
+                wup_deque = deque()
 
-            # para cada palavra da sorted wup (0 a 4)
-            if sorted_wup[0][0] not in lst_palavras_visuais:
+                palavra_ranqueada = sorted_wup[0][0]
+
+                # para cada palavra da sorted wup (0 a 4)
+                if sorted_wup[0][0] not in lst_palavras_visuais:
+                    for z in range(0, 5):
+                        try:
+                            # verifica se esta na lista das palavras visuais
+                            if sorted_wup[z][0].lower() in lst_palavras_visuais:
+                                wup_deque.appendleft(sorted_wup[z][0])
+                            else:
+                                wup_deque.append(sorted_wup[z][0])
+                        except:
+                            pass
+
+                        # se estiver sobe uma posicao na lista
+                    palavra_ranqueada = wup_deque[0]
+
+                dic_alinhamento = add_dic_alinhamento(dict=dic_alinhamento, word=palavra_ranqueada, nun_obj=num_objeto)
+
+                num_objeto += 1
+                # ESCREVE NO DIRETORIO O TOP-5
+                top5 = ""
                 for z in range(0, 5):
                     try:
-                        # verifica se esta na lista das palavras visuais
-                        if sorted_wup[z][0].lower() in lst_palavras_visuais:
-                            wup_deque.appendleft(sorted_wup[z][0])
-                        else:
-                            wup_deque.append(sorted_wup[z][0])
+                        top5 += self.dict_lematizado[sorted_wup[z][0].lower()] + "-------" + str(sorted_wup[z][1]) + "\n"
                     except:
                         pass
+                utils.escrever_arquivo(top5, dir_objeto + arquivo_wup)
 
-                    # se estiver sobe uma posicao na lista
-                palavra_ranqueada = wup_deque[0]
-
-            dic_alinhamento = add_dic_alinhamento(dict=dic_alinhamento, word=palavra_ranqueada, nun_obj=num_objeto)
-
-            num_objeto += 1
-            # ESCREVE NO DIRETORIO O TOP-5
-            top5 = ""
-            for z in range(0, 5):
-                try:
-                    top5 += self.dict_lematizado[sorted_wup[z][0].lower()] + "-------" + str(sorted_wup[z][1]) + "\n"
-                except:
-                    pass
-            utils.escrever_arquivo(top5, dir_objeto + arquivo_wup)
-
-            alignment = Alignment(term=palavra_ranqueada, bounding_box=bbox)
-            self.align_group.add_alignments(alignment=alignment)
+                alignment = Alignment(term=palavra_ranqueada, bounding_box=bbox)
+                self.align_group.add_alignments(alignment=alignment)
         # _________________ALINHAMENTO________________
         for palavra, value in dic_alinhamento.items():
             # dic_json[palavra] = "Objeto " + str(dic_alinhamento[palavra])
@@ -279,5 +286,7 @@ class AlignObjects:
             # remove a bounding box
             bbox_objects.pop(0)
 
-        cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
+        if img_original is not None:
+            cv2.imwrite(STATIC_REL + "alinhamento2.jpg", img_original)
+
         return dic_json
