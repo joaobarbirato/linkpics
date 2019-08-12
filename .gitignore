@@ -44,5 +44,5 @@ app/src/noticias_*/
 app/src/amr/*/
 app/src/amr/Data
 app/src/amr/stanford-*
-app/src/amr/glove/
+app/src/amr/glove
 data/
