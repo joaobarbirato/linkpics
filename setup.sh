@@ -2,7 +2,7 @@
 
 ## 1.
 ## Setup TreeTagger
-
+base_dir=$(pwd)
 tree_tagger_dir="./TreeTagger"
 echo $tree_tagger_dir
 wget https://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/tree-tagger-linux-3.2.2.tar.gz
@@ -29,9 +29,19 @@ cd app/src/PLN/$tree_tagger_dir
 
 sh install-tagger.sh
 
-cd ../../../../
+cd $base_dir
 
 # 2.
 # Installing git dependencies
 pip install git+https://github.com/miotto/treetagger-python/
 pip install dlib==19.13.1
+
+# 3. Downloading YOLO
+git clone https://github.com/pjreddie/darknet
+cd darknet
+make
+wget https://pjreddie.com/media/files/yolov3.weights
+./darknet detect cfg/yolov3.cfg yolov3.weights data/dog.jp
+cd ..
+mv darknet app/src/IA/YOLO
+cd $base_dir
