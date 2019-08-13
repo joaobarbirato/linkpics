@@ -25,7 +25,7 @@ def get_word_from_lemma(lemma=None):
 class AplicadorPLN(object):
     # -----------------------------------V A R I Á V E I S --- G L O B A I S---------------------
 
-    def __init__(self, path_projeto, noticia, legenda, titulo, path, path_dir, embeddings):
+    def __init__(self, path_projeto, noticia, legenda, titulo, path, path_dir):
         self.path_projeto = path_projeto
         self.diretorio = path_projeto + path_dir
         self.path_noticia = path_projeto + path
@@ -36,7 +36,6 @@ class AplicadorPLN(object):
         self.lst_top_substantivos = []
         self.lst_top_entidades_nomeadas = []
         self.total_entidades = 0
-        self.w_embeddings = embeddings
         self.tipo_wordNet = ""
         self.lst_EntidadesNomeadas = []
         self.lst_interseccao_entidades = []
@@ -170,9 +169,6 @@ class AplicadorPLN(object):
             return 1
         else:
             return -1
-
-    def ObterWordEmbeddings(self):
-        return self.w_embeddings.RetornarDicionario(self.lst_top_substantivos)
 
     # -----------------------FUNÇÃO MAIS IMPORTANTE DO SISTEMA-------------------
 

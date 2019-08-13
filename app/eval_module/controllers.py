@@ -3,11 +3,11 @@ import csv
 import re
 import shutil
 from flask import Blueprint, request, render_template, \
-    flash, redirect, url_for, abort, json, make_response, send_from_directory
+    flash, redirect, url_for, abort, json, send_from_directory
 
-from app.align_module.models import add_db_alignments_from_list, MWE, Synonym
-from app.src.UTIL.crawler import Crawler as crawler_folha
-from app.src.UTIL.crawler_bbc import Crawler as crawler_bbc
+from app.align_module.models import MWE, Synonym
+from app.src.UTIL.crawlers.crawler import Crawler as crawler_folha
+from app.src.UTIL.crawlers.crawler_bbc import Crawler as crawler_bbc
 
 # Import password / encryption helper tools
 from flask_login import login_user, login_required, current_user, logout_user
@@ -20,10 +20,10 @@ from app import db, login_manager, app, is_safe_url
 from app.eval_module.forms import LoginForm
 
 # Import module models (i.e. User)
-from app.eval_module.models import User, PredAlignment, EvalModel, Batch, get_all_batch, query_by_id, get_all_em
+from app.eval_module.models import User, PredAlignment, EvalModel, Batch, get_all_batch, query_by_id
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
-from app.src.UTIL.metrics import precision, p_r_f_metrics
+from app.src.UTIL.metrics import p_r_f_metrics
 from app.src.align.align_tool import AlignTool
 from config import STATIC_REL, BASE_DIR
 
@@ -292,11 +292,6 @@ def _download_csv(eval_list):
                     "Aprovação_Sinonimos": "-"
                 })
     return send_from_directory(BASE_DIR + "/" + STATIC_REL, 'avaliacao.csv', as_attachment=True)
-    # return app.response_class(
-    #     response=csv_file.read(),
-    #     mimetype="text/csv",
-    #     headers={"Content-disposition": "attachment; filename=avaliacao.csv"}
-    # )
 
 
 def _download_metrics(eval_list):

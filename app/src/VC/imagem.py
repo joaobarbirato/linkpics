@@ -1,13 +1,14 @@
+import math
 import os
+# from classify_image import CnnClassifier
+import subprocess
+
+import cv2
+# from IA.classificadores.classify_image import CnnClassifier
+from PIL import Image
 
 from config import SRC_DIR, BASE_DIR
 from .boundingBox import BoundingBox
-# from IA.classificadores.classify_image import CnnClassifier
-from PIL import Image
-import math
-import cv2
-# from classify_image import CnnClassifier
-import subprocess
 
 
 class Imagem(object):
@@ -27,7 +28,7 @@ class Imagem(object):
         self.numero_pessoas = 0
         self.path_diretorio = path_projeto + path_dir
         self.path_yolo = SRC_DIR + "IA/YOLO"
-        self.YOLO_THR= 0.4
+        self.YOLO_THR = 0.4
         self.YOLO_THR = str(self.YOLO_THR)
         print("dentro do construtor")
 
@@ -35,7 +36,8 @@ class Imagem(object):
     # self.classificador= CnnClassifier("resnet")
 
     def renomearArquivos(self):
-        os.rename(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", self.path_diretorio + "image_result.txt")
+        os.rename(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt",
+                  self.path_diretorio + "image_result.txt")
         print("removido")
 
     # os.rename("noticia_atual/extraction_result.txt", self.path_diretorio + "/extraction_result.txt")
@@ -51,7 +53,8 @@ class Imagem(object):
             # p = subprocess.Popen(["./darknet","detect","cfg/yolo.cfg","weights/yolo.weights",self.path,">>","noticia_atual/image_result.txt"])
             with open(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
-                    ["./darknet", "detect", "cfg/yolo.cfg", BASE_DIR + "/data/alinhador/yolo.weights", self.path, "-thresh",
+                    ["./darknet", "detect", "cfg/yolo.cfg", BASE_DIR + "/data/alinhador/yolo.weights", self.path,
+                     "-thresh",
                      self.YOLO_THR],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)

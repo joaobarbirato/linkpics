@@ -1,0 +1,3 @@
+[submodule "app/src/amr/AMR_AS_GRAPH_PREDICTION"]
+	path = app/src/amr/AMR_AS_GRAPH_PREDICTION
+	url = https://github.com/ChunchuanLv/AMR_AS_GRAPH_PREDICTION

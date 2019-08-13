@@ -1,6 +1,6 @@
 from app.align_module import models
 from app.src.UTIL import utils
-from app.src.UTIL import google_search_images as g_image
+from app.src.UTIL.crawlers import google_search_images as g_image
 import cv2
 from app.src.IA.face_recognition import FaceRecognition
 import os

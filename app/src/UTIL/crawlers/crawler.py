@@ -1,12 +1,13 @@
-from bs4 import BeautifulSoup
-from urllib.request import urlopen
-import urllib
 import socket
-
-from config import SRC_DIR
-from .general import *
-from .domain import *
+import urllib
 import urllib.request as r
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
+
+from app.src.UTIL.domain import *
+from app.src.UTIL.general import *
+from config import SRC_DIR
 
 
 class Crawler(object):
@@ -19,7 +20,8 @@ class Crawler(object):
         self.noticia = ""
         self.offset_dir = SRC_DIR
 
-    def file_to_variavel(self, file_name):
+    @staticmethod
+    def file_to_variavel(file_name):
         texto = ""
         with open(file_name, 'rt') as f:
             for line in f:
@@ -36,7 +38,8 @@ class Crawler(object):
             titulo_noticia = self.coletar_texto_ingles(url, nome_arquivo)
         return nome_arquivo, titulo_noticia, encontrou_img
 
-    def obter_nome_arquivo(self, path_link):
+    @staticmethod
+    def obter_nome_arquivo(path_link):
         link_cortado = path_link.split('/')
         nome_arquivo = link_cortado[-1].split('.')
         nome = nome_arquivo[-2]
@@ -44,7 +47,8 @@ class Crawler(object):
             nome = nome[:120]
         return nome
 
-    def coletar_img(self, url, nome_arquivo):
+    @staticmethod
+    def coletar_img(url, nome_arquivo):
         global encontrou_img
         legenda = None
         encontrou_img = 0
@@ -75,7 +79,8 @@ class Crawler(object):
                 name = nome_arquivo + ".jpg"
                 urllib.request.urlretrieve(url, name)
 
-    def coletar_texto_ingles(self, url, nome_arquivo):
+    @staticmethod
+    def coletar_texto_ingles(url, nome_arquivo):
         titulo_noticia = ""
         page = r.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         soup = BeautifulSoup(urlopen(page).read(), "html.parser")
@@ -109,5 +114,4 @@ class Crawler(object):
                     for p in paragrafos:
                         append_to_file(nome_arquivo, p.string)
                         # cria o arquivo de texto em portugues
-                        # coletar_texto_portugues(valor_link, nome_arquivo)
         return titulo_noticia

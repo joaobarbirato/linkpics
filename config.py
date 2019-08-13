@@ -9,9 +9,11 @@ from secrets import token_urlsafe
 WUP_THR = 0.82
 WUP_SYN_THR = 0.63
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.curdir)
 SRC_DIR = 'app/src/'
 STATIC_REL = 'app/static/'
+CORENLP_DIR = 'app/src/stanford-corenlp-full-2018-10-05'
+TMP_DIR = BASE_DIR + '/app/tmp'
 
 # Define the database - we are working with
 # SQLite for this example

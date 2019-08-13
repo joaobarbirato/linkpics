@@ -8,7 +8,6 @@ from app.align_module.models import AlignmentGroup
 from app.src.PLN.get_syns import get_syns
 from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma)
 from app.src.PLN.text_process import ThreadPLN
-from app.src.PLN.word_embeddings import WordEmbeding
 from app.src.UTIL import utils
 from app.src.VC.image_process import ThreadVC
 from app.src.VC.imagem import Imagem
@@ -81,7 +80,6 @@ class ColorPalette:
 class AlignTool:
     def __init__(self, crawler=None):
         if crawler:
-            self.w_embeddings = WordEmbeding(100)  # inicializa as word embeddings
             self.PATH_PROJETO = os.path.dirname(os.path.abspath(__file__)) + "/../../../"
             self.crawler = crawler()
             self.legenda = ""
@@ -344,7 +342,7 @@ class AlignTool:
         imagem = Imagem(self.path_imagem, self.directory, self.PATH_PROJETO)
         # cria uma instancia do processador de texto
         self.aplicador_pln = AplicadorPLN(self.PATH_PROJETO, self.noticia, self.legenda, self.titulo_noticia,
-                     self.path_noticia, self.directory, self.w_embeddings)
+                     self.path_noticia, self.directory)
 
         self.lst_top_nomeadas_texto = self.aplicador_pln.get_list_top_entidades_nomeadas()
 

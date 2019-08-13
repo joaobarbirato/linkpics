@@ -3,7 +3,7 @@
     @author: João Gabriel Melo Barbirato
 """
 import nltk
-from app.src.UTIL import wrapper
+from app.src.UTIL.amrtools import wrapper
 from itertools import combinations
 
 

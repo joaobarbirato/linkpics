@@ -5,16 +5,12 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
+from app.src.UTIL.general import *
 from config import SRC_DIR
-from .general import *
-
-
-
 
 
 class Crawler(object):
-
-    encontrou_img = 0  #inicia zerada
+    encontrou_img = 0  # inicia zerada
     socket.setdefaulttimeout(70)  # para evitar time out na página rastreada
     nome_arquivo = ""
 
@@ -23,7 +19,8 @@ class Crawler(object):
         self.tipo_crawler = ""
         self.offset_dir = SRC_DIR
 
-    def file_to_variavel(self, file_name):
+    @staticmethod
+    def file_to_variavel(file_name):
         texto = ""
         with open(file_name, 'rt') as f:
             for line in f:
@@ -34,7 +31,6 @@ class Crawler(object):
         global nome_arquivo
         nome_arquivo = self.offset_dir + 'noticia_atual/' + self.obter_nome_arquivo(url)
         path_imagem = nome_arquivo
-       # path_imagem = ""
         self.coletar_img(url, path_imagem)
         titulo_noticia = ""
         if encontrou_img == 1:
@@ -49,14 +45,13 @@ class Crawler(object):
 
     def coletar_img(self, url, nome_arquivo):
         global encontrou_img
-        legenda = None
         encontrou_img = 0
         page = r.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         soup = BeautifulSoup(urlopen(page).read(), "html.parser")
         if self.tipo_crawler == "news":
             dados_dentro_td = soup.findAll('figure', attrs={'class': 'media-landscape has-caption full-width lead'})
             has_caption = True
-            if dados_dentro_td == []:
+            if not dados_dentro_td:
                 has_caption = False
                 dados_dentro_td = soup.findAll('figure', attrs={'class': 'media-landscape no-caption full-width lead'})
 
@@ -70,18 +65,16 @@ class Crawler(object):
                 if has_caption is True:
                     caption = td.findAll('span', attrs={'class': 'media-caption__text'})
                     caption = caption[0].text
-                    caption = caption.replace('\n','')
-                    caption = caption.replace('  ','')
+                    caption = caption.replace('\n', '')
+                    caption = caption.replace('  ', '')
                     write_file(nome_arquivo + "_caption.txt", " ")
                     append_to_file(nome_arquivo + "_caption.txt", caption)
                 if os.path.isfile(nome_arquivo + ".jpg"):
-                        encontrou_img = 1
+                    encontrou_img = 1
 
         if self.tipo_crawler == "story":
             dados_dentro_td = soup.findAll('div', attrs={'class': 'inline-media inline-image'})
-            has_caption = True
-            if dados_dentro_td == []:
-                has_caption = False
+            if not dados_dentro_td:
                 dados_dentro_td = soup.findAll('figure', attrs={'class': 'media-landscape no-caption full-width lead'})
             url = dados_dentro_td[0].contents[1].attrs['href']
             caption = dados_dentro_td[0].contents[1].attrs['title']
@@ -90,9 +83,7 @@ class Crawler(object):
             write_file(nome_arquivo + "_caption.txt", " ")
             append_to_file(nome_arquivo + "_caption.txt", caption)
             if os.path.isfile(nome_arquivo + ".jpg"):
-                        encontrou_img = 1
-           
-            
+                encontrou_img = 1
 
     def coletar_texto_ingles(self, url, nome_arquivo):
         titulo_noticia = ""
@@ -100,14 +91,12 @@ class Crawler(object):
         soup = BeautifulSoup(urlopen(page).read(), "html.parser")
 
         if self.tipo_crawler == "news":
-            #Get TITLE
+            # Get TITLE
             dados_dentro_div = soup.findAll('div', attrs={'class': 'story-body'})
-            link_en_ptbr = set()
-            string_vazia = ''
             for div in dados_dentro_div:
 
                 hagas1 = div.findAll('h1')
-                if hagas1 !=[]:
+                if hagas1:
                     for titulo in hagas1:
                         titulo_noticia = titulo.get_text()
                         break
@@ -119,25 +108,17 @@ class Crawler(object):
 
             # GET TEXT
             dados_dentro_div = soup.findAll('div', attrs={'class': 'story-body__inner'})
-            link_en_ptbr = set()
-            string_vazia = ''
             for div in dados_dentro_div:
                 paragrafos = div.findAll('p', attrs={'class': ''})
                 introduction = div.findAll('p')
-                # paragrafos.pop(0)
-                # paragrafos.pop(0)
-                # paragrafos.pop(0)
                 write_file(nome_arquivo, " ")
                 append_to_file(nome_arquivo, introduction[0].string)
                 for p in paragrafos:
                     append_to_file(nome_arquivo, p.string)
-        
 
         if self.tipo_crawler == "story":
-              #Get TITLE
+            # Get TITLE
             dados_dentro_div = soup.findAll('div', attrs={'class': 'primary-header primary-header-with-context'})
-            link_en_ptbr = set()
-            string_vazia = ''
             for div in dados_dentro_div:
 
                 hagas1 = div.findAll('h1')
@@ -147,8 +128,6 @@ class Crawler(object):
 
             # GET TEXT
             dados_dentro_div = soup.findAll('div', attrs={'class': 'body-content'})
-            link_en_ptbr = set()
-            string_vazia = ''
             for div in dados_dentro_div:
                 paragrafos = div.findAll('p', attrs={'class': ''})
                 # introduction = div.findAll('p')
@@ -159,11 +138,8 @@ class Crawler(object):
                 # append_to_file(nome_arquivo, introduction[0].string)
                 for p in paragrafos:
                     texto = p.text
-                    init_texto= p.text[:2]
+                    init_texto = p.text[:2]
                     if init_texto != "\n\n":
                         append_to_file(nome_arquivo, texto)
-            
-                            
+
         return titulo_noticia
-
-

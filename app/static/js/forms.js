@@ -80,12 +80,11 @@ function successFunction(response){
             result_colums += "<tr><td>" + key + "</td><td>" + value + "</td></tr>";
         }
     }
-    const body_table = document.getElementById("line_resultados");
-    body_table.innerHTML = result_colums;
+
     $(".img_alinhamento").attr("src", response["img_alinhamento"]);
     if (response["img_alinhamento"].length === 0) {
         console.log(response["img_alinhamento"].length);
-        img_resultado.setAttribute("src", "static/sem_imagem.png")
+        img_resultado.setAttribute("src", "static/black_image.png")
     }
     // Alinhamento
     //setando o texto
@@ -97,23 +96,6 @@ function successFunction(response){
     //setando o titulo
     const titulo = document.getElementById("titulo");
     titulo.innerHTML = response["titulo"];
-
-    let descricoes = response["descricoes"];
-    console.log(descricoes);
-    card_img_gdi = $('#card-img-gdi');
-    let html_para_inserir;
-    if (typeof descricoes !== 'undefined' && descricoes.length > 0) { // se existem descricoes
-        html_para_inserir = "";
-        html_para_inserir += "<h4 class=\"card-title\">Descrições geradas</h4><ul>\n";
-        for (var descr in descricoes) {
-            html_para_inserir += "\t<li>" + descricoes[descr] + "</li>"
-        }
-        html_para_inserir += "\n</ul>";
-        console.log(html_para_inserir)
-        card_img_gdi.append(html_para_inserir)
-    } else {
-        card_img_gdi.append("<h4 class=\"card-title\">Sem descrições geradas</h4><ul>");
-    }
 
     dic_avaliacao = response["dic_avaliacao"];
     $("#btnAlignFile").prop("disabled", false);

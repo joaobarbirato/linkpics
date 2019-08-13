@@ -8,22 +8,34 @@ import os
 
 from time import sleep
 
-__CORENLP_REL_PATH = '../../../app/src/amr/stanford-corenlp-full-2018-10-05'
-_CORENLP_START_SHELL_COMMAND = '/usr/bin/bash start-corenlp-server.sh ' + os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), __CORENLP_REL_PATH)
-_CORENLP_STOP_SHELL_COMMAND = '/usr/bin/bash stop-corenlp-server.sh'
+from config import BASE_DIR, CORENLP_DIR, TMP_DIR
+
+_CORENLP_START_SHELL_COMMAND = '/usr/bin/bash ' + BASE_DIR + '/app/src/UTIL/shell/start-corenlp-server.sh ' + BASE_DIR + '/' + CORENLP_DIR + ' ' + TMP_DIR
+_CORENLP_STOP_SHELL_COMMAND = '/usr/bin/bash ' + BASE_DIR + '/app/src/UTIL/shell/stop-corenlp-server.sh ' + TMP_DIR
 __TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
+
+# __COMMAND = "python src/parse.py -train_from [gpus_0valid_best.pt] -input [" \
+#             "file]"
+#
+
+# def parse_amr_txt():
+#     os.chdir("app/src/amr/AMR_AS_GRAPH_PREDICTION")
+#     os.environ['PYTHONPATH'] = BASE_DIR + "app/src/amr/AMR_AS_GRAPH_PREDICTION"
+#     print(os.path.abspath(os.curdir))
+#     subprocess.Popen(__COMMAND.split(), env=os.environ)
+#     os.chdir(BASE_DIR)
+#     os.environ['PYTHONPATH'] = BASE_DIR
 
 
 class CoreNLPWrapper():
     def __init__(self):
         print(_CORENLP_START_SHELL_COMMAND)
         self._subprocess = subprocess.Popen(_CORENLP_START_SHELL_COMMAND.split(' '))
-        sleep(5)
+        sleep(1)
 
     def terminate(self):
         self._subprocess = subprocess.Popen(_CORENLP_STOP_SHELL_COMMAND.split(' '))
-        sleep(5)
+        sleep(1)
 
 
 class AMRWrapper:
@@ -86,16 +98,19 @@ class AMRWrapper:
 
 
 def parse_to_amr_list(snts=None):
-    os.chdir('app/src/amr')
-    with open('input.txt', 'w+') as input_file:
+    os.chdir(BASE_DIR + "/app/src/amr/AMR_AS_GRAPH_PREDICTION")
+    input_dir = TMP_DIR + '/input.txt'
+    with open(input_dir, 'w+') as input_file:
         for snt in snts:
             input_file.write("%s\n" % snt)
     a = subprocess.Popen('pwd', stdout=subprocess.PIPE)
     print(a.communicate()[0])
     corenlp = CoreNLPWrapper()
 
+    do_dot_py = 'python do.py -train_from scratch/s1544871/model/gpus_0valid_best.pt -input ' + input_dir
+
     snt_to_txt = subprocess.Popen(
-        'python do.py -train_from scratch/s1544871/model/gpus_0valid_best.pt -input input.txt'.split(),
+        do_dot_py.split(),
         stdout=subprocess.PIPE
     )
     snt_to_txt.wait()
@@ -124,7 +139,7 @@ def parse_to_amr_list(snts=None):
 
             amr_graph.build_ne_nodes()
             amr_list.append(amr_graph)
-    os.chdir('../../..')
+    os.chdir(BASE_DIR)
     return amr_list
 
 

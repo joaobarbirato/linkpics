@@ -1,11 +1,9 @@
-from bs4 import BeautifulSoup
-import requests
-import re
-import urllib
 import os
-from urllib.request import urlopen
+import re
 import urllib.request as r
-import cv2
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
 
 from config import BASE_DIR
 
@@ -15,7 +13,7 @@ def get_soup(url, header):
 
 
 def get_images(query):
-    #image_type = "Action"
+    # image_type = "Action"
     # you can change the query for the image  here
     query = query.split()
     query = '+'.join(query)
@@ -23,18 +21,17 @@ def get_images(query):
     header = {'User-Agent': 'Mozilla/5.0'}
     soup = get_soup(url, header)
     images = [a['src'] for a in soup.find_all("img", {"src": re.compile("gstatic.com")})]
-    #print images
+    # print images
     DIR = ""
     DIR = BASE_DIR + "/data/alinhador/faceDB/images_crawled/" + query.replace("+", "_") + "/"
-    #DIR_back = BASE_DIR + "/data/alinhador/faceDB/images_crawled/" + query.replace("+", "_") + "/"
     if not os.path.exists(DIR):  # se as imagens ainda não foram coletadas
         os.makedirs(DIR)
         for img in images:
             raw_img = urlopen(img).read()
-            #add the directory for your image here
+            # add the directory for your image here
             cntr = len([i for i in os.listdir(DIR)]) + 1
             f = open(DIR + query.replace("+", "_") + "_" + str(cntr) + ".jpg", 'wb')
-            
+
             f.write(raw_img)
             f.close()
 

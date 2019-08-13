@@ -5,7 +5,7 @@ app/src/PLN/stanfordNER/
 app/src/PLN/TreeTagger*/
 app/src/TreeTagger_old/
 app/src/PLN/treetagger-python/
-app/src/noticia_atual/*
+app/src/noticia_atual
 app/src/noticias/
 app/src/noticias/*
 input.txt
@@ -36,13 +36,13 @@ app/static/noticias
 
 *.db
 
+*tmp/
+
 *.tar.gz
 app/src/noticias_*/
 .idea/
 *venv/
 
-app/src/amr/*/
-app/src/amr/Data
-app/src/amr/stanford-*
-app/src/amr/glove
+app/src/amr/AMR_AS_GRAPH_PREDICTION
+app/src/stanford-*
 data/

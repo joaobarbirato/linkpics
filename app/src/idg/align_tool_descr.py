@@ -3,8 +3,7 @@
     @author: João Gabriel Melo Barbirato
 """
 
-from app.src.align.idgen import Generator
-from app.align_module import models
+from app.src.idg.idgen import Generator
 
 _COLOR_TEXT_OPEN = "<b>"
 _COLOR_TEXT_CLOSE = "</b>"
