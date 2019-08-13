@@ -3,39 +3,13 @@
     @author: João Gabriel Melo Barbirato
 """
 
-import subprocess
 import os
+import subprocess
 
-from time import sleep
+from app.src.UTIL.corenlp import CoreNLPWrapper
+from config import BASE_DIR, TMP_DIR
 
-from config import BASE_DIR, CORENLP_DIR, TMP_DIR
-
-_CORENLP_START_SHELL_COMMAND = '/usr/bin/bash ' + BASE_DIR + '/app/src/UTIL/shell/start-corenlp-server.sh ' + BASE_DIR + '/' + CORENLP_DIR + ' ' + TMP_DIR
-_CORENLP_STOP_SHELL_COMMAND = '/usr/bin/bash ' + BASE_DIR + '/app/src/UTIL/shell/stop-corenlp-server.sh ' + TMP_DIR
-__TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
-
-# __COMMAND = "python src/parse.py -train_from [gpus_0valid_best.pt] -input [" \
-#             "file]"
-#
-
-# def parse_amr_txt():
-#     os.chdir("app/src/amr/AMR_AS_GRAPH_PREDICTION")
-#     os.environ['PYTHONPATH'] = BASE_DIR + "app/src/amr/AMR_AS_GRAPH_PREDICTION"
-#     print(os.path.abspath(os.curdir))
-#     subprocess.Popen(__COMMAND.split(), env=os.environ)
-#     os.chdir(BASE_DIR)
-#     os.environ['PYTHONPATH'] = BASE_DIR
-
-
-class CoreNLPWrapper():
-    def __init__(self):
-        print(_CORENLP_START_SHELL_COMMAND)
-        self._subprocess = subprocess.Popen(_CORENLP_START_SHELL_COMMAND.split(' '))
-        sleep(1)
-
-    def terminate(self):
-        self._subprocess = subprocess.Popen(_CORENLP_STOP_SHELL_COMMAND.split(' '))
-        sleep(1)
+_TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
 
 
 class AMRWrapper:
@@ -107,7 +81,9 @@ def parse_to_amr_list(snts=None):
     print(a.communicate()[0])
     corenlp = CoreNLPWrapper()
 
-    do_dot_py = 'python do.py -train_from scratch/s1544871/model/gpus_0valid_best.pt -input ' + input_dir
+    corenlp.start_base()
+
+    do_dot_py = 'python do.py -train_from ' + _TRAIN_FROM + ' -input ' + input_dir
 
     snt_to_txt = subprocess.Popen(
         do_dot_py.split(),
