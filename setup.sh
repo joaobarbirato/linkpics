@@ -4,11 +4,11 @@
 ## Setup TreeTagger
 base_dir=$(pwd)
 tree_tagger_dir="./TreeTagger"
-echo $tree_tagger_dir
+echo ${tree_tagger_dir}
 wget https://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/tree-tagger-linux-3.2.2.tar.gz
-mkdir $tree_tagger_dir
-mv tree-tagger-linux-3.2.2.tar.gz $tree_tagger_dir
-cd $tree_tagger_dir
+mkdir ${tree_tagger_dir}
+mv tree-tagger-linux-3.2.2.tar.gz ${tree_tagger_dir}
+cd ${tree_tagger_dir}
 tar xvzf tree-tagger-linux-3.2.2.tar.gz
 
 wget https://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/tagger-scripts.tar.gz
@@ -23,13 +23,13 @@ rm *.tar.gz
 
 cd ..
 
-mv $tree_tagger_dir app/src/PLN
+mv ${tree_tagger_dir} app/src/PLN
 
-cd app/src/PLN/$tree_tagger_dir
+cd app/src/PLN/${tree_tagger_dir}
 
 sh install-tagger.sh
 
-cd $base_dir
+cd ${base_dir}
 
 # 2.
 # Installing git dependencies
@@ -44,4 +44,5 @@ wget https://pjreddie.com/media/files/yolov3.weights
 ./darknet detect cfg/yolov3.cfg yolov3.weights data/dog.jp
 cd ..
 mv darknet app/src/IA/YOLO
-cd $base_dir
+cd ${base_dir}
+mkdir ${base_dir}app/tmp

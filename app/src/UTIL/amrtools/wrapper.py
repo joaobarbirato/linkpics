@@ -5,6 +5,7 @@
 
 import os
 import subprocess
+import penman
 
 from app.src.UTIL.corenlp import CoreNLPWrapper
 from config import BASE_DIR, TMP_DIR
@@ -21,6 +22,7 @@ class AMRWrapper:
         self.pos = pos
         self.nodes = {}
         self.edges = []
+        self.penman = None
 
     def _get_node_val(self, var=None):
         if var is not None:
@@ -62,6 +64,13 @@ class AMRWrapper:
                 'parent': line_split[5]
             })
 
+    def set_penman(self, penman_notation):
+        self.penman = penman_notation
+
+    def get_penman(self, return_type='str'):
+        if return_type == 'str':
+            return penman.encode(self.penman)
+
     def is_node(self, value=None):
         if value is not None:
             for _, node_value in self.nodes.items():
@@ -90,9 +99,10 @@ def parse_to_amr_list(snts=None):
         stdout=subprocess.PIPE
     )
     snt_to_txt.wait()
-    corenlp.terminate()
+    corenlp.terminate_base()
     amr_list = []
-    with open('input.txt_parsed', 'r') as output_file:
+    penman_notation = []
+    with open(TMP_DIR + '/input.txt_parsed', 'r') as output_file:
         # AMR_AS_GRAPH_PREDICTION will always end a generated '_parsed' file with \n\n\n
         outputs = output_file.read().split('\n\n')[:-1]
     for output in outputs:
@@ -112,9 +122,16 @@ def parse_to_amr_list(snts=None):
                         amr_graph.add_node(line)
                     elif "edge" in line.split(' ')[1]:
                         amr_graph.add_edge(line)
+                    elif "ner" not in line.split(' ')[1]:
+                        penman_notation.append(line)
 
+            penman_string = ''.join(penman_notation).replace('\n', '')
+            penman_graph = penman.decode(penman_string)
+
+            amr_graph.set_penman(penman_graph)
             amr_graph.build_ne_nodes()
             amr_list.append(amr_graph)
+
     os.chdir(BASE_DIR)
     return amr_list
 
