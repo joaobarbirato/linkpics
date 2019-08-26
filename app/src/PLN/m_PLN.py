@@ -3,6 +3,8 @@ from nltk.corpus import wordnet as wn
 from treetagger import TreeTagger
 
 from app.src.PLN.chunk_sintagmas import MWEChunker
+from app.src.PLN.coreference import CoreferenceDocument
+from app.src.UTIL.corenlp import CoreNLPWrapper
 from .entidade_nomeada import EntidadeNomeada
 from .reconhecimento_nomeada import *
 from .word import Palavra
@@ -44,6 +46,8 @@ class AplicadorPLN(object):
         self.lst_diferenca_entidades = []
         self.dict_lematizado = {}
         self.chunker = MWEChunker()
+
+        self.crefdoc = CoreferenceDocument()
 
         PATH_LOCATION = os.path.dirname(os.path.abspath(__file__))
         print(PATH_LOCATION)
@@ -156,6 +160,19 @@ class AplicadorPLN(object):
         global lst_treetagger
         if self.chunker.set_list_tt(lst_treetagger):
             lst_treetagger = self.chunker.chunk()
+
+    def ResolveCoreferences(self):
+        """
+
+        :return:
+        """
+        sentences = f'{self.titulo}.{self.legenda}.{self.noticia}'
+        cnlpw = CoreNLPWrapper()
+        coref_dict = cnlpw.coreference_resolution(sentences=sentences, comm=True)
+        self.crefdoc.load_dict(coref_dict, sentences)
+
+    def get_crefdoc(self):
+        return self.crefdoc
 
     def AplicarStanforNER(self):
         lst_ner = self.stanfordner.tag(self.noticia.split())

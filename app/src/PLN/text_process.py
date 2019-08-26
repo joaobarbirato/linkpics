@@ -12,6 +12,11 @@ class ThreadPLN(threading.Thread):
 
     def run(self):
         print("Starting " + self.name)
+
+        resolve_coref = threading.Thread(target=self.pln.ResolveCoreferences())
+        resolve_coref.start()
+        resolve_coref.join()
+
         self.pln.FiltrarTexto()
         self.pln.ObterPalavrasLegenda()
         self.pln.ObterPalavrasTitulo()

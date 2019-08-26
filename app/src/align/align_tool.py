@@ -301,6 +301,43 @@ class AlignTool:
 
         return retorno
 
+    def _mark_coref(self):
+        crefs = self.aplicador_pln.get_crefdoc().get_coref_terms()
+        document = self.aplicador_pln.get_crefdoc().get_sentences()
+        from nltk import word_tokenize
+
+        tokenized_split_sentences = []
+        for snt in document.split('. '):
+            tokenized_split_sentences.append(word_tokenize(snt))
+        # tokenized_sentences = word_tokenize(sentences)
+        len_titulo = len(word_tokenize(self.titulo_noticia))
+        len_legenda = len(word_tokenize(self.legenda))
+        len_noticia = len(word_tokenize(self.noticia))
+
+        print(f'[tokenized_sentences]\n\t{tokenized_split_sentences}\n')
+        i = 1
+        for cref in crefs:
+            for mention in cref:
+                mtext_tokenized = word_tokenize(mention.text)
+                mtext_tokenized[-1] = mtext_tokenized[-1] + f' <sup>[{i}]</sup>'
+                print(f'{mention.text}, {mtext_tokenized}:\n\t{tokenized_split_sentences[mention.sentence-1][mention.start-1:mention.end-1]}\n\t{mtext_tokenized}\n')
+                tokenized_split_sentences[mention.sentence-1][mention.start - 1:mention.end-1] = mtext_tokenized
+            i += 1
+        from nltk.tokenize.treebank import TreebankWordDetokenizer
+
+        tokenized_sentences = []
+        for snt in tokenized_split_sentences:
+            tokenized_sentences += snt
+
+        print(f'[TITULO]  tokenized_sentences[:len_titulo] = \n\t{tokenized_sentences[:len_titulo]}')
+        self.titulo_noticia = TreebankWordDetokenizer().detokenize(tokenized_sentences[:len_titulo]).replace('``', '"')
+        print(f'[LEGENDA] tokenized_sentences[len_titulo:len_titulo+len_legenda] = \n\t{tokenized_sentences[len_titulo:len_titulo+len_legenda]}')
+        self.legenda = TreebankWordDetokenizer().detokenize(tokenized_sentences[len_titulo:len_titulo+len_legenda]).replace('``', '"')
+        print(f'[NOTICIA] tokenized_sentences[-len_noticia:] = \n\t{tokenized_sentences[-len_noticia:]}')
+        self.noticia = TreebankWordDetokenizer().detokenize(tokenized_sentences[len_titulo+len_legenda:len_titulo+len_legenda+len_noticia]).replace('``', '"')
+        return crefs
+
+
     @staticmethod
     def _mwe_with_separators(mwe):
         SEPARATORS = [' ', '-']
@@ -342,7 +379,7 @@ class AlignTool:
         imagem = Imagem(self.path_imagem, self.directory, self.PATH_PROJETO)
         # cria uma instancia do processador de texto
         self.aplicador_pln = AplicadorPLN(self.PATH_PROJETO, self.noticia, self.legenda, self.titulo_noticia,
-                     self.path_noticia, self.directory)
+                                          self.path_noticia, self.directory)
 
         self.lst_top_nomeadas_texto = self.aplicador_pln.get_list_top_entidades_nomeadas()
 
@@ -367,7 +404,8 @@ class AlignTool:
         self.lst_legenda = self.aplicador_pln.entidades_legenda()
 
         self.lst_top_nomeadas_texto = self.aplicador_pln.get_list_top_entidades_nomeadas()
-        print("Pessoas no texto:",  [ne.palavra for ne in self.lst_top_nomeadas_texto])#str(len(self.lst_top_nomeadas_texto)))
+        print("Pessoas no texto:",
+              [ne.palavra for ne in self.lst_top_nomeadas_texto])  # str(len(self.lst_top_nomeadas_texto)))
         self.dict_lematizado = self.aplicador_pln.get_dict_lematizado()
         self.list_boundingBoxOrganizada = imagem.list_boundingBoxOrganizada
         self.lst_top_substantivos_objects = self.aplicador_pln.lst_top_substantivos_objects
@@ -417,6 +455,15 @@ class AlignTool:
 
         self.titulo_noticia = self.titulo_noticia.replace("?", "")
         img_url = STATIC_REL + self.titulo_noticia + "_" + str(person_choose) + "_" + str(object_choose) + ".jpg"
+
+        print(f'ANTES DAS COREF:\n\t{self.titulo_noticia}\n\t{self.legenda}\n\t{self.noticia}')
+        crefs = self._mark_coref()
+        print(f'DEPOIS DAS COREF:\n\t{self.titulo_noticia}\n\t{self.legenda}\n\t{self.noticia}')
+
+        self.noticia += '\n\n<ul>'
+
+        for i, cref in enumerate(crefs, start=1):
+            self.noticia += f'<sub>[{i}] {", ".join([mention.text for mention in cref])}</sub><br/>'
 
         # reseta o indice
         self.palette.reset_colors()
