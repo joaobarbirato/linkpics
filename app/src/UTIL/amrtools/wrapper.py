@@ -13,6 +13,10 @@ from config import BASE_DIR, TMP_DIR
 _TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
 
 
+def get_amr_from_snt(snt, amr_list):
+    return next((amr for amr in amr_list if amr.snt == snt or snt in amr.snt or amr.snt in snt), None)
+
+
 class AMRWrapper:
     def __init__(self, snt, token, lemma, pos, ner):
         self.snt = snt
@@ -101,11 +105,12 @@ def parse_to_amr_list(snts=None):
     snt_to_txt.wait()
     corenlp.terminate_base()
     amr_list = []
-    penman_notation = []
+
     with open(TMP_DIR + '/input.txt_parsed', 'r') as output_file:
         # AMR_AS_GRAPH_PREDICTION will always end a generated '_parsed' file with \n\n\n
         outputs = output_file.read().split('\n\n')[:-1]
     for output in outputs:
+        penman_notation = []
         if output != " " and output != "  " and output is not None:
             output_split = output.split('\n')
             amr_graph = AMRWrapper(

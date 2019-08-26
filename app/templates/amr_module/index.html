@@ -10,7 +10,11 @@
     <div class="row" id="amr_form_row">
         <div class="col-lg-12 my-4">
             <div class="m-4 rounded card">
-                <img class="card-img-top img-responsive img-amr" style="object-fit: scale-down;" id="amr-graph" src="{{ url_for('static', filename='black_image.png') }}" alt="Card image cap">
+                <label for="penman-area" class="row">
+                    <textarea id="penman-area" class="text-monospace m-4 col" rows="25" cols="50">
+                    </textarea>
+                </label>
+                {#                <img class="card-img-top img-responsive img-amr" style="object-fit: scale-down;" id="amr-graph" src="{{ url_for('static', filename='black_image.png') }}" alt="Card image cap">#}
                 <div class="card-block">
                     <form enctype="multipart/form-data" id="amr-form" method="POST" action="{{ url_for('amr.generate') }}">
                         <input name="csrf_token" type="hidden" id="amr_form_csrf" value="{{ csrf_token() }}" />
@@ -75,7 +79,9 @@
                 $(item).click(function (e) {
                     value = $(item).attr("value");
                     console.log(value);
-                    $("#amr-graph").attr("src", "/static/graphs/Graph_" + value + ".png");
+                    $('#penman-area').val('');
+                    $('#penman-area').val($(item).find("input").attr("value"));
+                    {#$("#amr-graph").attr("src", "/static/graphs/Graph_" + value + ".png");#}
                 });
                 $(item).mouseover(function (e) {
                     $(item).attr("style", "color: red; cursor: default;");

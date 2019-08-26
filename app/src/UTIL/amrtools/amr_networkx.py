@@ -3,9 +3,10 @@
     @author: João Gabriel Melo Barbirato
 """
 import json
+from typing import Optional, Any
 
 from app import app
-from app.src.UTIL.amrtools.wrapper import parse_to_amr_list
+from app.src.UTIL.amrtools.wrapper import parse_to_amr_list, get_amr_from_snt, AMRWrapper
 import networkx as nx
 import matplotlib.pyplot as plt
 from nltk import sent_tokenize
@@ -78,12 +79,25 @@ def crawl_link_to_generated_amr(link):
         _title_tokenized = sent_tokenize(text=title)
         _subtitle_tokenized = sent_tokenize(text=subtitle)
 
+        snt_list = _text_tokenized + _title_tokenized + _subtitle_tokenized
+
+        # generate_digraphs_amr(snt_list=snt_list)
+        amr_list = parse_to_amr_list(snts=snt_list)
+
         inc = 0
+        import penman
 
         def link_to_graph(number, snt, string):
-            return string.replace(
-                snt, "<a id=\"link_to_" + str(number) + "\" value=\"" + str(number) + "\">" + snt + "</a>"
-            )
+            amr = get_amr_from_snt(snt=snt, amr_list=amr_list)
+            html_penman = penman.encode(amr.penman, indent=4).replace("\"", "'")
+            if amr is not None:
+                return string.replace(
+                    snt, f'<a id="link_to_{str(number)}" value="{str(number)}">'
+                         f'<input type="hidden" id="amr_hidden_link_hidden_to_{str(number)}" '
+                         f'value="{html_penman}"/>'
+                         f'{snt}'
+                         f'</a>'
+                )
 
         for snt in _text_tokenized:
             text = link_to_graph(number=inc, snt=snt, string=text)
@@ -96,10 +110,6 @@ def crawl_link_to_generated_amr(link):
         for snt in _subtitle_tokenized:
             subtitle = link_to_graph(number=inc, snt=snt, string=subtitle)
             inc += 1
-
-        snt_list = _text_tokenized + _title_tokenized + _subtitle_tokenized
-
-        generate_digraphs_amr(snt_list=snt_list)
 
         return dict(
             text=text,
@@ -115,4 +125,3 @@ if __name__ == "__main__":
             'The girl made adjustments to the machine',
         ]
     )
-
