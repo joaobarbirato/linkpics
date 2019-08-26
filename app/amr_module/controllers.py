@@ -9,13 +9,11 @@ mod_amr = Blueprint('amr', __name__, url_prefix='/amr')
 
 
 @mod_amr.route('/', methods=['GET', 'POST'])
-@login_required
 def home():
     return render_template('amr_module/index.html', button="Gerar AMRs")
 
 
 @mod_amr.route('/generate', methods=['GET', 'POST'])
-@login_required
 def generate():
     _link = request.form['link']
 

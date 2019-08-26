@@ -1,0 +1,15 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Image Description Generation</title>
+{% endblock %}
+
+{% block conteudo %}
+    {% include 'helpers/loading.html' %}
+    <h1 class="custom-title m-4">Gerar Descrições de Imagem</h1>
+    {% include 'link_form.html' %}
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/loading.js') }}"></script>
+{% endblock %}
