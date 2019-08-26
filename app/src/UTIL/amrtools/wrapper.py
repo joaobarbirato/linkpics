@@ -8,9 +8,66 @@ import subprocess
 import penman
 
 from app.src.UTIL.corenlp import CoreNLPWrapper
-from config import BASE_DIR, TMP_DIR
+from config import BASE_DIR, TMP_DIR, SHELL_DIR
 
 _TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
+
+
+def penman_to_text(amr_list):
+    """
+
+    :param amr_list:
+    :return:
+
+    :type amr_list: list
+    """
+    _penman_to_simplify = []
+
+    _penman_to_simplify = [amr.penman for amr in amr_list]
+
+    _file_name = 'snts'
+    _file_path = f'{TMP_DIR}/{_file_name}.amr'
+    _penman_to_simplify = [penman.encode(element, indent=False) for element in _penman_to_simplify]
+
+    with open(_file_path, 'w') as amr_file:
+        for pts in _penman_to_simplify:
+            amr_file.write(f'{pts}\n')
+
+    # anonymize written amr
+    print(f"PRIMEIRO PATH: {_file_path}")
+    amr_simplify_shell = subprocess.Popen(f'{SHELL_DIR}/amr-simplify.sh {_file_path}'.split(), stdout=subprocess.PIPE)
+    amr_simplify_shell.communicate()
+
+    # read anonymized amr
+    anonimized_amr = open(f'{_file_path}.anonymized', 'r').readlines()
+
+    # anonymized amr to JSON format
+    amr_json_list = []
+    _json_file_name = f'{_file_name}.amr'
+    _json_file_path = f'{TMP_DIR}/{_json_file_name}.json'
+
+    for i, amr in enumerate(amr_list):
+        json_cell = {
+            "amr": anonimized_amr[i],
+            "id": str(i),
+            "sent": amr.snt
+        }
+        amr_json_list.append(json_cell)
+
+    print(f"SEGUNDO PATH: {_json_file_path}")
+    with open(_json_file_path, 'w') as json_file:
+        formated_list = str(amr_json_list).replace("'", "\"")
+        json_file.write(f'{formated_list}\n')
+
+    # run amr-to-seq
+    amr_to_snt_shell = subprocess.Popen(f'{SHELL_DIR}/amr-to-snt.sh {_json_file_path}'.split(), stdout=subprocess.PIPE)
+    amr_to_snt_shell.communicate()
+
+    # read generated sequences
+    full_sequences = open(f'{_json_file_path}.tok', 'r').read().split("--------\n========\n")[:-1]
+    sequences = [seq.split('\n')[2].replace('</s>', '') for seq in full_sequences]
+
+    return sequences
 
 
 def get_amr_from_snt(snt, amr_list):
@@ -27,6 +84,12 @@ class AMRWrapper:
         self.nodes = {}
         self.edges = []
         self.penman = None
+
+    def __repr__(self):
+        return penman.encode(self.penman, indent=False)
+
+    def __str__(self):
+        return penman.encode(self.penman, indent=False)
 
     def _get_node_val(self, var=None):
         if var is not None:
@@ -48,9 +111,6 @@ class AMRWrapper:
     def add_node(self, line=None):
         line_split = line.split(' ')[1].replace('"', '').split('\t')
         self.nodes[line_split[1]] = line_split[2]
-        # self.nodes.append(
-        #     (line_split[1], line_split[2])
-        # )
 
     def add_edge(self, line=None):
         line_split = line.split(' ')[1].replace('"', '').split('\t')
