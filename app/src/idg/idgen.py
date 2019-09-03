@@ -9,6 +9,10 @@ from itertools import combinations
 
 class Generator:
     def __init__(self, title, sub, text, aligned_subs):
+        """
+
+        :type aligned_subs: AlignGroup
+        """
         self._title = title.replace(".", ". ").replace("  ", " ")
         self._sub = sub.replace(".", ". ").replace("  ", " ")
         self._text = text.replace(".", ". ").replace("  ", " ")
@@ -36,7 +40,7 @@ class Generator:
                 _pre_char_list = ['(', ' ', '-', '"']
                 _snt = ''
                 for pc in _pre_char_list:
-                    painted_snt = painted_snt.replace(pc + a.term, pc + _open_tag + a.term   + _close_tag)
+                    painted_snt = painted_snt.replace(pc + a.term, pc + _open_tag + a.term + _close_tag)
             return painted_snt
 
     def _two_match_gen(self):
@@ -76,7 +80,7 @@ class Generator:
 
         max_wfreq = max(word_frequencies.values())
         for word in word_frequencies.keys():
-            word_frequencies[word] = word_frequencies[word]/max_wfreq
+            word_frequencies[word] = word_frequencies[word] / max_wfreq
 
         for snt in self._snts:
             for word in nltk.word_tokenize(snt.lower()):
@@ -117,6 +121,18 @@ class Generator:
 
         return _worked
 
+    def _merge_amr(self):
+        # source sentence selection
+        # TODO:
+
+        # content planning
+        # TODO:
+
+        # surface realization
+        # TODO:
+
+        pass
+
     def _apply_criteria(self, crit_type=None):
         """
         Criteria for confirming description
@@ -154,4 +170,3 @@ class Generator:
 
     def get_gen_descr(self):
         return self._gen_descr
-

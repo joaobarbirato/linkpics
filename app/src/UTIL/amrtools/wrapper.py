@@ -34,7 +34,6 @@ def penman_to_text(amr_list):
             amr_file.write(f'{pts}\n')
 
     # anonymize written amr
-    print(f"PRIMEIRO PATH: {_file_path}")
     amr_simplify_shell = subprocess.Popen(f'{SHELL_DIR}/amr-simplify.sh {_file_path}'.split(), stdout=subprocess.PIPE)
     amr_simplify_shell.communicate()
 
@@ -54,7 +53,6 @@ def penman_to_text(amr_list):
         }
         amr_json_list.append(json_cell)
 
-    print(f"SEGUNDO PATH: {_json_file_path}")
     with open(_json_file_path, 'w') as json_file:
         formated_list = str(amr_json_list).replace("'", "\"")
         json_file.write(f'{formated_list}\n')

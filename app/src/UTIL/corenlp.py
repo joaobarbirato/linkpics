@@ -14,8 +14,7 @@ _dict_commands = {
     'start_base': '/usr/bin/bash ' + BASE_DIR + _UTIL_SHELL_BASE + '/start-corenlp-server.sh '
                   + BASE_DIR + '/' + CORENLP_DIR + ' ' + TMP_DIR,
     'stop_base': '/usr/bin/bash ' + BASE_DIR + _UTIL_SHELL_BASE + '/stop-corenlp-server.sh ' + TMP_DIR,
-    'correference_resolution': '/usr/bin/bash ' + BASE_DIR + _UTIL_SHELL_BASE + '/coreference-corenlp.sh '
-                  + BASE_DIR + '/' + CORENLP_DIR
+    'correference_resolution': f'/usr/bin/bash {BASE_DIR}/{_UTIL_SHELL_BASE}/coreference-corenlp.sh {BASE_DIR}/{CORENLP_DIR}'
 }
 
 
@@ -40,6 +39,9 @@ class CoreNLPWrapper:
 
         # find coref key
         corefs = root.find('document').find('coreference')
+        snts = root.find('document').find('sentences')
+
+        self.corefs_dict['tokenized'] = [[tkn.find('word').text for tkn in snt.find('tokens').findall('token')] for snt in snts.findall('sentence')]
 
         for coref in corefs:
             print(f'Coreference {corefs}')
@@ -53,7 +55,7 @@ class CoreNLPWrapper:
 
         return self.corefs_dict
 
-    def coreference_resolution(self, sentences=None, out_dir=TMP_DIR, comm=False):
+    def coreference_resolution(self, sentences=None, out_dir=TMP_DIR, comm=True):
         """
         Coreference resolution
         :param sentences: sentence list
@@ -72,12 +74,13 @@ class CoreNLPWrapper:
             elif isinstance(sentences, str):
                 input_file.write(sentences)
 
-        command_with_args = _dict_commands['correference_resolution'] + ' ' + input_path + ' ' + out_dir
+        command_with_args = f'{_dict_commands["correference_resolution"]} {input_path} {out_dir}'
         self._subprocess = subprocess.Popen(command_with_args.split(' '))
         if comm:
             self._subprocess.communicate()
 
         self.corefs_dict = self._get_coref_from_xml()
+
 
         return self.corefs_dict
 

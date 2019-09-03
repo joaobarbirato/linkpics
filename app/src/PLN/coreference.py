@@ -40,6 +40,7 @@ class CoreferenceDocument:
             coreferences = []
 
         self.coreferences = coreferences
+        self.tkn_snts = None
 
         if sentences is None:
             sentences = []
@@ -51,22 +52,27 @@ class CoreferenceDocument:
     def load_dict(self, coref_dict, sentences):
         assert isinstance(coref_dict, dict)
         self.sentences = sentences
+        self.tkn_snts = coref_dict['tokenized']
         for coref, mention in coref_dict.items():
-            current_coref = Coreference()
-            for mention, items in mention.items():
-                current_mention = Mention()
-                for item, value in items.items():
-                    print(item, value)
-                    if item != 'text':
-                        current_mention.set_attr(item, int(value))
-                    else:
-                        current_mention.set_attr(item, str(value))
-                current_coref.add_mention(mention=current_mention)
+            if 'tokenized' not in coref:
+                current_coref = Coreference()
+                for mention, items in mention.items():
+                    current_mention = Mention()
+                    for item, value in items.items():
+                        print(item, value)
+                        if item != 'text':
+                            current_mention.set_attr(item, int(value))
+                        else:
+                            current_mention.set_attr(item, str(value))
+                    current_coref.add_mention(mention=current_mention)
 
-            self.add_coref(coref=current_coref)
+                self.add_coref(coref=current_coref)
 
     def get_coref_terms(self):
         return [[mention for mention in cref.mentions] for cref in self.coreferences]
 
     def get_sentences(self):
         return self.sentences
+
+    def get_tkn_snts(self):
+        return self.tkn_snts

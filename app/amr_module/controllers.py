@@ -16,7 +16,6 @@ def home():
 @mod_amr.route('/generate', methods=['GET', 'POST'])
 def generate():
     _link = request.form['link']
-
     dict_return = crawl_link_to_generated_amr(_link)
 
     return app.response_class(

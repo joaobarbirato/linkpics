@@ -306,13 +306,11 @@ class AlignTool:
         document = self.aplicador_pln.get_crefdoc().get_sentences()
         from nltk import word_tokenize
 
-        tokenized_split_sentences = []
-        for snt in document.split('. '):
-            tokenized_split_sentences.append(word_tokenize(snt))
-        # tokenized_sentences = word_tokenize(sentences)
-        len_titulo = len(word_tokenize(self.titulo_noticia))
-        len_legenda = len(word_tokenize(self.legenda))
-        len_noticia = len(word_tokenize(self.noticia))
+        tokenized_split_sentences = self.aplicador_pln.get_crefdoc().get_tkn_snts()
+
+        len_titulo = len(tokenized_split_sentences[0])
+        len_legenda = len(tokenized_split_sentences[1])
+        len_noticia = len([tkn for snts in tokenized_split_sentences[2:] for tkn in snts])
 
         print(f'[tokenized_sentences]\n\t{tokenized_split_sentences}\n')
         i = 1
@@ -463,7 +461,7 @@ class AlignTool:
         self.noticia += '\n\n<ul>'
 
         for i, cref in enumerate(crefs, start=1):
-            self.noticia += f'<sub>[{i}] {", ".join([mention.text for mention in cref])}</sub><br/>'
+            self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
 
         # reseta o indice
         self.palette.reset_colors()

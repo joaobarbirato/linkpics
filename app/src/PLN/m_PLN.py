@@ -166,7 +166,28 @@ class AplicadorPLN(object):
 
         :return:
         """
-        sentences = f'{self.titulo}.{self.legenda}.{self.noticia}'
+        # sentences = f'{self.titulo if self.titulo[-1] == "." else f"{self.titulo}."} ' \
+        #             f'{self.legenda if self.legenda[-1] == "." else f"{self.legenda}."} ' \
+        #             f'{self.noticia}'
+
+        _snt_titulo = self.titulo
+        if '.' not in self.titulo:
+            _snt_titulo += '.'
+
+        _snt_legenda = self.legenda
+        if '.' not in self.legenda and self.legenda != '':
+            _snt_legenda += '.'
+
+        sentences = f'{_snt_titulo} {_snt_legenda} {self.noticia}'
+
+        # _quote_tuples = []
+        # from re import finditer
+        # for quote in finditer('"', sentences):
+        #     _quote_tuples.append((quote.start(), quote.end()))
+
+        sentences = sentences.replace('"', '')
+        # TODO: Resolution with quotes in text
+
         cnlpw = CoreNLPWrapper()
         coref_dict = cnlpw.coreference_resolution(sentences=sentences, comm=True)
         self.crefdoc.load_dict(coref_dict, sentences)
