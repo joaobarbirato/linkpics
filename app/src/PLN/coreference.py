@@ -31,10 +31,34 @@ class Coreference:
     def add_mention(self, mention):
         self.mentions.append(mention)
 
+    def get_mentions(self):
+        return self.mentions
+
+
+class CoreNLPToken:
+    def __init__(self, dictionary):
+        self.word = dictionary['word']
+        self.lemma = dictionary['lemma']
+        self.pos = dictionary['pos']
+        self.ner = dictionary['ner']
+        self._dictionary = dictionary
+
+    def __repr__(self):
+        return self.word
+
+    def __str__(self):
+        return self.word
+
+    def marshal(self):
+        return self._dictionary
+
 
 class CoreferenceDocument:
     def __init__(self, sentences=None, coreferences=None):
         """
+
+        :param sentences:
+        :param coreferences:
         """
         if coreferences is None:
             coreferences = []
@@ -52,7 +76,7 @@ class CoreferenceDocument:
     def load_dict(self, coref_dict, sentences):
         assert isinstance(coref_dict, dict)
         self.sentences = sentences
-        self.tkn_snts = coref_dict['tokenized']
+        self.tkn_snts = [[CoreNLPToken(tkn) for tkn in snt] for snt in coref_dict['tokenized']]
         for coref, mention in coref_dict.items():
             if 'tokenized' not in coref:
                 current_coref = Coreference()
@@ -76,3 +100,6 @@ class CoreferenceDocument:
 
     def get_tkn_snts(self):
         return self.tkn_snts
+
+    def get_corefs(self):
+        return self.coreferences

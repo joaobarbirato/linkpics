@@ -37,8 +37,8 @@ def add_header(response):
     return response
 
 
-from app.src.UTIL.crawlers.crawler_bbc import Crawler as crawler_bbc
-from app.src.UTIL.crawlers.crawler import Crawler as crawler_folha
+from app.src.util.crawlers.crawler_bbc import Crawler as crawler_bbc
+from app.src.util.crawlers.crawler import Crawler as crawler_folha
 
 
 @mod_align.route('/alinhamento', methods=['POST'])
@@ -58,37 +58,37 @@ def alinhar():
             mimetype='application/json'
         )
 
-    # try:
-    result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao, grupo = alinhador.align_from_url(
-        _link, _experimento_pessoa, _experimento_objeto)
+    try:
+        result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao, grupo, _ = alinhador.align_from_url(
+            _link, _experimento_pessoa, _experimento_objeto)
 
-    if img_url != '':
-        shutil.copy2(STATIC_REL + 'alinhamento2.jpg', img_url)
+        if img_url != '':
+            shutil.copy2(STATIC_REL + 'alinhamento2.jpg', img_url)
 
-    response = dict(result_pessoas=result_pessoas,
-                    result_objetos=result_objetos,
-                    img_alinhamento=img_url.replace(STATIC_REL, 'static/'),
-                    texto=texto,
-                    legenda=legenda,
-                    titulo=titulo,
-                    message='',
-                    dic_avaliacao=dic_avaliacao)
+        response = dict(result_pessoas=result_pessoas,
+                        result_objetos=result_objetos,
+                        img_alinhamento=img_url.replace(STATIC_REL, 'static/'),
+                        texto=texto,
+                        legenda=legenda,
+                        titulo=titulo,
+                        message='',
+                        dic_avaliacao=dic_avaliacao)
 
-    print(response)
-    print(grupo.get_list_terms())
-    return app.response_class(
-        response=json.dumps(response),
-        status=200,
-        mimetype='application/json',
-        direct_passthrough=True
-    )
-    # except Exception as e:
-    #     print(e)
-    #     return app.response_class(
-    #         response=json.dumps({'message': f'{e}'}),
-    #         status=600,
-    #         mimetype='application/json'
-    #     )
+        print(response)
+        print(grupo.get_list_terms())
+        return app.response_class(
+            response=json.dumps(response),
+            status=200,
+            mimetype='application/json',
+            direct_passthrough=True
+        )
+    except Exception as e:
+        print(e)
+        return app.response_class(
+            response=json.dumps({'message': f'{str(e)}'}),
+            status=600,
+            mimetype='application/json'
+        )
 
 
 

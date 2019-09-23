@@ -5,8 +5,8 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-from app.src.UTIL.domain import *
-from app.src.UTIL.general import *
+from app.src.util.domain import *
+from app.src.util.general import *
 from config import SRC_DIR
 
 
@@ -31,7 +31,7 @@ class Crawler(object):
     def crawl_page(self, url):
         global nome_arquivo
         nome_arquivo = self.offset_dir + 'noticia_atual/' + self.obter_nome_arquivo(url)
-        path_imagem = self.offset_dir + 'noticia_atual/' + self.obter_nome_arquivo(url)
+        path_imagem = nome_arquivo
         self.coletar_img(url, path_imagem)
         titulo_noticia = ""
         if encontrou_img == 1:

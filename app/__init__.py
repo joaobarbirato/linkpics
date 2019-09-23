@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from urllib.parse import urlparse, urljoin
 from werkzeug.exceptions import BadRequestKeyError
 
-from app.src.UTIL import utils
+from app.src.util import utils
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)

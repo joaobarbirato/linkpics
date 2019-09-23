@@ -1,9 +1,9 @@
 # bibliotecas do python
 #from __future__ import print_function
 import os
-from app.src.UTIL import utils
+from app.src.util import utils
 
-from app.src.UTIL import Crawler
+from app.src.util import Crawler
 from app.src.VC.imagem import Imagem
 from app.src.PLN import AplicadorPLN
 from app.src.VC.image_process import ThreadVC

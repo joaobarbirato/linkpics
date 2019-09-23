@@ -7,7 +7,7 @@ import os
 import subprocess
 import penman
 
-from app.src.UTIL.corenlp import CoreNLPWrapper
+from app.src.util.corenlp import CoreNLPWrapper
 from config import BASE_DIR, TMP_DIR, SHELL_DIR
 
 _TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
@@ -132,6 +132,8 @@ class AMRWrapper:
     def get_penman(self, return_type='str'):
         if return_type == 'str':
             return penman.encode(self.penman)
+        elif return_type == 'graph':
+            return self.penman
 
     def is_node(self, value=None):
         if value is not None:

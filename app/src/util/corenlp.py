@@ -8,7 +8,7 @@ from time import sleep
 
 from config import TMP_DIR, BASE_DIR, CORENLP_DIR
 
-_UTIL_SHELL_BASE = '/app/src/UTIL/shell'
+_UTIL_SHELL_BASE = '/app/src/util/shell'
 
 _dict_commands = {
     'start_base': '/usr/bin/bash ' + BASE_DIR + _UTIL_SHELL_BASE + '/start-corenlp-server.sh '
@@ -40,8 +40,21 @@ class CoreNLPWrapper:
         # find coref key
         corefs = root.find('document').find('coreference')
         snts = root.find('document').find('sentences')
+        print(snts.findall('sentence'))
+        print(snts.findall('sentence')[0].find('tokens').findall('token'))
 
-        self.corefs_dict['tokenized'] = [[tkn.find('word').text for tkn in snt.find('tokens').findall('token')] for snt in snts.findall('sentence')]
+        self.corefs_dict['tokenized'] = [
+            [
+                {
+                    'word': tkn.find('word').text,
+                    'lemma': tkn.find('lemma').text,
+                    'pos': tkn.find('POS').text,
+                    'ner': tkn.find('NER').text
+                }
+                for tkn in snt.find('tokens').findall('token')
+            ]
+            for snt in snts.findall('sentence')
+        ]
 
         for coref in corefs:
             print(f'Coreference {corefs}')
@@ -80,7 +93,6 @@ class CoreNLPWrapper:
             self._subprocess.communicate()
 
         self.corefs_dict = self._get_coref_from_xml()
-
 
         return self.corefs_dict
 

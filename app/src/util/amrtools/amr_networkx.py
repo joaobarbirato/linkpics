@@ -6,13 +6,13 @@ import json
 from typing import Optional, Any
 
 from app import app
-from app.src.UTIL.amrtools.wrapper import parse_to_amr_list, get_amr_from_snt, AMRWrapper
+from app.src.util.amrtools.wrapper import parse_to_amr_list, get_amr_from_snt, AMRWrapper
 import networkx as nx
 import matplotlib.pyplot as plt
 from nltk import sent_tokenize
 
-from app.src.UTIL.crawlers.crawler import Crawler as crawler_folha
-from app.src.UTIL.crawlers.crawler_bbc import Crawler as crawler_bbc
+from app.src.util.crawlers.crawler import Crawler as crawler_folha
+from app.src.util.crawlers.crawler_bbc import Crawler as crawler_bbc
 
 from config import STATIC_REL
 

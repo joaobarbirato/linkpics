@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request
 from flask_login import login_required
 
 from app import app
-from app.src.UTIL.amrtools.amr_networkx import crawl_link_to_generated_amr
+from app.src.util.amrtools.amr_networkx import crawl_link_to_generated_amr
 
 mod_amr = Blueprint('amr', __name__, url_prefix='/amr')
 

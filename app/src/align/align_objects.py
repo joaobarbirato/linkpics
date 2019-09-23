@@ -8,7 +8,7 @@ from nltk.corpus import wordnet as wn
 from app.align_module.models import Alignment
 from app.src.PLN.WordNetClasses import TrazerSynsetBoundingBox
 from app.src.PLN.trocar_nomes import TrocarNomes
-from app.src.UTIL import utils
+from app.src.util import utils
 from config import STATIC_REL
 
 

@@ -5,7 +5,7 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-from app.src.UTIL.general import *
+from app.src.util.general import *
 from config import SRC_DIR
 
 

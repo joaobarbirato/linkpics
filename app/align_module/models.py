@@ -4,169 +4,39 @@
 """
 from sqlalchemy.orm.collections import InstrumentedList
 
-from app.eval_module.models import query_by_id, PredAlignment
+from app.align_module.base_model import Token, MWE, Synonym, Color, Sentence
+from app.align_module.coref_models import MentionModel, CoreferenceModel
+from app.src.PLN.coreference import Coreference
 from app.src.VC.boundingBox import BoundingBox
+from app import (db)
+from app.model_utils import BaseModel, _add, _add_relation, _add_session
+
+occur = db.Table('occur',
+                 db.Column('sentence_id', db.Integer, db.ForeignKey('sentence.id'), primary_key=True),
+                 db.Column('alignment_id', db.Integer, db.ForeignKey('alignment.id'), primary_key=True)
+                 )
 
 
-def _add(list_object, element):
-    if list_object is None:
-        list_object = [element]
-    elif isinstance(list_object, list):
-        list_object.append(element)
-    else:
-        list_object = [list_object, element]
-    return list_object
-
-
-def _add_relation(model, object):
-    if object is not None:
-        if isinstance(object, list):
-            model.extend(object)
-        else:
-            model.append(object)
-
-    return model
-
-
-def _add_session(object):
-    if object is not None:
-        if isinstance(object, list):
-            db.session.add_all(object)
-        else:
-            db.session.add(object)
-
-
-from app import db
-
-
-def add_db_alignments_from_list(list_alignments):
-    db.session.add_all(list_alignments)
-
-
-class Base(db.Model):
-    __abstract__ = True
-
-    id = db.Column(db.Integer, primary_key=True)
-    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
-    date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
-                              onupdate=db.func.current_timestamp())
-
-
-class MWE(Base):
-    __tablename__ = 'mwe'
-    mwe = db.Column(db.String, nullable=False, default='')
-    approval = db.Column(db.Boolean, nullable=True)
-    aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
-
-    def __init__(self, mwe):
-        self.mwe = mwe
-
-    def get_parent(self):
-        return query_by_id(PredAlignment, self.aligment_id)
-
-    def set_approval(self, appr):
-        if isinstance(appr, bool):
-            self.approval = appr
-            return True
-        return False
-
-    def add_self(self):
-        _add_session(self)
-
-    def __eq__(self, other):
-        if isinstance(other, MWE):
-            return self.mwe == other.mwe
-        elif isinstance(other, str):
-            return self.mwe == other
-
-    def __repr__(self):
-        return self.mwe
-
-    def __str__(self):
-        return self.mwe
-
-
-class Synonym(Base):
-    __tablename__ = 'synonym'
-    syn = db.Column(db.String, nullable=False, default='')
-    approval = db.Column(db.Boolean, nullable=True)
-    aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
-
-    def __init__(self, syn):
-        self.syn = syn
-
-    def get_parent(self):
-        return query_by_id(PredAlignment, self.aligment_id)
-
-    def set_approval(self, appr):
-        if isinstance(appr, bool):
-            self.approval = appr
-            return True
-        return False
-
-    def add_self(self):
-        _add_session(self)
-
-    def __eq__(self, other):
-        if isinstance(other, Synonym):
-            return self.syn == other.syn
-        elif isinstance(other, str):
-            return self.syn == other
-
-    def __repr__(self):
-        return self.sym
-
-    def __str__(self):
-        return self.syn
-
-
-class Color(Base):
-    __tablename__ = 'color'
-    red = db.Column(db.Integer, nullable=False, default=0)
-    green = db.Column(db.Integer, nullable=False, default=0)
-    blue = db.Column(db.Integer, nullable=False, default=0)
-    aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
-
-    def __init__(self, r, g, b):
-        self.red = r
-        self.green = g
-        self.blue = b
-
-    def __eq__(self, other):
-        if isinstance(other, Color):
-            return self.red == other.red and self.green == other.green and self.blue == other.blue
-        elif isinstance(other, tuple):
-            return self.red == other[0] and self.green == other[1] and self.blue == other[2]
-
-    def get_html_color(self):
-        return self.red, self.green, self.blue
-
-    def get_bb_color(self):
-        return self.blue, self.green, self.red
-
-    def __repr__(self):
-        return "<Color ", self.get_html_color(), ">"
-
-    def __str__(self):
-        return "%d, %d, %d" % (self.get_html_color()[0], self.get_html_color()[1], self.get_html_color()[2])
-
-
-class Alignment(Base):
+class Alignment(BaseModel):
     """
     main class
     """
     __tablename__ = 'alignment'
 
-    id = db.Column(db.Integer, primary_key=True)
     model_id = db.Column(db.Integer, db.ForeignKey('eval_align.id'), nullable=False)
     term = db.Column(db.String, nullable=True)
-    occurrence = db.Column(db.Integer, nullable=False, default=1)
+    occurrence_times = db.Column(db.Integer, nullable=False, default=1)
+
     colors_model = db.relationship('Color', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                    lazy=True, uselist=False)
     mwes_model = db.relationship('MWE', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                  lazy=True)
     syns_model = db.relationship('Synonym', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                  lazy=True)
+    belongs_sentence = db.relationship('Sentence', secondary=occur, lazy='subquery',
+                                       backref=db.backref('has_alignment'))
+
+    group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'), nullable=False)
 
     is_ne = db.Column(db.Boolean, nullable=True)
 
@@ -176,7 +46,7 @@ class Alignment(Base):
 
         # 1:n alignment
         self.list_bounding_box = bounding_box
-        self.occurrence = 1 if isinstance(self.list_bounding_box, BoundingBox) else len(bounding_box)
+        self.occurrence_times = 1 if isinstance(self.list_bounding_box, BoundingBox) else len(bounding_box)
 
         # multi-word expressions
         self.list_mwe = mwe
@@ -190,15 +60,15 @@ class Alignment(Base):
         self.html_color = html_color
         self.img_color = img_color
 
-    def add_occurrence(self, bounding_box=None):
+    def add_occurrence_times(self, bounding_box=None):
         """
-        Add occurrence to an alignment
-        :param bounding_box: bounding box to a new occurrence
+        Add occurrence_times to an alignment
+        :param bounding_box: bounding box to a new occurrence_times
         :return: a list of all bounding boxes connected to self.term
         """
         if bounding_box is not None:
             self.list_bounding_box = _add(self.list_bounding_box, bounding_box)
-            self.occurrence = len(self.list_bounding_box)
+            self.occurrence_times = len(self.list_bounding_box)
             return self.list_bounding_box
 
     def add_mwe(self, mwe=None):
@@ -247,6 +117,19 @@ class Alignment(Base):
                 self.color = Color(color[0], color[1], color[2])
 
                 return self.color
+
+    def add_sentence(self, sentence=None):
+        """
+
+        :type sentence: app.align_module.base_model.Sentence
+        :param sentence:
+        :return:
+        """
+        if sentence is not None and sentence:
+            if self.belongs_sentence is None or sentence not in self.belongs_sentence:
+                self.belongs_sentence = _add_relation(self.belongs_sentence, sentence)
+
+        return self.belongs_sentence
 
     def get_color(self):
         return self.color
@@ -322,10 +205,14 @@ class Alignment(Base):
         db.session.commit()
 
 
-class AlignmentGroup:
+class AlignmentGroup(BaseModel):
+    __tablename__ = 'alignment_group'
+
+    list_alignments = db.relationship('Alignment', single_parent=True, backref='alignment_group',
+                                      cascade='all, delete-orphan', lazy=True)
+
     def __init__(self, name=None):
         self.name = name
-        self.list_alignments = []
 
     def _query_term(self, x):
         return [algn for algn in self.list_alignments if
@@ -334,17 +221,17 @@ class AlignmentGroup:
                 (algn.is_ne and algn.term in x)]
 
     def add_alignments(self, alignment=None):
-        if alignment is not None:
-            if isinstance(alignment, Alignment):
-                # if not self._query_term(alignment.term):
-                self.list_alignments.append(alignment)
+        """
+        Add alignment to a group
+        :param alignment: alignment object
+        :type alignment: Alignment
+        :return: list of all alignments
+        """
+        if alignment is not None and alignment:
+            if self.list_alignments is None or alignment not in self.list_alignments:
+                self.list_alignments = _add_relation(self.list_alignments, alignment)
 
-            elif isinstance(alignment, list):
-                for a in alignment:
-                    # if not self._query_term(a.term):
-                    self.list_alignments.append(a)
-
-            return self.list_alignments
+        return self.list_alignments
 
     def get_alignment(self, term=None, index=0):
         return self._query_term(term)[index]
@@ -368,6 +255,110 @@ class AlignmentGroup:
 
     def add_db_all_alignments(self):
         db.session.add_all(self.list_alignments)
+        db.session.add(self)
+
+
+class News(BaseModel):
+    __tablename__ = 'news'
+    img_path = db.Column(db.String, nullable=False, default='')
+    sentences = db.relationship('Sentence', single_parent=True, backref='news',
+                                cascade='all, delete-orphan', lazy=True)
+    coreferences = db.relationship('CoreferenceModel', single_parent=True, backref='news', cascade='all, delete-orphan',
+                                   lazy=True)
+
+    def __init__(self, path=None):
+        self.img_path = path
+
+    def set_path(self, path):
+        """
+
+        :type path: str
+        :param path:
+        :return:
+        """
+        self.img_path = path
+
+    def add_sentence(self, sentence):
+        """
+
+        :type sentence: app.align_module.base_model.Sentence
+        :param sentence:
+        :return:
+        """
+        if sentence is not None and sentence:
+            if self.sentences is None or sentence not in self.sentences:
+                self.sentences = _add_relation(self.sentences, sentence)
+        return self.sentences
+
+    def add_coreference(self, coref):
+        """
+
+        :param coref:
+        :return:
+        """
+        if coref is not None and coref:
+            if self.coreferences is None or coref not in self.coreferences:
+                self.coreferences = _add_relation(self.coreferences, coref)
+
+    def add_from_zip_list(self, tkn_snt_list):
+        for index, (snt, tknized) in enumerate(tkn_snt_list):
+            if index == 0:
+                label = 'title'
+            elif index == 1:
+                label = 'subtitle'
+            else:
+                label = 'text'
+            snt_model = Sentence(text=snt, label=label)
+
+            for tkn in tknized:
+                tkn_model = Token(tkn.marshal())
+                snt_model.add_tokenized(tkn_model)
+                _add_session(tkn_model)
+
+            self.sentences = _add_relation(self.sentences, snt_model)
+            _add_session(snt_model)
+
+    def add_from_coref_objects(self, coref_object):
+        """
+
+        :param coref_object: list
+        :return:
+        """
+        coref: Coreference
+        for coref in coref_object:
+            _coref_model = CoreferenceModel()
+            _mention_list = []
+            for mention in coref.get_mentions():
+                _sentence = self.get_sentence_index(index=int(mention.sentence) - 1)
+                _tokens = _sentence.get_tokens(start=mention.start, end=mention.end )
+                _m = MentionModel(
+                    start=mention.start,
+                    head=mention.head,
+                    end=mention.end,
+                    tokens=_tokens
+                )
+                _mention_list.append(_m)
+
+            _coref_model.add_mention(_mention_list)
+            self.coreferences = _add_relation(self.coreferences, _coref_model)
+
+    def get_sentence_index(self, index=0):
+        if isinstance(index, int):
+            return self.sentences[index]
+        elif isinstance(index, list):
+            return [self.sentences[i] for i in index]
+
+    def get_text(self):
+        return f'{self.sentences[0]}\n{self.sentences[1]}\n{self.sentences[2:]}'
+
+    def get_sentences(self, return_type="model"):
+        if return_type == "str":
+            return [str(s) for s in self.sentences]
+        elif return_type == "model":
+            return self.sentences
+
+    def as_dict(self):
+        return {"img_path": self.img_path, "sentences": {s.as_dict() for s in self.sentences}}
 
 
 def init():

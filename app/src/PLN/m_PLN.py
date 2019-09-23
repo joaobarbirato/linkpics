@@ -4,7 +4,7 @@ from treetagger import TreeTagger
 
 from app.src.PLN.chunk_sintagmas import MWEChunker
 from app.src.PLN.coreference import CoreferenceDocument
-from app.src.UTIL.corenlp import CoreNLPWrapper
+from app.src.util.corenlp import CoreNLPWrapper
 from .entidade_nomeada import EntidadeNomeada
 from .reconhecimento_nomeada import *
 from .word import Palavra
@@ -25,6 +25,8 @@ def get_word_from_lemma(lemma=None):
 
 
 class AplicadorPLN(object):
+    crefdoc: CoreferenceDocument
+
     # -----------------------------------V A R I Á V E I S --- G L O B A I S---------------------
 
     def __init__(self, path_projeto, noticia, legenda, titulo, path, path_dir):
@@ -48,6 +50,7 @@ class AplicadorPLN(object):
         self.chunker = MWEChunker()
 
         self.crefdoc = CoreferenceDocument()
+        self.snt_tok = []
 
         PATH_LOCATION = os.path.dirname(os.path.abspath(__file__))
         print(PATH_LOCATION)
@@ -166,9 +169,6 @@ class AplicadorPLN(object):
 
         :return:
         """
-        # sentences = f'{self.titulo if self.titulo[-1] == "." else f"{self.titulo}."} ' \
-        #             f'{self.legenda if self.legenda[-1] == "." else f"{self.legenda}."} ' \
-        #             f'{self.noticia}'
 
         _snt_titulo = self.titulo
         if '.' not in self.titulo:
@@ -180,20 +180,23 @@ class AplicadorPLN(object):
 
         sentences = f'{_snt_titulo} {_snt_legenda} {self.noticia}'
 
-        # _quote_tuples = []
-        # from re import finditer
-        # for quote in finditer('"', sentences):
-        #     _quote_tuples.append((quote.start(), quote.end()))
-
         sentences = sentences.replace('"', '')
         # TODO: Resolution with quotes in text
 
         cnlpw = CoreNLPWrapper()
         coref_dict = cnlpw.coreference_resolution(sentences=sentences, comm=True)
         self.crefdoc.load_dict(coref_dict, sentences)
+        _tokenizeds = self.crefdoc.get_tkn_snts()
+
+        self.snt_tok = [element for element in
+                        zip([' '.join([str(token) for token in token_list]) for token_list in _tokenizeds],
+                            _tokenizeds)]
 
     def get_crefdoc(self):
         return self.crefdoc
+
+    def get_snt_tok(self):
+        return self.snt_tok
 
     def AplicarStanforNER(self):
         lst_ner = self.stanfordner.tag(self.noticia.split())
