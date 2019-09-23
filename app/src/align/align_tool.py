@@ -3,17 +3,21 @@
 import os
 import random
 import shutil
+from typing import List
 
-from app.align_module.models import AlignmentGroup
+from flask import json
+
+from app.align_module.coref_models import CoreferenceModel
+from app.align_module.models import AlignmentGroup, News, Alignment
 from app.src.PLN.get_syns import get_syns
 from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma)
 from app.src.PLN.text_process import ThreadPLN
-from app.src.UTIL import utils
+from app.src.util import utils
 from app.src.VC.image_process import ThreadVC
 from app.src.VC.imagem import Imagem
 from app.src.align.align_objects import AlignObjects
 from app.src.align.align_persons import AlignPersons
-from config import STATIC_REL, SRC_DIR
+from config import STATIC_REL, SRC_DIR, TMP_DIR
 
 
 class ColorPalette:
@@ -78,6 +82,8 @@ class ColorPalette:
 
 
 class AlignTool:
+    aplicador_pln: AplicadorPLN
+
     def __init__(self, crawler=None):
         if crawler:
             self.PATH_PROJETO = os.path.dirname(os.path.abspath(__file__)) + "/../../../"
@@ -130,6 +136,7 @@ class AlignTool:
             self.palette = ColorPalette()
 
             self.aplicador_pln = None
+            self.news_object = News()
 
     @staticmethod
     def _remover_caracteres_especiais(titulo_noticia):
@@ -149,7 +156,13 @@ class AlignTool:
         os.remove(SRC_DIR + "noticia_atual/titulo.txt")
 
     def _text_contains(self, substring=None):
-        return substring in self.titulo_noticia or substring in self.noticia or substring in self.legenda
+        return_list = []
+        for index, (snt, _) in enumerate(self.aplicador_pln.get_snt_tok()):
+            print(f'index: {index}\nsubstring: {substring}\nsnt: {snt}\n')
+            if substring in snt:
+                return_list.append(index)
+
+        return return_list
 
     def _get_resources(self, url):
         # rastreia a página
@@ -248,6 +261,7 @@ class AlignTool:
 
     def _show_align_text(self, persons_aligned=None, object_aligned=None):
         retorno = [None, None]
+        alinhamento: Alignment
         if persons_aligned:
             for key, value in persons_aligned.items():
                 nomes = key.split(' ')
@@ -264,36 +278,38 @@ class AlignTool:
                 index = 0 if len(key.split("#")) == 1 else key.split("#")[1]
                 alinhamento = self.group.get_alignment(term=key.split("#")[0], index=int(index))
                 lst_mwe = self.aplicador_pln.chunker.get_mwes_from_aligned(word=key.split("#")[0])
-
                 if self.aplicador_pln.chunker.has_mwe() and lst_mwe is not False:
                     for mwe in lst_mwe:
                         mwe_with_separators = self._mwe_with_separators(mwe)
                         for mwe_w_s in mwe_with_separators:
-                            print("[_SHOW_ALIGN_TEXT | if has_mwe: for mwe in lst_mwe | mwe_w_s]: ", mwe)
-                            if self._text_contains(mwe_w_s):  # a detecção de MWEs ignora pontuação no texto
-                                print("\t[_SHOW_ALIGN_TEXT | if has_mwe: for mwe in lst_mwe | contains]: True")
+                            # get index of occurred sentences
+                            sentence_has_mwe = self._text_contains(mwe_w_s)
+                            if sentence_has_mwe:  # a detecção de MWEs ignora pontuação no texto
+                                print(f'[MWE-CONTAINS] {mwe_w_s}')
                                 alinhamento.add_mwe(mwe=mwe_w_s)
+                                alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_mwe))
                                 self._paint_text(mwe_w_s, alinhamento)
 
                 palavras = self._word_to_wordpoint(palavra)
                 for p in palavras:
-                    if self._text_contains(p):
+                    sentence_has_p = self._text_contains(p)
+                    if sentence_has_p:
+                        alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_p))
                         self._paint_text(p, alinhamento)
 
                 # n:1
                 palavra_syns = get_syns(key.split("#")[0])
                 if palavra_syns is not None:
                     for ps in palavra_syns:
-                        print("[_SHOW_ALIGN_TEXT | ps]: ", ps)
                         palavras_syns_points = self._word_to_wordpoint(
                             ps if get_word_from_lemma(ps) is None else get_word_from_lemma(ps)
                         )
                         for p in palavras_syns_points:
-                            print("\t[_SHOW_ALIGN_TEXT | syn]: ", p)
-                            if self._text_contains(p):
-                                print("\t[_SHOW_ALIGN_TEXT | if self.contains(syn):syn]: ", p)
-                                self._paint_text(p, alinhamento)
+                            sentence_has_p = self._text_contains(p)
+                            if sentence_has_p:
                                 alinhamento.add_syn(syn=ps)
+                                alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_p))
+                                self._paint_text(p, alinhamento)
 
                 self.palette.inc_index()
 
@@ -303,7 +319,6 @@ class AlignTool:
 
     def _mark_coref(self):
         crefs = self.aplicador_pln.get_crefdoc().get_coref_terms()
-        document = self.aplicador_pln.get_crefdoc().get_sentences()
         from nltk import word_tokenize
 
         tokenized_split_sentences = self.aplicador_pln.get_crefdoc().get_tkn_snts()
@@ -318,7 +333,6 @@ class AlignTool:
             for mention in cref:
                 mtext_tokenized = word_tokenize(mention.text)
                 mtext_tokenized[-1] = mtext_tokenized[-1] + f' <sup>[{i}]</sup>'
-                print(f'{mention.text}, {mtext_tokenized}:\n\t{tokenized_split_sentences[mention.sentence-1][mention.start-1:mention.end-1]}\n\t{mtext_tokenized}\n')
                 tokenized_split_sentences[mention.sentence-1][mention.start - 1:mention.end-1] = mtext_tokenized
             i += 1
         from nltk.tokenize.treebank import TreebankWordDetokenizer
@@ -327,12 +341,12 @@ class AlignTool:
         for snt in tokenized_split_sentences:
             tokenized_sentences += snt
 
-        print(f'[TITULO]  tokenized_sentences[:len_titulo] = \n\t{tokenized_sentences[:len_titulo]}')
-        self.titulo_noticia = TreebankWordDetokenizer().detokenize(tokenized_sentences[:len_titulo]).replace('``', '"')
-        print(f'[LEGENDA] tokenized_sentences[len_titulo:len_titulo+len_legenda] = \n\t{tokenized_sentences[len_titulo:len_titulo+len_legenda]}')
-        self.legenda = TreebankWordDetokenizer().detokenize(tokenized_sentences[len_titulo:len_titulo+len_legenda]).replace('``', '"')
-        print(f'[NOTICIA] tokenized_sentences[-len_noticia:] = \n\t{tokenized_sentences[-len_noticia:]}')
-        self.noticia = TreebankWordDetokenizer().detokenize(tokenized_sentences[len_titulo+len_legenda:len_titulo+len_legenda+len_noticia]).replace('``', '"')
+        self.titulo_noticia = TreebankWordDetokenizer().detokenize(
+            [str(item) for item in tokenized_sentences[:len_titulo]]).replace('``', '"')
+        self.legenda = TreebankWordDetokenizer().detokenize(
+            [str(item) for item in tokenized_sentences[len_titulo:len_titulo+len_legenda]]).replace('``', '"')
+        self.noticia = TreebankWordDetokenizer().detokenize(
+            [str(item) for item in tokenized_sentences[len_titulo+len_legenda:len_titulo+len_legenda+len_noticia]]).replace('``', '"')
         return crefs
 
 
@@ -441,8 +455,6 @@ class AlignTool:
             persons_aligned = {}
 
         # O indice das cores continua de onde parou o indice realizado no alinhamento de pessoas.
-        # self.palette.set_index(new_index=len(persons_aligned.keys()))
-
         print("INDEX -- " + str(self.index_cor_bounding_box))
         print(self.colors_bounding_box[2])
         # Alinha os objetos
@@ -452,11 +464,13 @@ class AlignTool:
         object_aligned, self.group = object.align(object_choose)
 
         self.titulo_noticia = self.titulo_noticia.replace("?", "")
-        img_url = STATIC_REL + self.titulo_noticia + "_" + str(person_choose) + "_" + str(object_choose) + ".jpg"
+        img_url = STATIC_REL + f'{self.titulo_noticia}_{person_choose}_{object_choose}.jpg'
 
-        print(f'ANTES DAS COREF:\n\t{self.titulo_noticia}\n\t{self.legenda}\n\t{self.noticia}')
+        self.news_object.add_from_zip_list(self.aplicador_pln.get_snt_tok())
+        self.news_object.add_from_coref_objects(self.aplicador_pln.get_crefdoc().get_corefs())
+        # TODO: debug coreference model
+
         crefs = self._mark_coref()
-        print(f'DEPOIS DAS COREF:\n\t{self.titulo_noticia}\n\t{self.legenda}\n\t{self.noticia}')
 
         self.noticia += '\n\n<ul>'
 
@@ -485,37 +499,10 @@ class AlignTool:
         #     print(e)
 
         self.palette.reset_colors()
-        print("PROCESSO FINALIZADO")
-        return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group
 
-    def align_manual(self, legenda, titulo, texto, img_path, person_choose, object_choose):
-        """Alinha a partir de uma url fornecida pela usuario"""
-        self.titulo_noticia = titulo
-        self.legenda = legenda
-        self.noticia = texto
-        self.path_imagem = img_path
-
-        self._set_manual_resources()
-        self._process_text_image()
-
-        # Alinha as pessoas
-        person = AlignPersons(self.lst_legenda, self.lst_top_nomeadas_texto, self.list_boundingBoxOrganizada,
-                              self.directory + "/img_original.jpg", self.directory + "/")
-        persons_aligned = person.align(person_choose)
-
-        # Alinha os objetos
-        object = AlignObjects(self.lst_legenda, self.lst_top_nomeadas_texto, self.lst_top_substantivos_objects,
-                              self.list_boundingBoxOrganizada)
-        object_aligned = object.align(object_choose)
+        # with open(f'{TMP_DIR}/newsobject.json', 'w', encoding='utf-8') as file:
+        #     file.write(self.news_object.get_text())
+        # json.dump(obj=self.news_object.get_text(), fp=)
 
         print("PROCESSO FINALIZADO")
-
-        img_url = STATIC_REL + self.titulo_noticia + "_" + str(person_choose) + "_" + str(object_choose) + ".jpg"
-        return persons_aligned, object_aligned, img_url
-
-    def _get_bounding_persons(self, boundingBox):
-        bbox_pessoas = []
-        for bounding in boundingBox:
-            if bounding.objeto == "person":  # Se encontrar uma pessoa
-                bbox_pessoas.append(bounding)
-        return bbox_pessoas
+        return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group, self.news_object
