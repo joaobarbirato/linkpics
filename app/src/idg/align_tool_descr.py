@@ -17,12 +17,12 @@ class AlignToolDescr:
         self.method = method
         self.group = align_group
 
-        image_desc_gen = Generator(
-            title=self.title, sub=self.sub, text=self.text,
-            aligned_subs=self.group.get_all_alignments()
-        )
-        image_desc_gen.generate_descriptions(type="N-MATCH")
-        self.descr = image_desc_gen.get_gen_descr()
+        # image_desc_gen = Generator(
+        #     title=self.title, sub=self.sub, text=self.text,
+        #     aligned_subs=self.group.get_all_alignments()
+        # )
+        # image_desc_gen.generate_descriptions(type="N-MATCH")
+        # self.descr = image_desc_gen.get_gen_descr()
 
     def get_descr(self):
         return self.descr

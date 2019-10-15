@@ -5,10 +5,13 @@
 
 import os
 import subprocess
+from os.path import join, isfile
+
 import penman
 
+from app.amr_module.models import AMRModel
 from app.src.util.corenlp import CoreNLPWrapper
-from config import BASE_DIR, TMP_DIR, SHELL_DIR
+from config import BASE_DIR, TMP_DIR, SHELL_DIR, SRC_DIR
 
 _TRAIN_FROM = 'scratch/s1544871/model/gpus_0valid_best.pt'
 
@@ -22,19 +25,24 @@ def penman_to_text(amr_list):
     :type amr_list: list
     """
     _penman_to_simplify = []
+    if not amr_list:
+        return _penman_to_simplify
 
-    _penman_to_simplify = [amr.penman for amr in amr_list]
+    if isinstance(amr_list[0], AMRModel):
+        _penman_to_simplify = [amr.get_penman(return_type='str', indent=False) for amr in amr_list]
+    elif isinstance(amr_list[0], str):
+        _penman_to_simplify = amr_list
 
     _file_name = 'snts'
     _file_path = f'{TMP_DIR}/{_file_name}.amr'
-    _penman_to_simplify = [penman.encode(element, indent=False) for element in _penman_to_simplify]
+    # _penman_to_simplify = [penman.encode(element, indent=False) for element in _penman_to_simplify]
 
     with open(_file_path, 'w') as amr_file:
         for pts in _penman_to_simplify:
             amr_file.write(f'{pts}\n')
 
     # anonymize written amr
-    amr_simplify_shell = subprocess.Popen(f'{SHELL_DIR}/amr-simplify.sh {_file_path}'.split(), stdout=subprocess.PIPE)
+    amr_simplify_shell = subprocess.Popen(f'{SHELL_DIR}/amr-simplify.sh {BASE_DIR} {_file_path}'.split(), stdout=subprocess.PIPE)
     amr_simplify_shell.communicate()
 
     # read anonymized amr
@@ -49,7 +57,7 @@ def penman_to_text(amr_list):
         json_cell = {
             "amr": anonimized_amr[i],
             "id": str(i),
-            "sent": amr.snt
+            "sent": ""
         }
         amr_json_list.append(json_cell)
 
@@ -58,7 +66,7 @@ def penman_to_text(amr_list):
         json_file.write(f'{formated_list}\n')
 
     # run amr-to-seq
-    amr_to_snt_shell = subprocess.Popen(f'{SHELL_DIR}/amr-to-snt.sh {_json_file_path}'.split(), stdout=subprocess.PIPE)
+    amr_to_snt_shell = subprocess.Popen(f'{SHELL_DIR}/amr-to-snt.sh {BASE_DIR} {_json_file_path}'.split(), stdout=subprocess.PIPE)
     amr_to_snt_shell.communicate()
 
     # read generated sequences
@@ -145,7 +153,7 @@ class AMRWrapper:
 
 
 def parse_to_amr_list(snts=None):
-    os.chdir(BASE_DIR + "/app/src/amr/AMR_AS_GRAPH_PREDICTION")
+    os.chdir(f"{BASE_DIR}/{SRC_DIR}amr/AMR_AS_GRAPH_PREDICTION")
     input_dir = TMP_DIR + '/input.txt'
     with open(input_dir, 'w+') as input_file:
         for snt in snts:
@@ -156,12 +164,11 @@ def parse_to_amr_list(snts=None):
 
     corenlp.start_base()
 
-    do_dot_py = 'python do.py -train_from ' + _TRAIN_FROM + ' -input ' + input_dir
+    crdir = os.getcwd()
+    onlyfiles = [f for f in os.listdir(crdir) if isfile(join(crdir, f))]
+    do_dot_py = f'{BASE_DIR}/venv/bin/python3 do.py -train_from {_TRAIN_FROM} -input {input_dir}'
 
-    snt_to_txt = subprocess.Popen(
-        do_dot_py.split(),
-        stdout=subprocess.PIPE
-    )
+    snt_to_txt = subprocess.Popen(do_dot_py.split())
     snt_to_txt.wait()
     corenlp.terminate_base()
     amr_list = []
@@ -201,9 +208,18 @@ def parse_to_amr_list(snts=None):
     return amr_list
 
 
-if __name__ == "__main__":
+def __test_parse_to_amr_list():
     snt = ['The marble is white']
     amrs = parse_to_amr_list(snts=snt)
     print(amrs[0].nodes)
     print(amrs[0].edges)
     print(amrs[0].nodes['n7'])
+
+
+if __name__ == "__main__":
+    # [a] = penman_to_text(['(a24 / and :op1 (f16 / frame-06 :ARG1 (l15 / landscape :ARG1-of (b17 / blather-01 :ARG1 (o18 / organization :name (n19 / name :op1 "Planalto" :op2 "Palace") :location (s23 / side :ARG1-of (l22 / left-19)) :wiki -)))) :op2 (f32 / follow-01 :ARG0 (p30 / person :ARG0-of (p31 / protest-01 :ARG0 (p6 / person :ARG0-of (c5 / champion-01 :ARG1 (g1 / game :name (n2 / name :op1 "Olympic") :wiki "Olympic_Games") :ARG1 (b4 / ball-01)) :name (n7 / name :op1 "Fabiana" :op2 "Claudino") :ARG0-of (r10 / run-01 :ARG1 (h11 / hold-01 :ARG1 (t12 / torch)) :op1-of (a13 / and :op2 (a14 / around))) :ARG0-of h11 :quant 2 :wiki -)) :ARG0-of (s34 / scream-01 :ARG0 (a33 / athlete)))) :op2 (g25 / government-organization :name (n26 / name :op1 "National" :op2 "Congress") :ARG1-of (r29 / right-05) :wiki "National_Congress_of_the_Communist_Party_of_China"))'])
+    [a] = penman_to_text(
+        ['(p30 / person :ARG0-of (p31 / protest-01 :ARG0 (p6 / person :name (n7 / name :op1 "Fabiana" :op2 "Claudino") :wiki - :ARG0-of (r10 / run-01 :ARG1 (h11 / hold-01 :ARG1 (t12 / torch)) :op1-of (a13 / and :op2 (a14 / around))) :ARG0-of h11 :quant 2 :ARG0-of (c5 / champion-01 :ARG1 (b4 / ball-01) :ARG1 (g1 / game :name (n2 / name :op1 "Olympic") :wiki "Olympic_Games")))) :ARG0-of (s34 / scream-01 :ARG0 (a33 / athlete)))',
+         '(p6 / person :name (n7 / name :op1 "Fabiana" :op2 "Claudino") :wiki - :ARG0-of (r10 / run-01 :ARG1 (h11 / hold-01 :ARG1 (t12 / torch)) :op1-of (a13 / and :op2 (a14 / around))) :ARG0-of h11 :quant 2 :ARG0-of (c5 / champion-01 :ARG1 (b4 / ball-01) :ARG1 (g1 / game :name (n2 / name :op1 "Olympic") :wiki "Olympic_Games")) :ARG0-of (p31 / protest-01 :ARG0 (p30 / person :ARG0-of (s34 / scream-01 :ARG0 (a33 / athlete)))))']
+    )
+    print(a)
