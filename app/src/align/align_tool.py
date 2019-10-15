@@ -267,7 +267,10 @@ class AlignTool:
                 nomes = key.split(' ')
                 for nome in nomes:
                     alinhamento = self.group.get_alignment(term=nome)
-                    self._paint_text(nome, alinhamento)
+                    sentence_has_name = self._text_contains(nome)
+                    if sentence_has_name:
+                        self._paint_text(nome, alinhamento)
+                        alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_name))
                 self.palette.inc_index()
             retorno[0] = persons_aligned
 
@@ -468,7 +471,6 @@ class AlignTool:
 
         self.news_object.add_from_zip_list(self.aplicador_pln.get_snt_tok())
         self.news_object.add_from_coref_objects(self.aplicador_pln.get_crefdoc().get_corefs())
-        # TODO: debug coreference model
 
         crefs = self._mark_coref()
 

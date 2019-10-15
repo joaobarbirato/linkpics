@@ -138,7 +138,7 @@ def align_batch():
                     mimetype='application/json'
                 )
 
-            result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao, group = alinhador.align_from_url(
+            result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao, group, _ = alinhador.align_from_url(
                 _link, _experimento_pessoa, _experimento_objeto)
 
             if img_url != '':

@@ -16,6 +16,8 @@ occur = db.Table('occur',
                  db.Column('alignment_id', db.Integer, db.ForeignKey('alignment.id'), primary_key=True)
                  )
 
+from app.desc_module.models import Description
+
 
 class Alignment(BaseModel):
     """
@@ -39,6 +41,8 @@ class Alignment(BaseModel):
     group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'), nullable=False)
 
     is_ne = db.Column(db.Boolean, nullable=True)
+
+    description = db.relationship('Description', single_parent=True, uselist=False, backref='alignment', lazy=True)
 
     def __init__(self, bounding_box, term, mwe=None, syns=None, is_ne=False, html_color=None, img_color=None):
         self.term = term
@@ -131,8 +135,26 @@ class Alignment(BaseModel):
 
         return self.belongs_sentence
 
+    def add_description(self, description):
+        """
+
+        :param alignment:
+        :return:
+        """
+        self.description = description
+        return self.description
+
+    def get_term(self):
+        return self.term
+
     def get_color(self):
         return self.color
+
+    def get_syns(self):
+        return self.syns_model
+
+    def get_mwes(self):
+        return self.mwes_model
 
     def is_syn(self, syn=None):
         """
@@ -170,12 +192,18 @@ class Alignment(BaseModel):
         """
         return bool(self.mwes_model)
 
+    def sentences(self):
+        return self.belongs_sentence
+
     def get_len_mwes_model(self):
         """
         Inform how many multi-word expressions are associated with an alignment
         :return: length of mwes_model relationship array
         """
         return len(self.mwes_model) if self.mwes_model else 0
+
+    def get_description(self):
+        return self.description
 
     def has_color(self):
         """
@@ -301,6 +329,11 @@ class News(BaseModel):
                 self.coreferences = _add_relation(self.coreferences, coref)
 
     def add_from_zip_list(self, tkn_snt_list):
+        """
+
+        :param tkn_snt_list:
+        :return:
+        """
         for index, (snt, tknized) in enumerate(tkn_snt_list):
             if index == 0:
                 label = 'title'
@@ -335,12 +368,30 @@ class News(BaseModel):
                     start=mention.start,
                     head=mention.head,
                     end=mention.end,
-                    tokens=_tokens
+                    tokens=InstrumentedList(_tokens)
                 )
                 _mention_list.append(_m)
 
             _coref_model.add_mention(_mention_list)
             self.coreferences = _add_relation(self.coreferences, _coref_model)
+
+    def alignments(self):
+        return InstrumentedList(set(sum([s.get_alignments() for s in self.sentences], [])))
+
+    def get_coreferences(self, term=None):
+        if term is None:
+            return self.coreferences
+        else:
+            if isinstance(term, str):
+                return InstrumentedList(coref for coref in self.coreferences
+                                        if coref.has_term(term))
+            elif isinstance(term, list or InstrumentedList):
+                if isinstance(term[0], str):
+                    return InstrumentedList(coref for coref in self.coreferences
+                                            if any(coref.has_term(t) for t in term))
+                elif isinstance(term[0], list or InstrumentedList):
+                    return InstrumentedList(coref for coref in self.coreferences
+                                            if any(all(coref.has_term(compound) for compound in t) for t in term))
 
     def get_sentence_index(self, index=0):
         if isinstance(index, int):

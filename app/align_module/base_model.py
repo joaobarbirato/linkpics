@@ -1,3 +1,5 @@
+from sqlalchemy.orm.collections import InstrumentedList
+
 from app import db
 from app.eval_module.models import query_by_id, PredAlignment
 from app.model_utils import BaseModel, _add_session, _add_relation
@@ -16,13 +18,16 @@ class Token(BaseModel):
         self.word = dictionary['word']
         self.lemma = dictionary['lemma']
         self.pos = dictionary['pos']
-        self.ner = dictionary['ner']
+        self.ner = dictionary['ner'] != '0'
 
     def __repr__(self):
         return self.word
 
     def __str__(self):
         return self.word
+
+    def __eq__(self, other):
+        return (self.lemma or self.word) == other
 
 
 class MWE(BaseModel):
@@ -133,7 +138,7 @@ class Sentence(BaseModel):
     content = db.Column(db.String, nullable=False, default='')
     tokenized = db.relationship('Token', single_parent=True, backref='sentence',
                                 cascade='all, delete-orphan', lazy=True)
-    amr = db.relationship('AMRModel', single_parent=True, backref='sentence',
+    amr = db.relationship('AMRModel', backref='sentence',
                           cascade='all, delete-orphan', lazy=True, uselist=False)
 
     news_id = db.Column(db.Integer, db.ForeignKey('news.id'), nullable=True)
@@ -175,5 +180,15 @@ class Sentence(BaseModel):
                 self.amr = amr
         return self.amr
 
+    def get_amr(self):
+        return self.amr
+
+    def get_alignments(self):
+        return self.has_alignment
+
     def as_dict(self):
         return {"label": self.label, "content": self.content, "news_id": self.news_id, "amr": self.amr}
+
+
+def sntsmodel_to_amrmodel(snts):
+    return InstrumentedList(set(snt.get_amr() for snt in snts))

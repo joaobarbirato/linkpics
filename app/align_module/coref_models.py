@@ -6,7 +6,7 @@ from app.src.PLN.coreference import Mention
 
 class MentionModel(BaseModel):
     __tablename__ = 'mention_model'
-    tokens = db.relationship('Token', backref='mention_model')
+    tokens = db.relationship('Token', backref='mention_model', lazy=True)
     start = db.Column(db.Integer, nullable=True)
     end = db.Column(db.Integer, nullable=True)
     head = db.Column(db.Integer, nullable=True)
@@ -25,7 +25,16 @@ class MentionModel(BaseModel):
         self.start = start
         self.end = end
         self.head = head
-        self.tokens = tokens
+        self.tokens = self.add_tokens(tokens)
+
+    def has_term(self, term):
+        return any(tkn == term for tkn in self.tokens)
+
+    def add_tokens(self, tokens):
+        if tokens is not None and tokens:
+            if self.tokens is not None or tokens not in self.tokens:
+                self.tokens = _add_relation(self.tokens, tokens)
+            return self.tokens
 
 
 class CoreferenceModel(BaseModel):
@@ -57,3 +66,6 @@ class CoreferenceModel(BaseModel):
             if self.mentions is not None or mention not in self.mentions:
                 self.mentions = _add_relation(self.mentions, mention)
         return self.mentions
+
+    def has_term(self, term):
+        return any(self.mentions.has_term(term))

@@ -88,6 +88,14 @@ class User(Base):
         return '<User %r>' % self.name
 
 
+def create_user(name,email,password):
+    try:
+        u = User(name=name, email=email, password=password, role=1)
+        u.add_self()
+    except Exception as exc:
+        print(f"[{__file__}] Error while creating user: {exc}")
+
+
 class PredAlignment(Base):
     __tablename__ = 'eval_align'
     label = db.Column(db.String(255), nullable=False, default='')

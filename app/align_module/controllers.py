@@ -83,9 +83,9 @@ def alinhar():
             direct_passthrough=True
         )
     except Exception as e:
-        print(e)
+        print(f'[{__file__}] : {str(e)}')
         return app.response_class(
-            response=json.dumps({'message': f'{str(e)}'}),
+            response={'message': f'{str(e)}'},
             status=600,
             mimetype='application/json'
         )
