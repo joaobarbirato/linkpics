@@ -1,3 +1,4 @@
+from sqlalchemy.orm import backref
 from sqlalchemy.orm.collections import InstrumentedList
 
 from app import db
@@ -28,6 +29,9 @@ class Token(BaseModel):
 
     def __eq__(self, other):
         return (self.lemma or self.word) == other
+
+    def __hash__(self):
+        return hash(self.word)
 
 
 class MWE(BaseModel):
@@ -138,10 +142,15 @@ class Sentence(BaseModel):
     content = db.Column(db.String, nullable=False, default='')
     tokenized = db.relationship('Token', single_parent=True, backref='sentence',
                                 cascade='all, delete-orphan', lazy=True)
-    amr = db.relationship('AMRModel', backref='sentence',
+    amr = db.relationship('AMRModel', backref=backref('sentence', enable_typechecks=False),
                           cascade='all, delete-orphan', lazy=True, uselist=False)
 
     news_id = db.Column(db.Integer, db.ForeignKey('news.id'), nullable=True)
+
+    __mapper_args = {
+        'polymorphic_on': 'sentence_type',
+        'polymorphic_identity': 'sentence'
+    }
 
     def __init__(self, text, label='text'):
         self.content = text
