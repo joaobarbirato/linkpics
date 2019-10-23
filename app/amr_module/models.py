@@ -6,6 +6,7 @@ from sqlalchemy.orm.collections import InstrumentedList
 from operator import methodcaller
 
 from app import (db)
+from app.align_module.base_model import Sentence
 from app.model_utils import BaseModel, _add_relation, PrintException
 
 
@@ -124,6 +125,16 @@ class Triple(BaseModel):
 
     def is_relation(self, item):
         return item == self.relation
+
+    def invert(self):
+        if '-of' in self.relation:
+            self.relation = self.relation
+        else:
+            self.relation += '-of'
+        aux = self.source
+        self.source = self.target
+        self.target = aux
+        return self
 
 
 def penman_to_model(pmn):
@@ -277,7 +288,8 @@ class AMRModel(BaseModel):
     list_triples = db.relationship('Triple', backref='amr_model', lazy=True)
     top = db.Column(db.String, nullable=False, default='')
     penman = db.Column(db.String, nullable=False, default='')
-    sentence_id = db.Column(db.Integer, db.ForeignKey('sentence.id'), nullable=False)
+    sentence_id = db.Column(db.Integer, db.ForeignKey('sentence.id'))
+    # sentence = db.relationship(Sentence, back_populates='amr')
 
     def __init__(self, **kwargs):
         """
@@ -311,6 +323,18 @@ class AMRModel(BaseModel):
 
     def __repr__(self):
         return self.penman
+
+    def __str__(self):
+        return self.penman
+
+    def __eq__(self, other):
+        if isinstance(other, AMRModel):
+            return self.penman == other.get_penman(return_type='str')
+        elif isinstance(other, str):
+            return self.penman == other
+
+    def __hash__(self):
+        return hash(self.penman)
 
     def add(self, other, tuple_ref):
         """
@@ -386,6 +410,16 @@ class AMRModel(BaseModel):
         """
         self.top = new_top
         return new_top
+
+    def get_parent(self, node):
+        _src = ''
+        if isinstance(node, str):
+            _src = node
+        elif isinstance(node, Triple):
+            _src = node.source
+        candidate = self.get_triple(target=_src)
+        if '-of' not in candidate.relation:
+            return candidate
 
     def is_instance(self, item):
         """
