@@ -12,6 +12,10 @@ class BaseModel(db.Model):
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
 
+    def save(self):
+        _add_session(self)
+        _commit_session()
+
 
 def _add(list_object, element):
     if list_object is None:
@@ -30,6 +34,9 @@ def _add_relation(model, object):
         else:
             model.append(object)
 
+        # tp = type(model)
+        # model = tp(set(model))
+
     return model
 
 
@@ -39,6 +46,10 @@ def _add_session(object):
             db.session.add_all(object)
         else:
             db.session.add(object)
+
+
+def _commit_session():
+    db.session.commit()
 
 
 def add_db_alignments_from_list(list_alignments):
