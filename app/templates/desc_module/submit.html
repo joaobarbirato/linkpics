@@ -1,0 +1,70 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Submissão de descricoes</title>
+{% endblock %}
+
+{% block conteudo %}
+    {% include 'helpers/loading.html' %}
+    <h1 class="custom-title">Submissão de descricoes</h1>
+    <div class="row card p-4 my-2">
+        <div class="col col-12 card-body p-2">
+            <form enctype="multipart/form-data" id="upload-batch" method="post" action="{{ url_for('upload_link_files') }}">
+                <input type="hidden" name="csrf_token" id="upload-batch-csrf" value="{{ csrf_token() }}" />
+                <div class="form-group">
+                    <label for="fileupload">Escolha o arquivo</label>
+                    <input type="file" id="batch-file" name="choosed_file">
+                    <button type="submit" id="btn-upload-batch" class="btn btn-danger">Carregar Links</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row card p-4 my-2">
+        <div class="col col-12 card-body">
+            <form enctype="multipart/form-data" id="align-batch" method="post" action="{{ url_for('desc.describe_batch') }}">
+                <div class="form-group">
+                    <input type="hidden" name="csrf_token" id="align-batch-csrf" value="{{ csrf_token() }}" />
+                    <div class="row">
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_all" value="all" checked>
+                                Objetos e Entidades Nomeadas
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_ne" value="ne">
+                                Apenas entidades nomeadas
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="restriction" id="restriction_obj" value="obj">
+                                Apenas objetos
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-12">
+                            <label for="name-batch">Nome do conjunto</label>
+                            <input class="form-control" type="text" name="batch_name" id="batch_name" placeholder="Nome do batch" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-12">
+                            <label for="batch_links">Links do conjunto</label>
+                            <textarea class="form-control" name="batch_links" rows="12" cols="50" id="batch_links"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-align-batch" >Alinhar batch!</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/loading.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}
