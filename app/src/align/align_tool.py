@@ -429,6 +429,7 @@ class AlignTool:
 
     def align_from_url(self, url, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
+        self.news_object.set_link(url)
         try:
             self.noticia_sem_imagem = False
             self._get_resources(url)

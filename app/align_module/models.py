@@ -25,7 +25,7 @@ class Alignment(BaseModel):
     """
     __tablename__ = 'alignment'
 
-    model_id = db.Column(db.Integer, db.ForeignKey('eval_align.id'), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey('eval_align.id'))
     term = db.Column(db.String, nullable=True)
     occurrence_times = db.Column(db.Integer, nullable=False, default=1)
 
@@ -38,7 +38,7 @@ class Alignment(BaseModel):
     belongs_sentence = db.relationship('Sentence', secondary=occur, lazy='subquery',
                                        backref=db.backref('has_alignment'))
 
-    group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'))
 
     is_ne = db.Column(db.Boolean, nullable=True)
 
@@ -293,9 +293,11 @@ class News(BaseModel):
                                 cascade='all, delete-orphan', lazy=True)
     coreferences = db.relationship('CoreferenceModel', single_parent=True, backref='news', cascade='all, delete-orphan',
                                    lazy=True)
+    link = db.Column(db.String, nullable=False, default='')
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, link=''):
         self.img_path = path
+        self.link = link
 
     def set_path(self, path):
         """
@@ -305,6 +307,14 @@ class News(BaseModel):
         :return:
         """
         self.img_path = path
+
+    def set_link(self, link):
+        """
+
+        :param link:
+        :return:
+        """
+        self.link = link
 
     def add_sentence(self, sentence):
         """
@@ -346,10 +356,10 @@ class News(BaseModel):
             for tkn in tknized:
                 tkn_model = Token(tkn.marshal())
                 snt_model.add_tokenized(tkn_model)
-                _add_session(tkn_model)
+                # _add_session(tkn_model)
 
             self.sentences = _add_relation(self.sentences, snt_model)
-            _add_session(snt_model)
+            # _add_session(snt_model)
 
     def add_from_coref_objects(self, coref_object):
         """
@@ -401,6 +411,9 @@ class News(BaseModel):
 
     def get_text(self):
         return f'{self.sentences[0]}\n{self.sentences[1]}\n{self.sentences[2:]}'
+
+    def get_link(self):
+        return self.link
 
     def get_sentences(self, return_type="model"):
         if return_type == "str":
