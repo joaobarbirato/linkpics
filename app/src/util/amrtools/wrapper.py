@@ -10,6 +10,7 @@ from os.path import join, isfile
 import penman
 
 from app.amr_module.models import AMRModel
+from app.model_utils import PrintException
 from app.src.util.corenlp import CoreNLPWrapper
 from config import BASE_DIR, TMP_DIR, SHELL_DIR, SRC_DIR
 
@@ -71,7 +72,10 @@ def penman_to_text(amr_list):
 
     # read generated sequences
     full_sequences = open(f'{_json_file_path}.tok', 'r').read().split("--------\n========\n")[:-1]
-    sequences = [seq.split('\n')[2].replace('</s>', '') for seq in full_sequences]
+    sequences = []
+    for full_sequence in full_sequences:
+        sequence_index, sequence_text = full_sequence.split('\n\n')
+        sequences.insert(int(sequence_index), sequence_text.replace('</s>\n', ''))
 
     return sequences
 
@@ -154,55 +158,59 @@ class AMRWrapper:
 
 def parse_to_amr_list(snts=None):
     os.chdir(f"{BASE_DIR}/{SRC_DIR}amr/AMR_AS_GRAPH_PREDICTION")
-    input_dir = TMP_DIR + '/input.txt'
-    with open(input_dir, 'w+') as input_file:
-        for snt in snts:
-            input_file.write("%s\n" % snt)
-    a = subprocess.Popen('pwd', stdout=subprocess.PIPE)
-    print(a.communicate()[0])
-    corenlp = CoreNLPWrapper()
+    try:
+        input_dir = TMP_DIR + '/input.txt'
+        with open(input_dir, 'w+') as input_file:
+            for snt in snts:
+                input_file.write("%s\n" % snt)
+        a = subprocess.Popen('pwd', stdout=subprocess.PIPE)
+        print(a.communicate()[0])
+        corenlp = CoreNLPWrapper()
 
-    corenlp.start_base()
+        corenlp.start_base()
 
-    crdir = os.getcwd()
-    onlyfiles = [f for f in os.listdir(crdir) if isfile(join(crdir, f))]
-    do_dot_py = f'{BASE_DIR}/venv/bin/python3 do.py -train_from {_TRAIN_FROM} -input {input_dir}'
+        crdir = os.getcwd()
+        onlyfiles = [f for f in os.listdir(crdir) if isfile(join(crdir, f))]
+        do_dot_py = f'{BASE_DIR}/venv/bin/python3 do.py -train_from {_TRAIN_FROM} -input {input_dir}'
 
-    snt_to_txt = subprocess.Popen(do_dot_py.split())
-    snt_to_txt.wait()
-    corenlp.terminate_base()
-    amr_list = []
+        snt_to_txt = subprocess.Popen(do_dot_py.split())
+        snt_to_txt.wait()
+        corenlp.terminate_base()
+        amr_list = []
 
-    with open(TMP_DIR + '/input.txt_parsed', 'r') as output_file:
-        # AMR_AS_GRAPH_PREDICTION will always end a generated '_parsed' file with \n\n\n
-        outputs = output_file.read().split('\n\n')[:-1]
-    for output in outputs:
-        penman_notation = []
-        if output != " " and output != "  " and output is not None:
-            output_split = output.split('\n')
-            amr_graph = AMRWrapper(
-                snt=' '.join(output_split[0].split(' ')[2:]),
-                token=output_split[1].split(' ')[2:],
-                lemma=output_split[2].split(' ')[2:],
-                pos=output_split[3].split(' ')[2:],
-                ner=output_split[4].split(' ')[2:],
-            )
+        with open(TMP_DIR + '/input.txt_parsed', 'r') as output_file:
+            # AMR_AS_GRAPH_PREDICTION will always end a generated '_parsed' file with \n\n\n
+            outputs = output_file.read().split('\n\n')[:-1]
+        for output in outputs:
+            penman_notation = []
+            if output != " " and output != "  " and output is not None:
+                output_split = output.split('\n')
+                amr_graph = AMRWrapper(
+                    snt=' '.join(output_split[0].split(' ')[2:]),
+                    token=output_split[1].split(' ')[2:],
+                    lemma=output_split[2].split(' ')[2:],
+                    pos=output_split[3].split(' ')[2:],
+                    ner=output_split[4].split(' ')[2:],
+                )
 
-            for line in output_split[4:]:
-                if len(line) > 0:
-                    if "node" in line.split(' ')[1]:
-                        amr_graph.add_node(line)
-                    elif "edge" in line.split(' ')[1]:
-                        amr_graph.add_edge(line)
-                    elif "ner" not in line.split(' ')[1]:
-                        penman_notation.append(line)
+                for line in output_split[4:]:
+                    if len(line) > 0:
+                        if "node" in line.split(' ')[1]:
+                            amr_graph.add_node(line)
+                        elif "edge" in line.split(' ')[1]:
+                            amr_graph.add_edge(line)
+                        elif "ner" not in line.split(' ')[1]:
+                            penman_notation.append(line)
 
-            penman_string = ''.join(penman_notation).replace('\n', '')
-            penman_graph = penman.decode(penman_string)
+                penman_string = ''.join(penman_notation).replace('\n', '')
+                penman_graph = penman.decode(penman_string)
 
-            amr_graph.set_penman(penman_graph)
-            amr_graph.build_ne_nodes()
-            amr_list.append(amr_graph)
+                amr_graph.set_penman(penman_graph)
+                amr_graph.build_ne_nodes()
+                amr_list.append(amr_graph)
+    except Exception as exc:
+        os.chdir(BASE_DIR)
+        PrintException()
 
     os.chdir(BASE_DIR)
     return amr_list
