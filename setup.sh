@@ -45,4 +45,14 @@ wget https://pjreddie.com/media/files/yolov3.weights
 cd ..
 mv darknet app/src/IA/YOLO
 cd ${base_dir}
-mkdir ${base_dir}app/tmp
+mkdir ${base_dir}/app/tmp
+
+mkdir ${base_dir}/app/src/noticia_atual
+
+# 4. AMR tools
+git clone https://github.com/ChunchuanLv/AMR_AS_GRAPH_PREDICTION ${base_dir}/app/src/amr/AMR_AS_GRAPH_PREDICTION
+git clone https://github.com/freesunshine0316/neural-graph-to-seq-mp ${base_dir}/app/src/amr/neural-graph-to-seq-mp
+
+# TODO: visual_words.txt
+# TODO: cfg/yolo.cfg
+# TODO: data/

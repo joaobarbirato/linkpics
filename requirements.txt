@@ -29,6 +29,7 @@ nltk==3.3
 numpy==1.15.1
 opencv-python==3.4.2.17
 parsimonious==0.8.1
+Penman==0.6.2
 Pillow==5.2.0
 pycorenlp==0.3.0
 pylint==2.3.1
