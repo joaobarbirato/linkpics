@@ -7,7 +7,7 @@ from app import app
 from app.align_module.models import News, Alignment
 from app.desc_module.models import Description
 from app.model_utils import _add_session, _commit_session, PrintException
-from app.src.align.align_tool import AlignTool
+from app.src.align.align_tool import AlignTool, init_csv_backup
 from app.src.idg.idgen import Generator
 from config import STATIC_REL, TMP_DIR
 from app.src.util.crawlers.crawler import Crawler as crawler_folha
@@ -106,6 +106,7 @@ def describe_batch():
             writer = csv.DictWriter(csv_file, fieldnames=_FIELDS)
             writer.writeheader()
 
+        # init_csv_backup()
         for i, link in enumerate(links):
             try:
                 print(f"#####\n\t[{i + 1}/{total}]\n#####")

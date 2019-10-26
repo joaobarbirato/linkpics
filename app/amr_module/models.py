@@ -10,18 +10,25 @@ from app.align_module.base_model import Sentence
 from app.model_utils import BaseModel, _add_relation, PrintException
 
 
-def organize_triples_list(triples_list, top):
-    if isinstance(top, Triple):
-        new_list = InstrumentedList([])
-        new_list.append(top)
-        for triple in triples_list:
-            if triple != top:
-                if triple.relation == 'instance':
-                    new_list.insert(1, triple)
-                else:
-                    new_list.append(triple)
+def copy_triples_from_list(triple_list):
+    return [Triple(src=triple.source, rel=triple.relation, tgt=triple.target) for triple in triple_list]
 
-        return new_list
+
+def organize_triples_list(triples_list, top):
+    try:
+        if isinstance(top, Triple):
+            new_list = InstrumentedList([])
+            new_list.append(top)
+            for triple in triples_list:
+                if triple != top:
+                    if triple.relation == 'instance':
+                        new_list.insert(1, triple)
+                    else:
+                        new_list.append(triple)
+
+            return new_list
+    except Exception as exc:
+        PrintException()
 
 
 def top_from_triples_list(triples_list, ancestral):
@@ -162,11 +169,11 @@ def _match_triple(src=None, relation=None, target=None, triple=None):
     """
 
     def __eq_or_in(attr, triple_attr):
-        return attr is not None and (attr == triple_attr or attr in triple_attr or triple_attr in attr)
+        return attr is not None and (attr.upper() == triple_attr.upper() or attr.upper() in triple_attr.upper() or triple_attr.upper() in attr.upper())
     try:
         if triple is None:
             return False
-
+        
         rule = (relation is None and target is None and (src is not None and src == triple.source))
         rule = rule or (relation is None and __eq_or_in(target, triple.target) and src is None)
         rule = rule or (relation is None and __eq_or_in(target, triple.target) and (src is not None and src == triple.source))
@@ -329,7 +336,7 @@ class AMRModel(BaseModel):
 
     def __eq__(self, other):
         if isinstance(other, AMRModel):
-            return self.penman == other.get_penman(return_type='str')
+            return all(triple in other.get_triples() for triple in self.list_triples) and all(triple in self.list_triples for triple in other.get_triples())
         elif isinstance(other, str):
             return self.penman == other
 
@@ -347,18 +354,21 @@ class AMRModel(BaseModel):
         """
         try:
             other_top = other.get_top()
-            old_triples = self.get_triples(src=other_top) + self.get_triples(target=other_top)
+            old_triples = other.get_triples()
             if old_triples:
                 new_triples = set()
                 for old_triple in old_triples:
                     if old_triple.source == tuple_ref[1]:
-                        new_triple = Triple(src=tuple_ref[0], rel=old_triple.relation, tgt=old_triple.target)
-                        new_triples.add(new_triple)
+                        if old_triple.relation != 'instance':
+                            new_triple = Triple(src=tuple_ref[0], rel=old_triple.relation, tgt=old_triple.target)
+                            new_triples.add(new_triple)
                     elif old_triple.target == tuple_ref[1]:
                         new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=tuple_ref[0])
                         new_triples.add(new_triple)
+                    elif old_triple.is_instance():
+                        new_triples.add(old_triple)
 
-                self.list_triples = self.delete(tuple_ref[1]) + InstrumentedList(new_triples)
+                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)))
                 self.list_triples = organize_triples_list(self.list_triples, self.get_triple(src=self.top, relation='instance'))
                 self.penman = triple_model_list_to_penman(self.list_triples, self.top)
             return self.list_triples
@@ -411,15 +421,19 @@ class AMRModel(BaseModel):
         self.top = new_top
         return new_top
 
-    def get_parent(self, node):
+    def get_parents(self, node):
         _src = ''
         if isinstance(node, str):
             _src = node
         elif isinstance(node, Triple):
             _src = node.source
-        candidate = self.get_triple(target=_src)
-        if '-of' not in candidate.relation:
-            return candidate
+        candidates = self.get_triples(target=_src)
+        if candidates is not None and candidates:
+            candidate = [triple for triple in candidates if triple.target == _src][0]
+            parent_node_candidate = self.get_triple(src=candidate.source, relation='instance')
+            if '-of' not in candidate.relation and candidate and parent_node_candidate:
+                return [parent_node_candidate, candidate, node]
+        return []
 
     def is_instance(self, item):
         """
@@ -491,16 +505,19 @@ class AMRModel(BaseModel):
                 return triple
 
     def get_triple(self, src=None, relation=None, target=None):
-        if src is None and relation is None and target is None:
-            return None
-        if target is not None:
-            triple_is_name = self.is_name(target)
-            if triple_is_name:
-                return triple_is_name
+        try:
+            if src is None and relation is None and target is None:
+                return None
+            if target is not None:
+                triple_is_name = self.is_name(target)
+                if triple_is_name:
+                    return triple_is_name
 
-        for triple in self.list_triples:
-            if _match_triple(src, relation, target, triple):
-                return triple
+            for triple in self.list_triples:
+                if _match_triple(src, relation, target, triple):
+                    return triple
+        except Exception as exc:
+            PrintException()
 
     def role(self, src=None, target=None):
         return_list = InstrumentedList([])
@@ -596,7 +613,8 @@ class AMRModel(BaseModel):
                     possible_children.remove(not_instance)
 
             possible_children = organize_triples_list(triples_list=possible_children, top=top)
-            return AMRModel(top=top.source, triples=possible_children) if possible_children else None
+            new_subgraph = AMRModel(top=top.source, triples=copy_triples_from_list(possible_children)) if possible_children else None
+            return new_subgraph
         except Exception as exc:
             PrintException()
 
