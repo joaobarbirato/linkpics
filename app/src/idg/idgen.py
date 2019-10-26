@@ -170,7 +170,7 @@ class Generator(object):
                 focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
                 if focus_triple is not None:
                     focus_subgraph = amr.get_subgraph(top=focus_triple)
-                    focus_parent = amr.get_parent(focus_triple)
+                    focus_parent = amr.get_parents(focus_triple)
                     information.append(
                         {
                             "triple": focus_triple,
@@ -182,12 +182,11 @@ class Generator(object):
 
             if information:
                 base_info = information[0]
-                if base_info["parent"] is not None:
-                    inverted_parent = base_info["parent"].invert()
+                if base_info["parent"]:
+                    base_info["parent"][1].invert()
                     base_info["subgraph"].add(
-                        other=create_amrmodel(triples=[inverted_parent], top=inverted_parent.source),
-                        tuple_ref=(base_info["triple"].source, inverted_parent.source))
-
+                        other=create_amrmodel(triples=base_info["parent"], top=base_info["parent"][2].source),
+                        tuple_ref=(base_info["triple"].source, base_info["parent"][2].source))
 
                 appended_amr_list = []
                 if len(information) > 1:
@@ -195,10 +194,11 @@ class Generator(object):
                         _before = base_info["subgraph"]
                         base_info["subgraph"].add(other=info["subgraph"],
                                                   tuple_ref=(base_info["triple"].source, info["triple"].source))
-                        if info["parent"] is not None:
-                            inverted_parent = info["parent"].invert()
-                            base_info["subgraph"].add(other=create_amrmodel(triples=[inverted_parent], top=inverted_parent.source),
-                                                      tuple_ref=(base_info["triple"].source, inverted_parent.source))
+                        if info["parent"]:
+                            info["parent"][1].invert()
+                            base_info["subgraph"].add(
+                                other=create_amrmodel(triples=info["parent"], top=info["parent"][2].source),
+                                tuple_ref=(base_info["triple"].source, info["parent"][2].source))
 
                         if _before == base_info["subgraph"]:
                             appended_amr_list.append(info)
