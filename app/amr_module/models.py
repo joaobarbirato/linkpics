@@ -7,7 +7,7 @@ from operator import methodcaller
 
 from app import (db)
 from app.align_module.base_model import Sentence
-from app.model_utils import BaseModel, _add_relation, PrintException
+from app.model_utils import BaseModel, _add_relation, PrintException, _add_session
 
 
 def copy_triples_from_list(triple_list):
@@ -50,8 +50,6 @@ def top_from_triples_list(triples_list, ancestral):
         distances.append(distance)
 
     minimum = triples_list[distances.index(min(distances))]
-    # distances = [ancestral.root_distance(triple) for triple in [t for t in triples_list if t.is_instance()]]
-    # return triples_list[distances.index(min(distances))]
     return minimum
 
 
@@ -92,9 +90,6 @@ class Triple(BaseModel):
 
     def __repr__(self):
         return f"<AMR Triple ({self.source}, {self.relation}, {self.target})>"
-
-    # def __str__(self):
-    #     return f'{self.source}, {self.relation}, {self.target}'
 
     def __contains__(self, item):
         return self.is_instance(item) or self.is_relation(item)
@@ -173,7 +168,7 @@ def _match_triple(src=None, relation=None, target=None, triple=None):
     try:
         if triple is None:
             return False
-        
+
         rule = (relation is None and target is None and (src is not None and src == triple.source))
         rule = rule or (relation is None and __eq_or_in(target, triple.target) and src is None)
         rule = rule or (relation is None and __eq_or_in(target, triple.target) and (src is not None and src == triple.source))
@@ -296,7 +291,7 @@ class AMRModel(BaseModel):
     top = db.Column(db.String, nullable=False, default='')
     penman = db.Column(db.String, nullable=False, default='')
     sentence_id = db.Column(db.Integer, db.ForeignKey('sentence.id'))
-    # sentence = db.relationship(Sentence, back_populates='amr')
+    amr_group_id = db.Column(db.Integer, db.ForeignKey('amr_group.id'), nullable=True)
 
     def __init__(self, **kwargs):
         """
@@ -327,6 +322,9 @@ class AMRModel(BaseModel):
 
             elif len(kwargs) == 1 and 'copy' in kwargs:
                 _source_amr: AMRModel = kwargs['copy']
+                self.list_triples = InstrumentedList([Triple(copy=t) for t in _source_amr.get_triples()])
+                self.penman = _source_amr.get_penman(return_type='str')
+                self.top = _source_amr.get_top()
 
     def __repr__(self):
         return self.penman
@@ -432,7 +430,7 @@ class AMRModel(BaseModel):
             candidate = [triple for triple in candidates if triple.target == _src][0]
             parent_node_candidate = self.get_triple(src=candidate.source, relation='instance')
             if '-of' not in candidate.relation and candidate and parent_node_candidate:
-                return [parent_node_candidate, candidate, node]
+                return [Triple(copy=parent_node_candidate), Triple(copy=candidate), Triple(copy=node)]
         return []
 
     def is_instance(self, item):

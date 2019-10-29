@@ -5,8 +5,8 @@
 from operator import methodcaller
 
 from app.amr_module.models import AMRModel, biggest_amr, top_from_triples_list, create_amrmodel
-from app.desc_module.models import create_description
-from app.model_utils import PrintException, _add_session
+from app.desc_module.models import create_description, create_amrgroup
+from app.model_utils import PrintException
 from app.align_module.models import News, Alignment
 from app.align_module.base_model import Sentence, sntsmodel_to_amrmodel
 
@@ -37,11 +37,10 @@ class Generator(object):
             sntobj: Sentence
             for amr, sntobj in zip_amr_sntobj:
                 amr_model = AMRModel(object=amr.get_penman(return_type='graph'))
-                _add_session(amr_model)
                 sntobj.add_amr(amr_model)
-                _add_session(sntobj)
+
         except Exception as exc:
-            print(f'[{__file__}] Error while relating AMR: {str(exc)}')
+            PrintException()
 
     def generate(self, method='baseline3'):
         """
@@ -74,13 +73,11 @@ class Generator(object):
             for ((alignment, generated_amr, main_ancestral, adjacents_ancestral), _generated_text) \
                     in zip(descr_to_generate, _generated_text_list):
                 description = create_description(text=_generated_text, method=method)
+                amr_group = create_amrgroup()
+                description.add_amrgroup(amr_group)
                 description.add_amr(generated_amr)
                 description.keep_amr(main_ancestral, adjacents_ancestral)
                 alignment.add_description(description)
-
-                _add_session(generated_amr)
-                _add_session(description)
-                _add_session(alignment)
 
         except Exception as exc:
             PrintException()
@@ -93,7 +90,7 @@ class Generator(object):
         :return:
         """
         try:
-            generating_method = self._baseline4() #methodcaller(f'_{method}')
+            generating_method = self._baseline4()
             return generating_method
         except Exception as exc:
             PrintException()
