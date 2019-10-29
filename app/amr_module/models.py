@@ -621,6 +621,10 @@ class AMRModel(BaseModel):
     def __contains__(self, item):
         return any(item == triple for triple in self.list_triples)
 
+    def save(self):
+        [triple.save() for triple in self.list_triples]
+        _add_session(self)
+
 
 def biggest_amr(amrmodel_list):
     try:

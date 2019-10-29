@@ -36,7 +36,7 @@ class Alignment(BaseModel):
     syns_model = db.relationship('Synonym', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                  lazy=True)
     belongs_sentence = db.relationship('Sentence', secondary=occur, lazy='subquery',
-                                       backref=db.backref('has_alignment'))
+                                       backref=db.backref('has_alignment', lazy=True))
 
     group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'))
 
@@ -125,12 +125,14 @@ class Alignment(BaseModel):
     def add_sentence(self, sentence=None):
         """
 
-        :type sentence: app.align_module.base_model.Sentence
+        :type sentence: app.align_module.base_model.Sentence, list
         :param sentence:
         :return:
         """
         if sentence is not None and sentence:
-            if self.belongs_sentence is None or sentence not in self.belongs_sentence:
+            if self.belongs_sentence is None or \
+                    ((isinstance(sentence, list) and all(s not in self.belongs_sentence for s in sentence)) or
+                     (isinstance(sentence, Sentence) and sentence not in self.belongs_sentence)):
                 self.belongs_sentence = _add_relation(self.belongs_sentence, sentence)
 
         return self.belongs_sentence
@@ -415,14 +417,33 @@ class News(BaseModel):
     def get_link(self):
         return self.link
 
-    def get_sentences(self, return_type="model"):
+    def get_sentences(self, return_type="model", position=None):
         if return_type == "str":
-            return [str(s) for s in self.sentences]
+            if position is not None:
+                if isinstance(position, int) and position >= 0:
+                    return str(self.sentences[position])
+                elif isinstance(position, list):
+                    return [str(s) for i, s in enumerate(self.sentences) if i in position]
+            else:
+                return [str(s) for s in self.sentences]
         elif return_type == "model":
-            return self.sentences
+            if position is not None:
+                if isinstance(position, int) and position >= 0:
+                    return self.sentences[position]
+                elif isinstance(position, list):
+                    return [s for i, s in enumerate(self.sentences) if i in position]
+            else:
+                return self.sentences
+
+        return []
 
     def as_dict(self):
         return {"img_path": self.img_path, "sentences": {s.as_dict() for s in self.sentences}}
+
+    def save(self):
+        # [sentence.save() for sentence in self.sentences]
+        # [coref.save() for coref in self.coreferences]
+        _add_session(self)
 
 
 def init():

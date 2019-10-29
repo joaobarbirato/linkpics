@@ -33,6 +33,9 @@ class Token(BaseModel):
     def __hash__(self):
         return hash(self.word)
 
+    def save(self):
+        _add_session(self)
+
 
 class MWE(BaseModel):
     __tablename__ = 'mwe'
@@ -142,7 +145,7 @@ class Sentence(BaseModel):
     content = db.Column(db.String, nullable=False, default='')
     tokenized = db.relationship('Token', single_parent=True, backref='sentence',
                                 cascade='all, delete-orphan', lazy=True)
-    amr = db.relationship('AMRModel', backref=backref('sentence', enable_typechecks=False),
+    amr = db.relationship('AMRModel', backref=backref('sentence', enable_typechecks=False, lazy=True),
                           cascade='all, delete-orphan', lazy=True, uselist=False)
 
     news_id = db.Column(db.Integer, db.ForeignKey('news.id'), nullable=True)
@@ -161,6 +164,9 @@ class Sentence(BaseModel):
 
     def __str__(self):
         return self.content
+
+    def __hash__(self):
+        return hash(self.content)
 
     def get_tokens(self, start, end):
         return self.tokenized[start-1:end-1]
@@ -197,6 +203,9 @@ class Sentence(BaseModel):
 
     def as_dict(self):
         return {"label": self.label, "content": self.content, "news_id": self.news_id, "amr": self.amr}
+
+    def save(self):
+        [token.save() for token in self.tokenized]
 
 
 def sntsmodel_to_amrmodel(snts):

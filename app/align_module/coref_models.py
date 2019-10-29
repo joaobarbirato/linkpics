@@ -1,6 +1,5 @@
 from app import db
-from app.align_module.base_model import Sentence
-from app.model_utils import BaseModel, _add_relation
+from app.model_utils import BaseModel, _add_relation, _add_session
 from app.src.PLN.coreference import Mention
 
 
@@ -36,6 +35,10 @@ class MentionModel(BaseModel):
                 self.tokens = _add_relation(self.tokens, tokens)
             return self.tokens
 
+    def save(self):
+        # tokens are saved by sentences
+        _add_session(self)
+
 
 class CoreferenceModel(BaseModel):
     __tablename__ = 'coreference_model'
@@ -69,3 +72,7 @@ class CoreferenceModel(BaseModel):
 
     def has_term(self, term):
         return any(self.mentions.has_term(term))
+
+    def save(self):
+        [mention.save() for mention in self.mentions]
+        _add_session(self)
