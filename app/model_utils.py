@@ -29,7 +29,7 @@ def _add(list_object, element):
 
 def _add_relation(model, object):
     if object is not None:
-        if isinstance(object, list):
+        if isinstance(object, list) and all(item not in model for item in object):
             model.extend(object)
         else:
             model.append(object)
@@ -40,12 +40,12 @@ def _add_relation(model, object):
     return model
 
 
-def _add_session(object):
-    if object is not None:
-        if isinstance(object, list):
-            db.session.add_all(object)
+def _add_session(obj):
+    if obj is not None:
+        if isinstance(obj, list):
+            db.session.add_all(obj)
         else:
-            db.session.add(object)
+            db.session.add(obj)
 
 
 def _commit_session():

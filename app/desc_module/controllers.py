@@ -43,7 +43,7 @@ def _do_describe(link):
 
         generator = Generator(news_object=news_object)
         generator.relate_amr()
-        generator.generate(method='baseline1')
+        generator.generate(method='baseline5')
         print(f'Generated:\n\t{generator.get_generated_descriptions()}')
 
         if img_url != '':

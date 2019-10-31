@@ -42,7 +42,7 @@ class Generator(object):
         except Exception as exc:
             PrintException()
 
-    def generate(self, method='baseline3'):
+    def generate(self, method='baseline5'):
         """
 
         :return:
@@ -59,8 +59,8 @@ class Generator(object):
                 try:
                     response = self._generate_amr(method=method)
                     if response is not None:
-                        generated_amr, main_ancestral, adjacents_ancestral = response
-                        descr_to_generate.append((alignment, generated_amr, main_ancestral, adjacents_ancestral))
+                        generated_amr, main_ancestral, adjacent_ancestral = response
+                        descr_to_generate.append((alignment, generated_amr, main_ancestral, adjacent_ancestral))
                 except Exception as exc:
                     PrintException()
                     print(f'[{__file__}] Error while generating AMR from {alignment}: {str(exc)}')
@@ -70,27 +70,32 @@ class Generator(object):
                 amr_to_generate_text.append(generated_amr)
 
             _generated_text_list = penman_to_text(amr_list=amr_to_generate_text)
-            for ((alignment, generated_amr, main_ancestral, adjacents_ancestral), _generated_text) \
+            for ((alignment, generated_amr, main_ancestral, adjacent_ancestral), _generated_text) \
                     in zip(descr_to_generate, _generated_text_list):
                 description = create_description(text=_generated_text, method=method)
                 amr_group = create_amrgroup()
                 description.add_amrgroup(amr_group)
                 description.add_amr(generated_amr)
-                description.keep_amr(main_ancestral, adjacents_ancestral)
+                description.keep_amr(main_ancestral, adjacent_ancestral)
                 alignment.add_description(description)
 
         except Exception as exc:
             PrintException()
             print(f'[{__file__}] Error while generating descriptions: {str(exc)}')
 
-    def _generate_amr(self, method='baseline3'):
+    def _generate_amr(self, method='baseline4'):
         """
 
         :param method:
         :return:
         """
         try:
-            generating_method = self._baseline4()
+            if method == 'baseline4':
+                generating_method = self._baseline4()
+            elif method == 'baseline5':
+                generating_method = self._baseline5()
+            else:
+                generating_method = None
             return generating_method
         except Exception as exc:
             PrintException()
@@ -137,6 +142,17 @@ class Generator(object):
     #     except Exception as exc:
     #         PrintException()
     #         print(f'Error on baseline2: {str(exc)}')
+    def _choose_biggest(self, info_list):
+        found = False
+        copy_info_list = info_list
+        base_info = None
+        while not found and copy_info_list:
+            biggest_subgraph = biggest_amr([info["subgraph"] for info in copy_info_list])
+            base_info = [info for info in copy_info_list if info["subgraph"] == biggest_subgraph][0]
+            if self._current_alignment.get_term() == base_info["triple"].target:
+                found = True
+            copy_info_list.remove(base_info)
+        return base_info, copy_info_list
 
     def _baseline3(self):
         try:
@@ -163,9 +179,14 @@ class Generator(object):
         try:
             amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
             information = []
+            amr: AMRModel
             for amr in amr_list:
-                focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
-                if focus_triple is not None:
+                is_name = amr.is_name(self._current_alignment.get_term())
+                if not is_name:
+                    focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+                else:
+                    focus_triple = is_name
+                if focus_triple is not None and focus_triple:
                     focus_subgraph = amr.get_subgraph(top=focus_triple)
                     focus_parent = amr.get_parents(focus_triple)
                     information.append(
@@ -178,7 +199,9 @@ class Generator(object):
                     )
 
             if information:
-                base_info = information[0]
+                # base_info = information[0]
+                base_info, information = self._choose_biggest(information)
+
                 if base_info["parent"]:
                     base_info["parent"][1].invert()
                     base_info["subgraph"].add(
@@ -187,7 +210,7 @@ class Generator(object):
 
                 appended_amr_list = []
                 if len(information) > 1:
-                    for info in information[1:]:
+                    for info in information:
                         _before = base_info["subgraph"]
                         base_info["subgraph"].add(other=info["subgraph"],
                                                   tuple_ref=(base_info["triple"].source, info["triple"].source))
@@ -204,6 +227,59 @@ class Generator(object):
         except Exception as exc:
             PrintException()
             print(f'Error on baseline4: {str(exc)}')
+
+    def _baseline5(self):
+        try:
+            amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
+            information = []
+            amr: AMRModel
+            for amr in amr_list:
+                is_name = amr.is_name(self._current_alignment.get_term())
+                if not is_name:
+                    focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+                else:
+                    focus_triple = is_name
+                if focus_triple is not None and focus_triple:
+                    focus_subgraph = amr.get_subgraph(top=focus_triple)
+                    # focus_parent = amr.get_parents(focus_triple)
+                    information.append(
+                        {
+                            "triple": focus_triple,
+                            "subgraph": focus_subgraph,
+                            # "parent": focus_parent,
+                            "amr": amr
+                        }
+                    )
+
+            if information:
+                # base_info = information[0]
+                base_info, information = self._choose_biggest(information)
+
+                # if base_info["parent"]:
+                #     base_info["parent"][1].invert()
+                #     base_info["subgraph"].add(
+                #         other=create_amrmodel(triples=base_info["parent"], top=base_info["parent"][2].source),
+                #         tuple_ref=(base_info["triple"].source, base_info["parent"][2].source))
+
+                appended_amr_list = []
+                if len(information) > 1:
+                    for info in information:
+                        _before = base_info["subgraph"]
+                        base_info["subgraph"].add(other=info["subgraph"],
+                                                  tuple_ref=(base_info["triple"].source, info["triple"].source))
+                        # if info["parent"]:
+                        #     info["parent"][1].invert()
+                        #     base_info["subgraph"].add(
+                        #         other=create_amrmodel(triples=info["parent"], top=info["parent"][2].source),
+                        #         tuple_ref=(base_info["triple"].source, info["parent"][2].source))
+
+                        if _before == base_info["subgraph"]:
+                            appended_amr_list.append(info)
+
+                return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list]
+        except Exception as exc:
+            PrintException()
+            print(f'Error on baseline5: {str(exc)}')
 
     # def _filter_commons(self, sns, current_alignment=None):
     #     """

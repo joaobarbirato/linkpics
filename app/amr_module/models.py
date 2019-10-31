@@ -460,7 +460,7 @@ class AMRModel(BaseModel):
         return_list = InstrumentedList([])
         for possible_name in possible_names:
             possible_name_string_list = self.get_triples(src=possible_name.source, relation='op')
-            if possible_name_string_list and all(any(ss in pns.target for ss in splitted_string)
+            if possible_name_string_list and any(any(ss in pns.target for ss in splitted_string)
                                                  for pns in possible_name_string_list):
                 return_list.append(possible_name)
 
@@ -510,10 +510,15 @@ class AMRModel(BaseModel):
                 triple_is_name = self.is_name(target)
                 if triple_is_name:
                     return triple_is_name
-
+            return_list = []
             for triple in self.list_triples:
                 if _match_triple(src, relation, target, triple):
-                    return triple
+                    return_list.append(triple)
+
+            if relation is not None and relation == 'instance':
+                return [triple for triple in return_list if (triple.target is not None or triple.target) and triple.target == target][0]
+            else:
+                return return_list[0]
         except Exception as exc:
             PrintException()
 
