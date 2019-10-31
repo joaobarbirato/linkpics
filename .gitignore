@@ -46,3 +46,5 @@ app/src/noticias_*/
 app/src/amr/AMR_AS_GRAPH_PREDICTION
 app/src/stanford-*
 data/
+scripts/
+scripts/*
