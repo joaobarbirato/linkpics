@@ -5,7 +5,6 @@ from werkzeug.exceptions import BadRequestKeyError
 
 from app.align_module import models
 from app.src.align.align_tool import AlignTool
-from app.src.align.align_tool_descr import AlignToolDescr
 
 from app import app
 from config import STATIC_REL
@@ -18,13 +17,13 @@ def render_index(action=None):
 
 
 @mod_align.route("/")
-@login_required
+# @login_required
 def main():
     return render_index(action='/alinhamento')
 
 
 @mod_align.route("/baseline")
-@login_required
+# @login_required
 def main_baseline():
     return render_index(action='/alinhamento')
 
@@ -70,7 +69,7 @@ from app.src.UTIL import utils
 
 
 @mod_align.route('/alinhamento', methods=['POST'])
-@login_required
+# @login_required
 def alinhar():
     _link = request.form['link']
 
@@ -94,17 +93,12 @@ def alinhar():
     if img_url != '':
         shutil.copy2(STATIC_REL + 'alinhamento2.jpg', img_url)
 
-    alinhador_descr = AlignToolDescr(
-        title=alinhador.orig_titulo, sub=alinhador.orig_legenda, text=alinhador.orig_texto, align_group=grupo
-    )
-
     response = dict(result_pessoas=result_pessoas,
                     result_objetos=result_objetos,
                     img_alinhamento=img_url.replace(STATIC_REL, 'static/'),
                     texto=texto,
                     legenda=legenda,
                     titulo=titulo,
-                    descricoes=alinhador_descr.get_descr(),
                     message='',
                     dic_avaliacao=dic_avaliacao)
 

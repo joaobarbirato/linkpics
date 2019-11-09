@@ -51,12 +51,10 @@ def not_found(error):
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.eval_module.controllers import mod_eval as auth_module
 from app.align_module.controllers import mod_align as align_module
-from app.amr_module.controllers import mod_amr as amr_module
 
 # Register blueprint(s)
 app.register_blueprint(auth_module)
 app.register_blueprint(align_module)
-app.register_blueprint(amr_module)
 
 # Build the database:
 # This will create the database file using SQLAlchemy
