@@ -33,8 +33,13 @@ cd ${base_dir}
 
 # 2.
 # Installing git dependencies
+wget https://download.pytorch.org/whl/cu75/torch-0.2.0.post2-cp36-cp36m-manylinux1_x86_64.whl
+pip install torch-0.2.0.post2-cp36-cp36m-manylinux1_x86_64.whl
+rm torch-0.2.0.post2-cp36-cp36m-manylinux1_x86_64.whl
+pip install torchvision==0.2.2.post3
+
 pip install git+https://github.com/miotto/treetagger-python/
-pip install dlib==19.13.1
+pip install dlib==19.17.1
 
 # 3. Downloading YOLO
 git clone https://github.com/pjreddie/darknet
@@ -53,6 +58,5 @@ mkdir ${base_dir}/app/src/noticia_atual
 git clone https://github.com/ChunchuanLv/AMR_AS_GRAPH_PREDICTION ${base_dir}/app/src/amr/AMR_AS_GRAPH_PREDICTION
 git clone https://github.com/freesunshine0316/neural-graph-to-seq-mp ${base_dir}/app/src/amr/neural-graph-to-seq-mp
 
-# TODO: visual_words.txt
-# TODO: cfg/yolo.cfg
-# TODO: data/
+cat installation_additional_scripts/constants_for_text_to_graph_python.txt > ${base_dir}/app/src/amr/AMR_AS_GRAPH_PREDICTION/utility/constants.py
+cat installation_additional_scripts/do_for_text_to_graph_python.txt > ${base_dir}/app/src/amr/AMR_AS_GRAPH_PREDICTION/do.py
