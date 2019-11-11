@@ -1,4 +1,3 @@
-// optionsSelected = $('.eval-batch-select option:selected');
 allRadios = $(':radio');
 // var activate_modal_button;
 $(document).ready(function () {
@@ -24,6 +23,10 @@ $(document).ready(function () {
     $('.flask-text p').each(function (index, item) {
         flaskTextToHTML(index, item)
     });
+
+    allRadios.each(function (index, item) {
+        $(item).prop('checked', false);
+    })
 });
 $('.modal-btn-eval').each(function (index, item) {
     $(item).click(function(){
@@ -37,13 +40,8 @@ $('.modal-btn-eval').each(function (index, item) {
     });
 });
 
-$(document).ready(function () {
-    allRadios.each(function (index, item) {
-        $(item).prop('checked', false);
-    })
-});
-
 $("[data-toggle=popover]").popover({html:true});
+
 $('.submit-eval').each(function (index, item) {
     $(item).click(function(e){
         e.preventDefault();
@@ -54,9 +52,9 @@ $('.submit-eval').each(function (index, item) {
 function radiosAreChecked(form) {
     const selector_checked = '#' + $(form).attr("id") + " :radio:checked";
     const selector_all = '#' + $(form).attr("id") + " :radio";
-    console.log($(selector_checked).length);
-    console.log($(selector_all).length);
-    return ($(selector_checked).length === $(selector_all).length / 2);
+    // console.log($(selector_checked).length);
+    // console.log($(selector_all).length);
+    return ($(selector_checked).length === $(selector_all).length / $(selector_all).length);
 }
 
 function submitFunction (form, item) {

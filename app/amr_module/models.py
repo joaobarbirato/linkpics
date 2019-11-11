@@ -287,11 +287,11 @@ def create_amrmodel(**kwargs):
 
 class AMRModel(BaseModel):
     __tablename__ = 'amr_model'
-    list_triples = db.relationship('Triple', backref='amr_model', lazy=True)
+    list_triples = db.relationship('Triple', backref='amr_model', lazy=True, cascade="all, delete-orphan")
     top = db.Column(db.String, nullable=False, default='')
     penman = db.Column(db.String, nullable=False, default='')
     sentence_id = db.Column(db.Integer, db.ForeignKey('sentence.id'))
-    amr_group_id = db.Column(db.Integer, db.ForeignKey('amr_group.id'), nullable=True)
+    description_id = db.Column(db.Integer, db.ForeignKey('description.id'), nullable=True)
 
     def __init__(self, **kwargs):
         """
@@ -501,6 +501,9 @@ class AMRModel(BaseModel):
         for triple in self.list_triples:
             if triple.source == src and triple.is_instance():
                 return triple
+
+    def get_sentence(self):
+        return self.sentence
 
     def get_triple(self, src=None, relation=None, target=None):
         try:

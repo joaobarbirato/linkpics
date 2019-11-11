@@ -2,8 +2,13 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.collections import InstrumentedList
 
 from app import db
+from app.align_module import _treat_raw_text
 from app.eval_module.models import query_by_id, PredAlignment
 from app.model_utils import BaseModel, _add_session, _add_relation
+
+
+def create_token(**kwargs):
+    return Token(**kwargs)
 
 
 class Token(BaseModel):
@@ -139,6 +144,10 @@ class Color(BaseModel):
         return "%d, %d, %d" % (self.get_html_color()[0], self.get_html_color()[1], self.get_html_color()[2])
 
 
+def create_sentence(**kwargs):
+    return Sentence(**kwargs)
+
+
 class Sentence(BaseModel):
     __tablename__ = 'sentence'
     label = db.Column(db.String(16), nullable=False, default='text')
@@ -155,18 +164,28 @@ class Sentence(BaseModel):
         'polymorphic_identity': 'sentence'
     }
 
-    def __init__(self, text, label='text'):
-        self.content = text
-        self.label = label
+    def __init__(self, **kwargs):
+        if kwargs:
+            if len(kwargs) == 2 and ('text' and 'label') in kwargs:
+                self.content = kwargs['text']
+                self.label = kwargs['label']
+            elif len(kwargs) == 1 and 'copy' in kwargs:
+                kwargs['copy']: Sentence
+                self.content = kwargs['copy'].content
+                self.label = kwargs['copy'].label
+                self.tokenized = InstrumentedList([
+                    create_token(dictionary={'word': token.word, 'lemma': token.lemma, 'ner': token.ner, 'pos': token.pos})
+                    for token in kwargs['copy'].tokenized
+                ])
 
     def __repr__(self):
-        return self.content
+        return _treat_raw_text(self.content)
 
     def __str__(self):
-        return self.content
+        return _treat_raw_text(self.content)
 
     def __hash__(self):
-        return hash(self.content)
+        return hash(_treat_raw_text(self.content))
 
     def get_tokens(self, start, end):
         return self.tokenized[start-1:end-1]

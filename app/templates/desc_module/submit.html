@@ -21,7 +21,7 @@
     </div>
     <div class="row card p-4 my-2">
         <div class="col col-12 card-body">
-            <form enctype="multipart/form-data" id="align-batch" method="post" action="{{ url_for('desc.describe_batch') }}">
+            <form enctype="multipart/form-data" id="align-batch" method="post" action="{{ url_for('eval_desc.describe_batch') }}">
                 <div class="form-group">
                     <input type="hidden" name="csrf_token" id="align-batch-csrf" value="{{ csrf_token() }}" />
                     <div class="row">
@@ -41,6 +41,20 @@
                             <label class="custom-control custom-checkbox">
                                 <input type="radio" class="form-check-input" name="restriction" id="restriction_obj" value="obj">
                                 Apenas objetos
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="method" id="method_baseline4" value="baseline4" checked>
+                                Considerar nó pai (baseline4)
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="method" id="method_baseline5" value="baseline5">
+                                Desconsiderar nó pai (baseline5)
                             </label>
                         </div>
                     </div>

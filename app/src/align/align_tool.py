@@ -442,12 +442,6 @@ class AlignTool:
 
             self._process_text_image()
 
-            pessoas_noticia = len(self._get_bounding_persons(self.list_boundingBoxOrganizada))
-            nomes_noticia = len(self.lst_top_nomeadas_texto)
-
-            self.total_pessoas += pessoas_noticia
-            self.total_nomes += nomes_noticia
-
         except Exception as e:
             print(e)
 

@@ -5,10 +5,10 @@
 from operator import methodcaller
 
 from app.amr_module.models import AMRModel, biggest_amr, top_from_triples_list, create_amrmodel
-from app.desc_module.models import create_description, create_amrgroup
+from app.desc_module.models import create_description
 from app.model_utils import PrintException
 from app.align_module.models import News, Alignment
-from app.align_module.base_model import Sentence, sntsmodel_to_amrmodel
+from app.align_module.base_model import Sentence, sntsmodel_to_amrmodel, create_sentence
 
 from app.src.util.amrtools.wrapper import parse_to_amr_list, penman_to_text
 
@@ -73,10 +73,19 @@ class Generator(object):
             for ((alignment, generated_amr, main_ancestral, adjacent_ancestral), _generated_text) \
                     in zip(descr_to_generate, _generated_text_list):
                 description = create_description(text=_generated_text, method=method)
-                amr_group = create_amrgroup()
-                description.add_amrgroup(amr_group)
                 description.add_amr(generated_amr)
-                description.keep_amr(main_ancestral, adjacent_ancestral)
+                main_sentence = create_sentence(copy=main_ancestral.get_sentence())
+                main_copy = create_amrmodel(copy=main_ancestral)
+                main_sentence.add_amr(main_copy)
+                main_sentence.save()
+                adj_copies = []
+                for aa in adjacent_ancestral:
+                    aa_sentence = create_sentence(copy=aa.get_sentence())
+                    aa_copy = create_amrmodel(copy=aa)
+                    aa_sentence.add_amr(aa_copy)
+                    aa_sentence.save()
+                    adj_copies.append(aa_copy)
+                description.keep_amr(main_copy, adj_copies)
                 alignment.add_description(description)
 
         except Exception as exc:
@@ -101,47 +110,6 @@ class Generator(object):
             PrintException()
             print(f'[{__file__}] Error while generating AMR: {str(exc)}')
 
-    # def _baseline1(self):
-    #     try:
-    #         amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
-    #         _big_amr = biggest_amr(amr_list)
-    #         amr_list.remove(_big_amr)
-    #         print(_big_amr)
-    #         _old_big_amr = _big_amr
-    #         #
-    #         for amr in amr_list:
-    #             intersection = _big_amr.intersection(amr)
-    #             if intersection and _big_amr.get_triples() != intersection:
-    #                 subgraph_top = top_from_triples_list(triples_list=intersection, ancestral=amr)
-    #                 subgraph = amr.get_subgraph(top=subgraph_top)
-    #                 if subgraph is not None:
-    #                     _big_amr = subgraph
-    #
-    #         return _big_amr if _big_amr != _old_big_amr else None
-    #     except Exception as exc:
-    #         PrintException()
-    #         print(f'Error on baseline1: {str(exc)}')
-
-    # def _baseline2(self):
-    #     try:
-    #         amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
-    #         _big_amr = biggest_amr(amr_list)
-    #         amr_list.remove(_big_amr)
-    #         print(_big_amr)
-    #         _old_big_amr = _big_amr
-    #         #
-    #         for amr in amr_list:
-    #             intersection = _big_amr.intersection(amr, focus=self._current_alignment.get_term())
-    #             if intersection and _big_amr.get_triples() != intersection:
-    #                 subgraph_top = top_from_triples_list(triples_list=intersection, ancestral=amr)
-    #                 subgraph = amr.get_subgraph(top=subgraph_top)
-    #                 if subgraph is not None:
-    #                     _big_amr = subgraph
-    #
-    #         return _big_amr if _big_amr != _old_big_amr else None
-    #     except Exception as exc:
-    #         PrintException()
-    #         print(f'Error on baseline2: {str(exc)}')
     def _choose_biggest(self, info_list):
         found = False
         copy_info_list = info_list
@@ -175,7 +143,34 @@ class Generator(object):
             PrintException()
             print(f'Error on baseline3: {str(exc)}')
 
+    @staticmethod
+    def _add_parent_to_base(info, base):
+        if info["parent"]:
+            info["parent"][1].invert()
+            base["subgraph"].add(
+                other=create_amrmodel(triples=base["parent"], top=base["parent"][2].source),
+                tuple_ref=(base["triple"].source, base["parent"][2].source))
+        return base
+
+    def sentence_selection(self, select=0):
+        # alignments only
+        if select == 0:
+            pass
+        # alignments and it's corefs
+        elif select == 1:
+            pass
+        # alignments, corefs and some TODO WordNet relation
+        elif select == 2:
+            pass
+        else:
+            return self.sentence_selection(0)
+
     def _baseline4(self):
+        """
+        - alignment
+        - with parents
+        :return:
+        """
         try:
             amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
             information = []
@@ -199,28 +194,17 @@ class Generator(object):
                     )
 
             if information:
-                # base_info = information[0]
                 base_info, information = self._choose_biggest(information)
-
-                if base_info["parent"]:
-                    base_info["parent"][1].invert()
-                    base_info["subgraph"].add(
-                        other=create_amrmodel(triples=base_info["parent"], top=base_info["parent"][2].source),
-                        tuple_ref=(base_info["triple"].source, base_info["parent"][2].source))
-
+                base_info = self._add_parent_to_base(info=base_info, base=base_info)
                 appended_amr_list = []
                 if len(information) > 1:
                     for info in information:
                         _before = base_info["subgraph"]
                         base_info["subgraph"].add(other=info["subgraph"],
                                                   tuple_ref=(base_info["triple"].source, info["triple"].source))
-                        if info["parent"]:
-                            info["parent"][1].invert()
-                            base_info["subgraph"].add(
-                                other=create_amrmodel(triples=info["parent"], top=info["parent"][2].source),
-                                tuple_ref=(base_info["triple"].source, info["parent"][2].source))
+                        base_info = self._add_parent_to_base(info=info, base=base_info)
 
-                        if _before == base_info["subgraph"]:
+                        if _before != base_info["subgraph"]:
                             appended_amr_list.append(info)
 
                 return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list]
@@ -229,6 +213,11 @@ class Generator(object):
             print(f'Error on baseline4: {str(exc)}')
 
     def _baseline5(self):
+        """
+        - alignment
+        - without parents
+        :return:
+        """
         try:
             amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
             information = []
@@ -241,39 +230,24 @@ class Generator(object):
                     focus_triple = is_name
                 if focus_triple is not None and focus_triple:
                     focus_subgraph = amr.get_subgraph(top=focus_triple)
-                    # focus_parent = amr.get_parents(focus_triple)
                     information.append(
                         {
                             "triple": focus_triple,
                             "subgraph": focus_subgraph,
-                            # "parent": focus_parent,
                             "amr": amr
                         }
                     )
 
             if information:
-                # base_info = information[0]
                 base_info, information = self._choose_biggest(information)
-
-                # if base_info["parent"]:
-                #     base_info["parent"][1].invert()
-                #     base_info["subgraph"].add(
-                #         other=create_amrmodel(triples=base_info["parent"], top=base_info["parent"][2].source),
-                #         tuple_ref=(base_info["triple"].source, base_info["parent"][2].source))
-
                 appended_amr_list = []
                 if len(information) > 1:
                     for info in information:
                         _before = base_info["subgraph"]
                         base_info["subgraph"].add(other=info["subgraph"],
                                                   tuple_ref=(base_info["triple"].source, info["triple"].source))
-                        # if info["parent"]:
-                        #     info["parent"][1].invert()
-                        #     base_info["subgraph"].add(
-                        #         other=create_amrmodel(triples=info["parent"], top=info["parent"][2].source),
-                        #         tuple_ref=(base_info["triple"].source, info["parent"][2].source))
 
-                        if _before == base_info["subgraph"]:
+                        if _before != base_info["subgraph"]:
                             appended_amr_list.append(info)
 
                 return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list]

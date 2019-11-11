@@ -4,67 +4,53 @@ from app.amr_module.models import create_amrmodel, AMRModel
 from app.model_utils import BaseModel, _add_relation
 
 
-def create_description(text, method):
-    return Description(text, method)
+from app.eval_module.desc_models import DescBatch, DescEval
 
 
-def create_amrgroup():
-    return AMRGroup()
-
-
-class AMRGroup(BaseModel):
-    __tablename__ = 'amr_group'
-    amr_list = db.relationship('AMRModel', single_parent=True, lazy=True, backref='amr_group')
-    description_id = db.Column(db.Integer, db.ForeignKey('sentence.id'), nullable=True)
-
-    def __init__(self):
-        pass
-
-    def add_amr(self, amr):
-        if amr is not None or amr:
-            if isinstance(amr, AMRModel):
-                self.amr_list = _add_relation(self.amr_list, create_amrmodel(copy=amr))
-            elif isinstance(amr, list):
-                self.amr_list = _add_relation(self.amr_list, [create_amrmodel(copy=a) for a in amr])
-
-        return self.amr_list
-
-    def get_first(self):
-        return self.amr_list[0]
-
-    def get_others(self):
-        return self.amr_list[1:]
-
-
-class Description(Sentence):
+class Description(BaseModel):
     __tablename__ = 'description'
     method = db.Column(db.String)
+    text = db.Column(db.String)
+    amr_list = db.relationship('AMRModel', single_parent=True, lazy=True, backref='description',
+                               cascade="all, delete-orphan")
     alignment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=True)
-    derivated_amr = db.relationship('AMRGroup', uselist=False, single_parent=True, lazy=True, backref='description')
+    desc_eval_id = db.Column(db.Integer, db.ForeignKey('desc_eval.id'), nullable=True)
 
-    __mapper_args = {
-        'polymorphic_identity': 'sentence'
-    }
-
-    def __int__(self, text, method):
-        """
-        :param text:
-        :param method:
-        :return:
-        """
+    def __init__(self, text, method):
+        self.text = text
         self.method = method
-        super().__init__(text, label='description')
 
-    def add_amrgroup(self, amr_group):
-        self.derivated_amr = amr_group
-        return self.derivated_amr
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return self.text
+
+    def __hash__(self):
+        return hash(self.text)
+
+    def add_amr(self, amr):
+        return _add_relation(self.amr_list, amr)
 
     def keep_amr(self, main, adj_list):
-        self.derivated_amr.add_amr(main)
-        self.derivated_amr.add_amr(adj_list)
+        self.add_amr(main)
+        self.add_amr(adj_list)
+
+    def get_amr(self):
+        return self.amr_list[0]
 
     def get_main(self):
-        return self.derivated_amr.get_first()
+        return self.amr_list[1]
 
     def get_adjacents(self):
-        return self.derivated_amr.get_others()
+        return self.amr_list[2:]
+
+    def get_alignment(self):
+        return self.alignment
+
+    def get_news(self):
+        return self.alignment.sentences()[0].news
+
+
+def create_description(text, method):
+    return Description(text=text, method=method)
