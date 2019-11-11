@@ -2,6 +2,26 @@ import re
 import unicodedata
 
 
+def mwe_with_separators(mwe):
+    SEPARATORS = [' ', '-']
+    return [separator.join(mwe.split(' ')) for separator in SEPARATORS]
+
+
+def word_to_wordpoint(palavra):
+    return [
+        palavra + ".", palavra + "?", palavra + "!", palavra + ";", palavra + "'", palavra + "-", palavra + '"',
+        palavra.title() + ".", palavra.title() + " ", palavra.title() + "?", palavra.title() + "!",
+        palavra.title() + ";", palavra.title() + ",", palavra.title() + "'", palavra.title() + "-",
+        palavra.title() + '"',
+        palavra.lower() + " ", palavra.lower() + ".", palavra.lower() + "?", palavra.lower() + "!",
+        palavra.lower() + ";", palavra.lower() + ",", palavra.lower() + "'", palavra.lower() + "-",
+        palavra.lower() + '"',
+        palavra.upper() + " ", palavra.upper() + ".", palavra.upper() + "?", palavra.upper() + "!",
+        palavra.upper() + ";", palavra.upper() + ",", palavra.upper() + "'", palavra.upper() + "-",
+        palavra.upper() + '"'
+    ]
+
+
 def file_to_variavel(file_name):
     texto = ""
     with open(file_name, 'rt') as f:

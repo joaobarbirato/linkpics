@@ -1,0 +1,223 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Avaliação de Descrições</title>
+{% endblock %}
+
+{% block conteudo %}
+    <h1 class="custom-title">Avaliação</h1>
+    {% if news_list %}
+        <!-- Modal -->
+        <div class="modal fade" id="modal-alignment" tabindex="-1" role="dialog" aria-labelledby="modal-alignmentTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-alignment-title">Modal title</h5>
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <h6 class="modal-title ml-3 mt-2" id="modal-alignment-subt">Modal subtitle</h6>
+                    <div class="modal-body text-justify" id="modal-alignment-text">
+                        ...
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {#  For each batch that hasn't been evaluated  #}
+        <div class="row" role="tablist" aria-multiselectable="false" id="row_batch">
+            {% for news in news_list %}
+                    <div class="card col col-12 p-0">
+                        <div class="card-header" role="tab" id="heading_{{ news.id }}">
+                            <h5 class="mb-0">
+                                <a data-toggle="collapse" data-parent="#row_batch" href="#collapse_{{ news.id }}" aria-expanded="true" aria-controls="collapse_{{ news.id }}">
+                                    <b>Notícia #{{ news.id }}</b>
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse_{{ news.id }}" class="collapse" role="tabpanel" aria-labelledby="heading_{{ news.id }}">
+                            <div class="row">
+                                <div class="col col-5 pl-4">
+                                    <img class="img-fluid rounded img-responsive my-2 ml-2" style="border: solid;" alt="image_{{ news.id }}"
+                                         src="/{{ news.img_path.replace("app/", "/") }}" />
+                                    <!-- Button trigger modal -->
+                                    <button type="button" class="btn btn-primary modal-btn-eval ml-2 mb-2" id="activate_modal_btn_{{ news.id }}">
+                                        Exibir texto
+                                    </button>
+                                    <div class="hidden-news-text border border-primary m-2 p-2" id="news_for_activate_modal_btn_{{ news.id }}">
+                                        <div class="flask-text" id="title_for_news_for_activate_modal_btn_{{ news.id }}">
+                                            <h4 class="font-weight-bold">{{ news.get_title() }}</h4>
+                                        </div>
+                                        <div class="flask-text" id="subt_for_news_for_activate_modal_btn_{{ news.id }}">
+                                            <h5 class="text-secondary">{{ news.get_subtitle() }}</h5>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="flask-text" id="text_for_news_for_activate_modal_btn_{{ news.id }}">
+                                            <p class="text-justify">{{ news.get_text() }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-block col col-7 p-2 pr-4">
+                                    <form id="form_batch_e{{ news.id }}" action="{{ url_for('eval.eval_batch') }}" method="post">
+                                        <input type="hidden" name="csrf_token" id="csrf_batch_e{{ news.id }}" value="{{ csrf_token() }}" />
+                                        <a target="_blank" href="{{ news.link }}">{{ news.link }}</a>
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="thead-inverse">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Alinhamentos</th>
+                                                <th>Descrições</th>
+                                                <th>Corretude</th>
+                                            </tr>
+                                            </thead>
+                                            {% for alignment in news.alignments() %}
+                                                <tr>
+                                                    <th scope="row">{{ alignment.id }}</th>
+                                                    <td>
+                                                        <div class="row my-2">
+                                                            <div class="col col-5 pl-4">
+                                                                <div class="row pl-2">
+                                                                    <b style="color: rgb({{ alignment.colors_model }})">{{ alignment.term }}</b>
+                                                                </div>
+{#                                                                <div class="row pl-4 my-2">#}
+{#                                                                    <label class="form-check-label" for="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_y">#}
+{#                                                                        <input class="form-check-input" type="radio" name="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}" id="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_y" value="True">#}
+{#                                                                        Correto#}
+{#                                                                    </label>#}
+{#                                                                </div>#}
+{#                                                                <div class="row pl-4 my-2">#}
+{#                                                                    <label class="form-check-label" for="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}">#}
+{#                                                                        <input class="form-check-input" type="radio" name="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}" id="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_n" value="False">#}
+{#                                                                        Incorreto#}
+{#                                                                    </label>#}
+{#                                                                </div>#}
+{#                                                                {% if alignment.syns_model or alignment.mwes_model %}#}
+{#                                                                    {% if alignment.syns_model %}#}
+{#                                                                        <div class="row pl-2 my-2">#}
+{#                                                                            <button type="button" class="btn btn-secondary popover-syns" data-container="body"#}
+{#                                                                                    data-toggle="popover" data-placement="top" title="Sinônimos encontrados"#}
+{#                                                                                    data-content="<ul>{% for syn in alignment.syns_model %}<li>{{ syn }}</li>{% endfor %}</ul>">#}
+{#                                                                                Sinônimos#}
+{#                                                                            </button>#}
+{#                                                                        </div>#}
+{#                                                                    {% endif %}#}
+{#                                                                    {% if alignment.mwes_model %}#}
+{#                                                                        <div class="row pl-2 my-2">#}
+{#                                                                            <button type="button" class="btn btn-secondary popover-mwes" data-container="body"#}
+{#                                                                                    data-toggle="popover" data-placement="bottom" title="Expr. multipalavras encontradas"#}
+{#                                                                                    data-content="<ul>{% for mwe in alignment.mwes_model %}<li>{{ mwe }}</li>{% endfor %}</ul>">#}
+{#                                                                                MWEs#}
+{#                                                                            </button>#}
+{#                                                                        </div>#}
+{#                                                                    {% endif %}#}
+{#                                                                    </div>#}
+{#                                                                    <div class="col col-7 pr-4">#}
+{#                                                                        {% if alignment.mwes_model %}#}
+{#                                                                            <h5>Expr multip. encontradas</h5>#}
+{#                                                                            <ul>#}
+{#                                                                            {% for mwe in alignment.mwes_model %}#}
+{#                                                                                <li>#}
+{#                                                                                <div class="row my-2 d-table w-100">#}
+{#                                                                                    <div class="col-6 d-table-cell">#}
+{#                                                                                        <b style="color: rgb({{ alignment.colors_model }})">{{ mwe }}</b>#}
+{#                                                                                    </div>#}
+{#                                                                                    <div class="col-3 pl-4 my-2 d-table-cell">#}
+{#                                                                                        <label class="form-check-label" for="mwe_{{ mwe.id }}_y">#}
+{#                                                                                            <input class="form-check-input" type="radio" name="mwe_{{ mwe.id }}" id="mwe_{{ mwe.id }}_y" value="True">#}
+{#                                                                                            Corr#}
+{#                                                                                        </label>#}
+{#                                                                                    </div>#}
+{#                                                                                    <div class="col-3 pl-4 my-2 d-table-cell">#}
+{#                                                                                        <label class="form-check-label" for="mwe_{{ mwe.id }}_n">#}
+{#                                                                                            <input class="form-check-input" type="radio" name="mwe_{{ mwe.id }}" id="mwe_{{ mwe.id }}_n" value="False">#}
+{#                                                                                            Incorr#}
+{#                                                                                        </label>#}
+{#                                                                                    </div>#}
+{#                                                                                </div>#}
+{#                                                                                </li>#}
+{#                                                                            {% endfor %}#}
+{#                                                                            </ul>#}
+{#                                                                        {% endif %}#}
+{#                                                                        {% if alignment.syns_model %}#}
+{#                                                                            <h5>Sinônimos encontrados</h5>#}
+{#                                                                            <ul>#}
+{#                                                                            {% for syn in alignment.syns_model %}#}
+{#                                                                                <li>#}
+{#                                                                                <div class="row my-2 d-table w-100">#}
+{#                                                                                    <div class="col-6 d-table-cell">#}
+{#                                                                                        <b style="color: rgb({{ alignment.colors_model }})">{{ syn }}</b>#}
+{#                                                                                    </div>#}
+{#                                                                                    <div class="col-3 pl-4 my-2 d-table-cell">#}
+{#                                                                                        <label class="form-check-label" for="syn_{{ syn.id }}_y">#}
+{#                                                                                            <input class="form-check-input" type="radio" name="syn_{{ syn.id }}" id="syn_{{ syn.id }}_y" value="True">#}
+{#                                                                                            Corr#}
+{#                                                                                        </label>#}
+{#                                                                                    </div>#}
+{#                                                                                    <div class="col-3 pl-4 my-2 d-table-cell">#}
+{#                                                                                        <label class="form-check-label" for="syn_{{ syn.id }}_n">#}
+{#                                                                                            <input class="form-check-input" type="radio" name="syn_{{ syn.id }}" id="syn_{{ syn.id }}_n" value="False">#}
+{#                                                                                            Incorr#}
+{#                                                                                        </label>#}
+{#                                                                                    </div>#}
+{#                                                                                </div>#}
+{#                                                                                </li>#}
+{#                                                                            {% endfor %}#}
+{#                                                                            </ul>#}
+{#                                                                        {% endif %}#}
+                                                                    </div>
+{#                                                                {% endif %}#}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="row my-2">
+                                                            <div class="col col-12 pl-4">
+                                                                {{ alignment.get_description() }}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="row pl-4 my-2">
+                                                            <label class="form-check-label" for="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_y">
+                                                                <input class="form-check-input" type="radio" name="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}" id="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_c" value="2">
+                                                                Correto
+                                                            </label>
+                                                        </div>
+                                                        <div class="row pl-4 my-2">
+                                                            <label class="form-check-label" for="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}">
+                                                                <input class="form-check-input" type="radio" name="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}" id="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_p" value="1">
+                                                                Parcialmente Correto
+                                                            </label>
+                                                        </div>
+                                                        <div class="row pl-4 my-2">
+                                                            <label class="form-check-label" for="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}">
+                                                                <input class="form-check-input" type="radio" name="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}" id="radio_batch_e{{ news.id }}_a{{ alignment.get_description().id }}_i" value="0">
+                                                                Incorreto
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </table>
+{#                                        <button type="submit" id="submit_batch_e{{ news.id }}" class="btn btn-primary submit-eval">Avaliar</button>#}
+                                    </form>
+{#                                </div>#}
+                            </div>
+                        </div>
+                    </div>
+{#                {% endif %}{% endfor %}#}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="row">
+            <h4>Não há conjuntos pra avaliar</h4>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/eval.js') }}"></script>
+{% endblock %}

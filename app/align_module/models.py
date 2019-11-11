@@ -4,12 +4,14 @@
 """
 from sqlalchemy.orm.collections import InstrumentedList
 
+from app.align_module import _treat_raw_text
 from app.align_module.base_model import Token, MWE, Synonym, Color, Sentence
 from app.align_module.coref_models import MentionModel, CoreferenceModel
 from app.src.PLN.coreference import Coreference
 from app.src.VC.boundingBox import BoundingBox
 from app import (db)
 from app.model_utils import BaseModel, _add, _add_relation, _add_session
+from app.src.util.utils import word_to_wordpoint, mwe_with_separators
 
 occur = db.Table('occur',
                  db.Column('sentence_id', db.Integer, db.ForeignKey('sentence.id'), primary_key=True),
@@ -36,7 +38,7 @@ class Alignment(BaseModel):
     syns_model = db.relationship('Synonym', single_parent=True, backref='alignment', cascade='all, delete-orphan',
                                  lazy=True)
     belongs_sentence = db.relationship('Sentence', secondary=occur, lazy='subquery',
-                                       backref=db.backref('has_alignment'))
+                                       backref=db.backref('has_alignment', lazy=True))
 
     group_id = db.Column(db.Integer, db.ForeignKey('alignment_group.id'))
 
@@ -125,12 +127,14 @@ class Alignment(BaseModel):
     def add_sentence(self, sentence=None):
         """
 
-        :type sentence: app.align_module.base_model.Sentence
+        :type sentence: app.align_module.base_model.Sentence, list
         :param sentence:
         :return:
         """
         if sentence is not None and sentence:
-            if self.belongs_sentence is None or sentence not in self.belongs_sentence:
+            if self.belongs_sentence is None or \
+                    ((isinstance(sentence, list) and all(s not in self.belongs_sentence for s in sentence)) or
+                     (isinstance(sentence, Sentence) and sentence not in self.belongs_sentence)):
                 self.belongs_sentence = _add_relation(self.belongs_sentence, sentence)
 
         return self.belongs_sentence
@@ -286,6 +290,10 @@ class AlignmentGroup(BaseModel):
         db.session.add(self)
 
 
+def get_all_news():
+    return News.query.all()
+
+
 class News(BaseModel):
     __tablename__ = 'news'
     img_path = db.Column(db.String, nullable=False, default='')
@@ -409,20 +417,81 @@ class News(BaseModel):
         elif isinstance(index, list):
             return [self.sentences[i] for i in index]
 
-    def get_text(self):
-        return f'{self.sentences[0]}\n{self.sentences[1]}\n{self.sentences[2:]}'
+    def get_full_text(self):
+        return f'{self.sentences[0]}\n{self.sentences[1]}\n{"".join(str(s) for s in self.sentences[2:])}'
+
+    def _highlight_alignments(self, text):
+        """
+
+        :type text: str
+        """
+        new_text = text
+        alignment: Alignment
+        for alignment in self.alignments():
+            pre_tag = f'<b style="color:rgb({str(alignment.colors_model)});">'
+            pos_tag = f'</b>'
+            if alignment.get_mwes():
+                for mwe in alignment.get_mwes():
+                    for word in mwe_with_separators(mwe.mwe):
+                        new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+            if alignment.get_syns():
+                for syn in alignment.get_syns():
+                    for word in word_to_wordpoint(syn.syn):
+                        new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+
+            for word in word_to_wordpoint(alignment.get_term()):
+                new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+
+        return new_text
+
+    def get_title(self, highlight_alignments=False):
+        if not highlight_alignments:
+            return f'{self.sentences[0]}'
+        else:
+            return self._highlight_alignments(f'{self.sentences[0]}')
+
+    def get_subtitle(self, highlight_alignments=False):
+        if not highlight_alignments:
+            return f'{self.sentences[1]}'
+        else:
+            return self._highlight_alignments(f'{self.sentences[1]}')
+
+    def get_text(self, highlight_alignments=False):
+        if not highlight_alignments:
+            return _treat_raw_text(f'{"".join(str(s) for s in self.sentences[2:])}')
+        else:
+            return self._highlight_alignments(_treat_raw_text(f'{"".join(str(s) for s in self.sentences[2:])}'))
 
     def get_link(self):
         return self.link
 
-    def get_sentences(self, return_type="model"):
+    def get_sentences(self, return_type="model", position=None):
         if return_type == "str":
-            return [str(s) for s in self.sentences]
+            if position is not None:
+                if isinstance(position, int) and position >= 0:
+                    return str(self.sentences[position])
+                elif isinstance(position, list):
+                    return [str(s) for i, s in enumerate(self.sentences) if i in position]
+            else:
+                return [str(s) for s in self.sentences]
         elif return_type == "model":
-            return self.sentences
+            if position is not None:
+                if isinstance(position, int) and position >= 0:
+                    return self.sentences[position]
+                elif isinstance(position, list):
+                    return [s for i, s in enumerate(self.sentences) if i in position]
+            else:
+                return self.sentences
+
+        return []
 
     def as_dict(self):
         return {"img_path": self.img_path, "sentences": {s.as_dict() for s in self.sentences}}
+
+    def save(self):
+        # [sentence.save() for sentence in self.sentences]
+        # [coref.save() for coref in self.coreferences]
+        _add_session(self)
 
 
 def init():

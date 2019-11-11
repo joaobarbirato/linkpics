@@ -91,13 +91,13 @@ def index():
     return render_template("eval_module/index.html")
 
 
-@mod_eval.route('/submit', methods=["GET"])
+@mod_eval.route('/align/submit', methods=["GET"])
 @login_required
 def submit():
     return render_template("eval_module/submit.html")
 
 
-@mod_eval.route('/eval', methods=["GET"])
+@mod_eval.route('/align/eval', methods=["GET"])
 @login_required
 def evaluation():
     return render_template(

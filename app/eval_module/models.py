@@ -4,6 +4,7 @@ import os
 from werkzeug.security import generate_password_hash
 
 from app import db
+from app.eval_module import Base
 from config import STATIC_REL
 
 
@@ -36,16 +37,6 @@ def exists_em(em):
 
 
 # Define a base model for other database tables to inherit
-class Base(db.Model):
-    __abstract__ = True
-
-    id = db.Column(db.Integer, primary_key=True)
-    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
-    date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
-                              onupdate=db.func.current_timestamp())
-
-    def add_self(self):
-        db.session.add(self)
 
 
 # Define a User model

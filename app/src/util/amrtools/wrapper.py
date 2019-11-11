@@ -158,6 +158,7 @@ class AMRWrapper:
 
 def parse_to_amr_list(snts=None):
     os.chdir(f"{BASE_DIR}/{SRC_DIR}amr/AMR_AS_GRAPH_PREDICTION")
+    _current = None
     try:
         input_dir = TMP_DIR + '/input.txt'
         with open(input_dir, 'w+') as input_file:
@@ -203,6 +204,7 @@ def parse_to_amr_list(snts=None):
                             penman_notation.append(line)
 
                 penman_string = ''.join(penman_notation).replace('\n', '')
+                _current = penman_string
                 penman_graph = penman.decode(penman_string)
 
                 amr_graph.set_penman(penman_graph)
@@ -211,6 +213,7 @@ def parse_to_amr_list(snts=None):
     except Exception as exc:
         os.chdir(BASE_DIR)
         PrintException()
+        print(penman_string)
 
     os.chdir(BASE_DIR)
     return amr_list

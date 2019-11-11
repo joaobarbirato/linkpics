@@ -295,6 +295,7 @@ class AlignTool:
         if object_aligned:
             for key, value in object_aligned.items():
                 print("Key: ", key, "\nValue: ", value)
+                snts_to_add = list()
                 palavra = get_word_from_lemma(lemma=key.split("#")[0])
                 index = 0 if len(key.split("#")) == 1 else key.split("#")[1]
                 alinhamento = self.group.get_alignment(term=key.split("#")[0], index=int(index))
@@ -308,14 +309,14 @@ class AlignTool:
                             if sentence_has_mwe:  # a detecção de MWEs ignora pontuação no texto
                                 print(f'[MWE-CONTAINS] {mwe_w_s}')
                                 alinhamento.add_mwe(mwe=mwe_w_s)
-                                alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_mwe))
+                                snts_to_add += [snt for snt in self.news_object.get_sentence_index(sentence_has_mwe) if snt not in snts_to_add]
                                 self._paint_text(mwe_w_s, alinhamento)
 
                 palavras = self._word_to_wordpoint(palavra)
                 for p in palavras:
                     sentence_has_p = self._text_contains(p)
                     if sentence_has_p:
-                        alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_p))
+                        snts_to_add += [snt for snt in self.news_object.get_sentence_index(sentence_has_p) if snt not in snts_to_add]
                         self._paint_text(p, alinhamento)
 
                 # n:1
@@ -329,8 +330,10 @@ class AlignTool:
                             sentence_has_p = self._text_contains(p)
                             if sentence_has_p:
                                 alinhamento.add_syn(syn=ps)
-                                alinhamento.add_sentence(self.news_object.get_sentence_index(sentence_has_p))
+                                snts_to_add += [snt for snt in self.news_object.get_sentence_index(sentence_has_p) if snt not in snts_to_add]
                                 self._paint_text(p, alinhamento)
+                if snts_to_add:
+                    alinhamento.add_sentence(snts_to_add)
 
                 self.palette.inc_index()
 
@@ -458,12 +461,6 @@ class AlignTool:
                 return 0
 
             self._process_text_image()
-
-            pessoas_noticia = len(self._get_bounding_persons(self.list_boundingBoxOrganizada))
-            nomes_noticia = len(self.lst_top_nomeadas_texto)
-
-            self.total_pessoas += pessoas_noticia
-            self.total_nomes += nomes_noticia
 
         except Exception as e:
             print(e)

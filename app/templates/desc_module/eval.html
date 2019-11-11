@@ -1,0 +1,130 @@
+{% extends 'helpers/base.html' %}
+
+{% block titulo %}
+    <title>LinkPICS | Avaliação de Descrições</title>
+{% endblock %}
+
+{% block conteudo %}
+    <h1 class="custom-title">Avaliação</h1>
+    {% if batch_list %}
+        <!-- Modal -->
+        {#  For each batch that hasn't been evaluated  #}
+        {% for batch in batch_list %}{% if not batch.was_eval() %}
+            <div class="row" role="tablist" aria-multiselectable="false" id="row_b{{ batch.id }}">
+                {#  For each evaluate model that hasn't been evaluated  #}
+                {% for eval in batch.desc_eval_list %}{% if not eval.was_eval() %}
+                    <div class="card col col-12 p-0">
+                        <div class="card-header" role="tab" id="heading_{{ eval.id }}">
+                            <h5 class="mb-0">
+                                <a data-toggle="collapse" data-parent="#row_b{{ batch.id }}" href="#collapse_{{ eval.id }}" aria-expanded="true" aria-controls="collapse_{{ eval.id }}">
+                                    <b>Conjunto {{ batch.name }}#{{ batch.id }}</b> | Avaliação de descrição # {{ eval.id }}
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse_{{ eval.id }}" class="collapse" role="tabpanel" aria-labelledby="heading_{{ eval.id }}">
+                            <div class="row">
+                                <div class="col col-5 pl-4">
+                                    <img class="img-fluid rounded img-responsive my-2 ml-2" style="border: solid;" alt="image_{{ eval.eval_id }}_{{ batch.name }}"
+                                         src="/{{ eval.get_news().img_path.replace("app/", "/") }}" />
+                                    <!-- Button trigger modal -->
+                                    <button type="button" class="btn btn-primary modal-btn-eval ml-2 mb-2" id="activate_modal_btn_{{ eval.id }}">
+                                        Exibir texto
+                                    </button>
+                                    <div class="hidden-news-text border border-primary m-2 p-2" id="news_for_activate_modal_btn_{{ eval.id }}">
+                                        <div class="flask-text" id="title_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <h4 class="font-weight-bold">{{ eval.get_news().get_title(True) }}</h4>
+                                        </div>
+                                        <div class="flask-text" id="subt_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <h5 class="text-secondary">{{ eval.get_news().get_subtitle(True) }}</h5>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="flask-text" id="text_for_news_for_activate_modal_btn_{{ eval.id }}">
+                                            <p class="text-justify">{{ eval.get_news().get_text(True) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-block col col-7 p-2 pr-4">
+                                    <form id="form_b{{ batch.id }}_e{{ eval.id }}" action="{{ url_for('eval_desc.eval_desc_batch') }}" method="post">
+                                        <input type="hidden" name="csrf_token" id="csrf_b{{ batch.id }}_e{{ eval.id }}" value="{{ csrf_token() }}" />
+                                        <a target="_blank" href="{{ eval.get_news().link }}">{{ eval.get_news().link }}</a>
+                                        {# 1ª linha #}
+                                        <div class="row m-2">
+                                            {# Desccrição #}
+                                            <div class="col-8">
+                                                <b>Descrição</b> | <b style="color: rgb({{ eval.get_desc().get_alignment().colors_model }});">{{ eval.get_desc().get_alignment() }}</b>
+                                                <div class="border rounded bg-light border-secondary p-2 text-muted" id="desc_{{ eval.get_desc().id }}">{{ eval.get_desc() }}</div>
+                                            </div>
+                                            {# Classificação da avaliação #}
+                                            <div class="col-4">
+                                                <div class="row pl-4 my-2">
+                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_c">
+                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_c" value="2">
+                                                        Correto
+                                                    </label>
+                                                </div>
+                                                <div class="row pl-4 my-2">
+                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_p">
+                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_p" value="1">
+                                                        Parcialmente Correto
+                                                    </label>
+                                                </div>
+                                                <div class="row pl-4 my-2">
+                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_n">
+                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_n" value="0">
+                                                        Incorreto
+                                                    </label>
+                                                </div>
+                                                <div class="row pl-4 my-2">
+                                                    <label class="form-check-label" for="radio_b{{ batch.id }}_e{{ eval.id }}_i">
+                                                        <input class="form-check-input" type="radio" name="radio_b{{ batch.id }}_e{{ eval.id }}" id="radio_b{{ batch.id }}_e{{ eval.id }}_i" value="-1">
+                                                        Inválido
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {# 2ª linha #}
+                                        <div class="row m-2">
+                                            <div class="col-12">
+                                                {# AMR gerada #}
+                                                <div class="row ml-1 my-2">
+                                                    <p class="font-weight-bold">AMR Gerada</p>
+                                                    <div class="border rounded border-dark w-100 pre-scrollable font-weight-bold p-2" style="color: rgb({{ eval.get_desc().get_alignment().colors_model }}); font-family: monospace; white-space: pre-wrap;">{{ eval.get_desc().get_amr() }}</div>
+                                                </div>
+                                                {# AMR main #}
+                                                <div class="row ml-1 my-2">
+                                                    <p class="font-weight-bold">AMR parente principal</p>
+                                                    <p>{{ eval.get_desc().get_main().get_sentence() }}</p>
+                                                    <div id="main_d{{ eval.get_desc().id }}" class="border w-100 rounded border-secondary bg-light p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ eval.get_desc().get_main() }}</div>
+                                                </div>
+                                                {# AMR outras #}
+                                                    {% if eval.get_desc().get_adjacents() %}
+                                                        <div class="dropdown-divider"></div>
+                                                        <div class="row ml-1 my-2">
+                                                        <p class="font-weight-bold">AMR outros parentes</p>
+                                                        {% for adj in eval.get_desc().get_adjacents() %}
+                                                            <p>{{ adj.sentence_id }}</p>
+                                                            <div id="adj_d{{ adj.id }}" class="border w-100 rounded border-secondary bg-light my-1 p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ adj }}</div>
+                                                        {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                            </div>
+                                        </div>
+                                        <button type="submit" id="submit_b{{ batch.id }}_e{{ eval.id }}" class="btn btn-primary submit-eval">Avaliar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}{% endfor %}
+            </div>
+        {% endif %}{% endfor %}
+    {% else %}
+        <div class="row">
+            <h4>Não há conjuntos pra avaliar</h4>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/eval.js') }}"></script>
+{% endblock %}

@@ -7,7 +7,7 @@ import cv2
 # from IA.classificadores.classify_image import CnnClassifier
 from PIL import Image
 
-from config import SRC_DIR, BASE_DIR
+from config import SRC_DIR, BASE_DIR, WEIGHTS_DIR
 from .boundingBox import BoundingBox
 
 
@@ -53,7 +53,7 @@ class Imagem(object):
             # p = subprocess.Popen(["./darknet","detect","cfg/yolo.cfg","weights/yolo.weights",self.path,">>","noticia_atual/image_result.txt"])
             with open(self.path_projeto + SRC_DIR + "noticia_atual/image_result.txt", "wb") as out:
                 p = subprocess.Popen(
-                    ["./darknet", "detect", "cfg/yolo.cfg", BASE_DIR + "/data/alinhador/yolo.weights", self.path,
+                    ["./darknet", "detect", "cfg/yolo.cfg", f"{WEIGHTS_DIR}/yolo.weights", self.path,
                      "-thresh",
                      self.YOLO_THR],
                     cwd=self.path_projeto + self.path_yolo,
@@ -74,7 +74,7 @@ class Imagem(object):
             with open(self.path_projeto + SRC_DIR + "noticia_atual/extraction_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/extraction.cfg",
-                     BASE_DIR + "/data/alinhador/extraction.weights", self.path_projeto + img_path],
+                     f"{WEIGHTS_DIR}/extraction.weights", self.path_projeto + img_path],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
@@ -88,7 +88,7 @@ class Imagem(object):
             with open(self.path_projeto + SRC_DIR + "noticia_atual/darknet_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/darknet19.cfg",
-                     BASE_DIR + "/data/alinhador/darknet19.weights", self.path_projeto + img_path],
+                     f"{WEIGHTS_DIR}/darknet19.weights", self.path_projeto + img_path],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
@@ -102,7 +102,7 @@ class Imagem(object):
             with open(self.path_projeto + SRC_DIR + "noticia_atual/resnet_50_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/resnet50.cfg",
-                     BASE_DIR + "/data/alinhador/resnet50.weights", self.path_projeto + img_path],
+                     f"{WEIGHTS_DIR}resnet50.weights", self.path_projeto + img_path],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
@@ -116,7 +116,7 @@ class Imagem(object):
             with open(self.path_projeto + SRC_DIR + "noticia_atual/densenet_201_result.txt", "wb") as out:
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/densenet201.cfg",
-                     BASE_DIR + "/data/alinhador/densenet201.weights", self.path_projeto + img_path],
+                     f"{WEIGHTS_DIR}/densenet201.weights", self.path_projeto + img_path],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
@@ -130,7 +130,7 @@ class Imagem(object):
                 print("ENTROU AQUI")
                 p = subprocess.Popen(
                     ["./darknet", "classifier", "predict", "cfg/imagenet1k.data", "cfg/vgg-16.cfg",
-                     BASE_DIR + "/data/alinhador/vgg-16.weights", self.path_projeto + img_path],
+                     f"{WEIGHTS_DIR}/vgg-16.weights", self.path_projeto + img_path],
                     cwd=self.path_projeto + self.path_yolo,
                     stdout=out)
                 p.wait()
