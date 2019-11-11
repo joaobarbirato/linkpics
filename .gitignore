@@ -1,6 +1,5 @@
 app/src/IA/face_recognition/boost_1_64_0/
 app/src/IA/classificadores
-app/src/IA/YOLO
 app/src/PLN/stanfordNER/
 app/src/PLN/TreeTagger*/
 app/src/TreeTagger_old/
@@ -14,13 +13,12 @@ so_text.txt
 __pycache__
 *.png
 *.jpg
-IA/*/
 *.pyc
 
 # auxiliar TXT
 output.txt
 urls.txt
-visual_words.txt
+
 *titulo.txt
 *noticia.txt
 *embedding*.txt
