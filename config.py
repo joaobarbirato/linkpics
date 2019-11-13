@@ -16,6 +16,7 @@ CORENLP_DIR = 'app/src/stanford-corenlp-full-2018-10-05'
 TMP_DIR = BASE_DIR + '/app/tmp'
 SHELL_DIR = BASE_DIR + '/app/src/util/shell'
 WEIGHTS_DIR = BASE_DIR + '/app/src/IA/weights'
+BACKUP_DIR = BASE_DIR + '/app/static/noticias/noticias_backup'
 
 # Define the database - we are working with
 # SQLite for this example
