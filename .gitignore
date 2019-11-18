@@ -29,7 +29,7 @@ urls.txt
 
 *.json
 *.weights
-*.csv
+
 app/static/noticias
 
 *.db

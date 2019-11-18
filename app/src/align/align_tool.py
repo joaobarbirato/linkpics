@@ -17,7 +17,25 @@ from app.src.VC.image_process import ThreadVC
 from app.src.VC.imagem import Imagem
 from app.src.align.align_objects import AlignObjects
 from app.src.align.align_persons import AlignPersons
-from config import STATIC_REL, SRC_DIR, TMP_DIR
+from config import STATIC_REL, SRC_DIR, TMP_DIR, BACKUP_DIR
+
+CSV_BACKUP_FILE_DIR = f'{TMP_DIR}/csvbackup.csv'
+CSV_BACKUP_FIELDS = ['link', 'directory']
+
+
+import csv
+
+
+def init_csv_backup():
+    with open(CSV_BACKUP_FILE_DIR, 'w+') as csv_backup_file:
+        writer = csv.DictWriter(csv_backup_file, fieldnames=CSV_BACKUP_FIELDS)
+        writer.writeheader()
+
+
+def add_to_csv_backup(link, directory):
+    with open(CSV_BACKUP_FILE_DIR, 'a') as csv_backup_file:
+        writer = csv.DictWriter(csv_backup_file, fieldnames=CSV_BACKUP_FIELDS)
+        writer.writerow({'link': link, 'directory': f'{BACKUP_DIR}/{directory}'})
 
 
 class ColorPalette:
@@ -432,11 +450,13 @@ class AlignTool:
 
     def align_from_url(self, url, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
+
+
         self.news_object.set_link(url)
         try:
             self.noticia_sem_imagem = False
             self._get_resources(url)
-
+            # add_to_csv_backup(link=url, directory=self.titulo_diretorio)
             if self.noticia_sem_imagem is True:
                 return 0
 

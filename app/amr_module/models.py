@@ -240,6 +240,16 @@ def _delete_nodes(triple_list, node_source):
     )
 
 
+def _delete_relation(triple_list, relation_triple):
+    """
+
+    :type relation_triple: Triple
+    """
+    return InstrumentedList(
+        set(triple_list) - set(relation_triple) - set(_delete_nodes(triple_list, relation_triple.target))
+    )
+
+
 def triples(triples_list, src=None, relation=None, target=None):
     try:
         if src is None and relation is None and target is None:
@@ -315,16 +325,20 @@ class AMRModel(BaseModel):
                 self.top = kwargs['top']
                 self.list_triples = kwargs['triples']
                 self.penman = triple_model_list_to_penman(self.list_triples, top_id=self.top)
+                self.list_triples = self.delete_wiki()
 
             elif len(kwargs) == 1 and 'object' in kwargs:
                 self.penman = pm.encode(kwargs['object'], top=kwargs['object'].top)
                 self.list_triples, self.top = penman_to_model(kwargs['object'])
+                self.list_triples = self.delete_wiki()
 
             elif len(kwargs) == 1 and 'copy' in kwargs:
                 _source_amr: AMRModel = kwargs['copy']
-                self.list_triples = InstrumentedList([Triple(copy=t) for t in _source_amr.get_triples()])
                 self.penman = _source_amr.get_penman(return_type='str')
+                self.list_triples = InstrumentedList([Triple(copy=t) for t in _source_amr.get_triples()])
+                self.list_triples = self.delete_wiki()
                 self.top = _source_amr.get_top()
+                self.penman = triple_model_list_to_penman(self.list_triples, top_id=self.top)
 
     def __repr__(self):
         return self.penman
@@ -379,6 +393,13 @@ class AMRModel(BaseModel):
         elif isinstance(node_source, Triple):
             self.list_triples = _delete_nodes(self.list_triples, node_source.source)
 
+        return self.list_triples
+
+    def delete_wiki(self):
+        wikis = self.get_triples(relation='wiki')
+        [self.list_triples.remove(wiki) for wiki in wikis]
+        self.penman = triple_model_list_to_penman(self.list_triples, top_id=self.top)
+        [self.delete(node_source=wiki.target) for wiki in wikis if wiki.target != '-']
         return self.list_triples
 
     def get_top(self):

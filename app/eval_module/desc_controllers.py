@@ -3,6 +3,7 @@ import re
 from typing import Optional, Any
 
 from flask import render_template, request, json, Blueprint, send_from_directory
+from flask_login import login_required
 
 from app import app
 from app.align_module.models import News, Alignment
@@ -31,6 +32,7 @@ def submit_desc():
 
 
 @mod_eval_desc.route('/eval')
+# @login_required
 def evaluation_desc():
     return render_template(
         "desc_module/eval.html",
@@ -124,6 +126,7 @@ def _write_test_csv(news):
 
 
 @mod_eval_desc.route('/eval_batch', methods=["POST"])
+# @login_required
 def eval_desc_batch():
     type_pattern = r"([a-z]*)_"
     radio_pattern = r"^(\w*)(_b)(\d*)(_e)(\d*)"
@@ -139,9 +142,6 @@ def eval_desc_batch():
                 de: DescEval = query_by_id(DescEval, de_id)
                 de.approve(value=value)
                 de.add_self()
-
-                # d_batch: DescBatch = query_by_id(DescBatch, batch_id)
-                # d_batch.add_self()
 
             except Exception as e:
                 PrintException()

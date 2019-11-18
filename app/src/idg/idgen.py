@@ -74,6 +74,7 @@ class Generator(object):
                     in zip(descr_to_generate, _generated_text_list):
                 description = create_description(text=_generated_text, method=method)
                 description.add_amr(generated_amr)
+                description.save()
                 main_sentence = create_sentence(copy=main_ancestral.get_sentence())
                 main_copy = create_amrmodel(copy=main_ancestral)
                 main_sentence.add_amr(main_copy)

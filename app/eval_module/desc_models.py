@@ -28,6 +28,8 @@ class DescEval(Base):
 
     desc_batch_id = db.Column(db.Integer, db.ForeignKey('desc_batch.id'), nullable=True)
 
+    comments = db.Column(db.String, nullable=True)
+
     def __init__(self, desc_model):
         self.desc_model = desc_model
 
