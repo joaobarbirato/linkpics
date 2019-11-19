@@ -17,7 +17,7 @@ from app.src.VC.image_process import ThreadVC
 from app.src.VC.imagem import Imagem
 from app.src.align.align_objects import AlignObjects
 from app.src.align.align_persons import AlignPersons
-from config import STATIC_REL, SRC_DIR, TMP_DIR, BACKUP_DIR
+from config import STATIC_REL, SRC_DIR, TMP_DIR, BACKUP_DIR, BASE_DIR
 
 CSV_BACKUP_FILE_DIR = f'{TMP_DIR}/csvbackup.csv'
 CSV_BACKUP_FIELDS = ['link', 'directory']
@@ -448,23 +448,7 @@ class AlignTool:
         print("--------------SUBSTANTIVOS-------------")
         print(self.lst_top_substantivos_objects)
 
-    def align_from_url(self, url, person_choose, object_choose):
-        """Alinha a partir de uma url fornecida pela usuario"""
-
-
-        self.news_object.set_link(url)
-        try:
-            self.noticia_sem_imagem = False
-            self._get_resources(url)
-            # add_to_csv_backup(link=url, directory=self.titulo_diretorio)
-            if self.noticia_sem_imagem is True:
-                return 0
-
-            self._process_text_image()
-
-        except Exception as e:
-            print(e)
-
+    def begin_alignment(self, person_choose=None, object_choose=None):
         self.group = AlignmentGroup(name="align_tool")
         # Alinha as pessoas
         person = AlignPersons(self.lst_legenda, self.lst_top_nomeadas_texto, self.list_boundingBoxOrganizada,
@@ -526,3 +510,68 @@ class AlignTool:
 
         print("PROCESSO FINALIZADO")
         return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group, self.news_object
+
+    def align_manual(self, legenda, titulo, texto, img_path, person_choose, object_choose):
+        """Alinha a partir de uma url fornecida pela usuario"""
+        self.titulo_noticia = titulo
+        self.legenda = legenda
+        self.noticia = texto
+        self.path_imagem = img_path
+
+        self._set_manual_resources()
+        self._process_text_image()
+
+        # Alinha as pessoas
+        return self.begin_alignment(person_choose=person_choose, object_choose=object_choose)
+
+    def get_path_from_url(self, url):
+        with open(f'{BACKUP_DIR}/csvbackup_objetos.csv', 'r') as csv_read:
+            reader = csv.DictReader(csv_read, fieldnames=['link', 'directory'])
+            for row in reader:
+                if row['link'] == url:
+                    return f'back_app/noticias_backup/{row["directory"]}'
+
+    def align_backup(self, url, object_choose=None, person_choose=None):
+        self.url = url
+        path = self.get_path_from_url(url)
+        try:
+            text = legenda = titulo = ''
+            if os.path.isfile(f'{BASE_DIR}/{path}/noticia.txt'):
+                with open(f'{path}/noticia.txt', 'r') as textfile:
+                    text = textfile.read()
+                    text = text.replace('\n\n\n', ' ')
+
+            if os.path.isfile(f'{BASE_DIR}/{path}/titulo.txt'):
+                with open(f'{path}/titulo.txt', 'r') as titulo_file:
+                    titulo = titulo_file.read()
+
+            if os.path.isfile(f'{BASE_DIR}/{path}/legenda.txt'):
+                with open(f'{path}/caption.txt', 'r') as legenda_file:
+                    legenda = legenda_file.read()
+
+        except Exception as exc:
+            print(f'Exception while aligning backup: {str(exc)}')
+            return None
+
+        return self.align_manual(legenda=legenda, texto=text, titulo=titulo, img_path=f'{path}/img_original.jpg',
+                                 person_choose=person_choose, object_choose=object_choose)
+
+    def align_from_url(self, url, person_choose, object_choose):
+        """Alinha a partir de uma url fornecida pela usuario"""
+
+
+        self.news_object.set_link(url)
+        try:
+            self.noticia_sem_imagem = False
+            self._get_resources(url)
+            # add_to_csv_backup(link=url, directory=self.titulo_diretorio)
+            if self.noticia_sem_imagem is True:
+                return 0
+
+            self._process_text_image()
+
+        except Exception as e:
+            print(e)
+
+        return self.begin_alignment(person_choose=person_choose, object_choose=object_choose)
+
