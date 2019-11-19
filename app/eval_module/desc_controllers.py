@@ -9,7 +9,8 @@ from app import app
 from app.align_module.models import News, Alignment
 from app.desc_module.controllers import do_describe
 from app.desc_module.models import Description
-from app.eval_module.desc_models import create_desc_batch, create_desc_eval, get_all_batch_desc, DescEval, DescBatch
+from app.eval_module.desc_models import create_desc_batch, create_desc_eval, get_all_batch_desc, DescEval, DescBatch, \
+    get_all_desc_eval
 from app.eval_module.models import query_by_id
 from app.model_utils import PrintException, _commit_session
 from config import TMP_DIR, STATIC_REL, BASE_DIR
@@ -34,9 +35,11 @@ def submit_desc():
 @mod_eval_desc.route('/eval')
 # @login_required
 def evaluation_desc():
+    eval_list = get_all_desc_eval()
+    eval_list.sort()
     return render_template(
         "desc_module/eval.html",
-        batch_list=get_all_batch_desc()
+        eval_list=eval_list
     )
 
 

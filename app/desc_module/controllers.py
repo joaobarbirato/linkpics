@@ -68,7 +68,7 @@ def home():
 @mod_desc.route('/geracao', methods=['POST'])
 def describe():
     try:
-        response = do_describe(request.form["link"])
+        response = do_describe(request.form["link"], method='baseline4')
         return app.response_class(
             response=json.dumps(response),
             status=200,

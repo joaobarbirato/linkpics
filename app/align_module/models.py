@@ -62,9 +62,12 @@ class Alignment(BaseModel):
         self.list_syns = syns
         self.has_syns = self.list_syns is not None
 
-        self.color = html_color
+        self.colors_model = html_color
         self.html_color = html_color
         self.img_color = img_color
+
+    def __lt__(self, other):
+        return self.term < other.term
 
     def add_occurrence_times(self, bounding_box=None):
         """
@@ -119,10 +122,10 @@ class Alignment(BaseModel):
         :return: list of colors
         """
         if color is not None:
-            if isinstance(color, tuple) and (self.color is None or color != self.color):
-                self.color = Color(color[0], color[1], color[2])
+            if isinstance(color, tuple) and (self.colors_model is None or color != self.colors_model):
+                self.colors_model = Color(color[0], color[1], color[2])
 
-                return self.color
+                return self.colors_model
 
     def add_sentence(self, sentence=None):
         """
@@ -152,7 +155,7 @@ class Alignment(BaseModel):
         return self.term
 
     def get_color(self):
-        return self.color
+        return self.colors_model
 
     def get_syns(self):
         return self.syns_model
@@ -214,7 +217,7 @@ class Alignment(BaseModel):
         Inform if an alignment has a color
         :return: boolean True if it has, False otherwise
         """
-        return self.color is not None
+        return self.colors_model is not None
 
     def __str__(self):
         return self.term
@@ -223,11 +226,11 @@ class Alignment(BaseModel):
         return self.term
 
     def add_to_db(self):
-        self.colors_model = self.color
+        self.colors_models_model = self.colors_model
         self.syns_model = _add_relation(self.syns_model, self.list_syns)
         self.mwes_model = _add_relation(self.mwes_model, self.list_mwe)
 
-        _add_session(self.color)
+        _add_session(self.colors_model)
         _add_session(self.list_syns)
         _add_session(self.list_mwe)
         _add_session(self)

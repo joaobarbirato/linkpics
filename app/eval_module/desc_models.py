@@ -7,6 +7,10 @@ def get_all_batch_desc():
     return DescBatch.query.all()
 
 
+def get_all_desc_eval():
+    return DescEval.query.all()
+
+
 def create_desc_eval(desc_model):
     return DescEval(desc_model=desc_model)
 
@@ -35,6 +39,9 @@ class DescEval(Base):
 
     def __repr__(self):
         return f'<DescEval {self.desc_model}'
+
+    def __lt__(self, other):
+        return self.get_desc().get_alignment() < other.get_desc().get_alignment()
 
     def approve(self, value):
         """
