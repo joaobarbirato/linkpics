@@ -135,24 +135,31 @@ def eval_desc_batch():
     radio_pattern = r"^(\w*)(_b)(\d*)(_e)(\d*)"
     print([item for item in request.form.items()])
     batch_id = -1
+    de_id = -1
     for tag_id, value in request.form.items():
         str_match = [t(s) for t, s in zip((str,), re.search(type_pattern, tag_id).groups())][0]
-        if str_match == "radio":
-            (_, _, batch_id, _, de_id) = [
-                t(s) for t, s in zip((str, str, int, str, int), re.search(radio_pattern, tag_id).groups())
-            ]
-            try:
+        try:
+            if str_match == "radio":
+                (_, _, batch_id, _, de_id) = [
+                    t(s) for t, s in zip((str, str, int, str, int), re.search(radio_pattern, tag_id).groups())
+                ]
                 de: DescEval = query_by_id(DescEval, de_id)
                 de.approve(value=value)
                 de.add_self()
-
-            except Exception as e:
-                PrintException()
-                return app.response_class(
-                    response=json.dumps({"error": str(e)}),
-                    status=601,
-                    mimetype="application/json"
-                )
+            elif str_match == "comment":
+                (_, _, batch_id, _, de_id) = [
+                    t(s) for t, s in zip((str, str, int, str, int), re.search(radio_pattern, tag_id).groups())
+                ]
+                de: DescEval = query_by_id(DescEval, de_id)
+                de.comments = value
+                de.add_self()
+        except Exception as e:
+            PrintException()
+            return app.response_class(
+                response=json.dumps({"error": str(e)}),
+                status=601,
+                mimetype="application/json"
+            )
     try:
         _commit_session()
     except Exception as exc:

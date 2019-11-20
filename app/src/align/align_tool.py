@@ -9,6 +9,7 @@ from flask import json
 
 from app.align_module.coref_models import CoreferenceModel
 from app.align_module.models import AlignmentGroup, News, Alignment
+from app.model_utils import PrintException
 from app.src.PLN.get_syns import get_syns
 from app.src.PLN.m_PLN import (AplicadorPLN, get_word_from_lemma)
 from app.src.PLN.text_process import ThreadPLN
@@ -449,67 +450,70 @@ class AlignTool:
         print(self.lst_top_substantivos_objects)
 
     def begin_alignment(self, person_choose=None, object_choose=None):
-        self.group = AlignmentGroup(name="align_tool")
-        # Alinha as pessoas
-        person = AlignPersons(self.lst_legenda, self.lst_top_nomeadas_texto, self.list_boundingBoxOrganizada,
-                              self.directory + "/img_original.jpg", self.directory + "/", self.index_cor_bounding_box,
-                              self.colors_bounding_box, align_group=self.group, palette=self.palette)
-        persons_aligned, self.group = person.align(person_choose)
+        try:
+            self.group = AlignmentGroup(name="align_tool")
+            # Alinha as pessoas
+            person = AlignPersons(self.lst_legenda, self.lst_top_nomeadas_texto, self.list_boundingBoxOrganizada,
+                                  self.directory + "/img_original.jpg", self.directory + "/", self.index_cor_bounding_box,
+                                  self.colors_bounding_box, align_group=self.group, palette=self.palette)
+            persons_aligned, self.group = person.align(person_choose)
 
-        if persons_aligned is None:
-            persons_aligned = {}
+            if persons_aligned is None:
+                persons_aligned = {}
 
-        # O indice das cores continua de onde parou o indice realizado no alinhamento de pessoas.
-        print("INDEX -- " + str(self.index_cor_bounding_box))
-        print(self.colors_bounding_box[2])
-        # Alinha os objetos
-        object = AlignObjects(self.lst_legenda, self.lst_top_nomeadas_texto, self.lst_top_substantivos_objects,
-                              self.list_boundingBoxOrganizada, self.directory, self.dict_lematizado,
-                              self.index_cor_bounding_box, self.colors_bounding_box, self.group, self.palette)
-        object_aligned, self.group = object.align(object_choose)
+            # O indice das cores continua de onde parou o indice realizado no alinhamento de pessoas.
+            print("INDEX -- " + str(self.index_cor_bounding_box))
+            print(self.colors_bounding_box[2])
+            # Alinha os objetos
+            object = AlignObjects(self.lst_legenda, self.lst_top_nomeadas_texto, self.lst_top_substantivos_objects,
+                                  self.list_boundingBoxOrganizada, self.directory, self.dict_lematizado,
+                                  self.index_cor_bounding_box, self.colors_bounding_box, self.group, self.palette)
+            object_aligned, self.group = object.align(object_choose)
 
-        self.titulo_noticia = self.titulo_noticia.replace("?", "")
-        img_url = STATIC_REL + f'{self.titulo_noticia}_{person_choose}_{object_choose}.jpg'
+            self.titulo_noticia = self.titulo_noticia.replace("?", "")
+            img_url = STATIC_REL + f'{self.titulo_noticia}_{person_choose}_{object_choose}.jpg'
 
-        self.news_object.add_from_zip_list(self.aplicador_pln.get_snt_tok())
-        self.news_object.add_from_coref_objects(self.aplicador_pln.get_crefdoc().get_corefs())
+            self.news_object.add_from_zip_list(self.aplicador_pln.get_snt_tok())
+            self.news_object.add_from_coref_objects(self.aplicador_pln.get_crefdoc().get_corefs())
 
-        crefs = self._mark_coref()
+            crefs = self._mark_coref()
 
-        self.noticia += '\n\n<ul>'
+            self.noticia += '\n\n<ul>'
 
-        for i, cref in enumerate(crefs, start=1):
-            self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
+            for i, cref in enumerate(crefs, start=1):
+                self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
 
-        # reseta o indice
-        self.palette.reset_colors()
-        # Prepara o texto, legenda, titulo que serao destacados
+            # reseta o indice
+            self.palette.reset_colors()
+            # Prepara o texto, legenda, titulo que serao destacados
 
-        # try:
-        [persons_aligned, object_aligned] = self._show_align_text(
-            persons_aligned=persons_aligned, object_aligned=object_aligned
-        )
+            # try:
+            [persons_aligned, object_aligned] = self._show_align_text(
+                persons_aligned=persons_aligned, object_aligned=object_aligned
+            )
 
-        dic_avaliacao = {}
-        # prepara o dicionario de avaliação
-        if persons_aligned:
-            for key, value in persons_aligned.items():
-                dic_avaliacao[key] = ''
+            dic_avaliacao = {}
+            # prepara o dicionario de avaliação
+            if persons_aligned:
+                for key, value in persons_aligned.items():
+                    dic_avaliacao[key] = ''
 
-        if object_aligned:
-            for key, value in object_aligned.items():
-                dic_avaliacao[key] = ''
-        # except Exception as e:
-        #     print(e)
+            if object_aligned:
+                for key, value in object_aligned.items():
+                    dic_avaliacao[key] = ''
+            # except Exception as e:
+            #     print(e)
 
-        self.palette.reset_colors()
+            self.palette.reset_colors()
 
-        # with open(f'{TMP_DIR}/newsobject.json', 'w', encoding='utf-8') as file:
-        #     file.write(self.news_object.get_text())
-        # json.dump(obj=self.news_object.get_text(), fp=)
+            # with open(f'{TMP_DIR}/newsobject.json', 'w', encoding='utf-8') as file:
+            #     file.write(self.news_object.get_text())
+            # json.dump(obj=self.news_object.get_text(), fp=)
 
-        print("PROCESSO FINALIZADO")
-        return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group, self.news_object
+            print("PROCESSO FINALIZADO")
+            return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group, self.news_object
+        except Exception as exc:
+            PrintException()
 
     def align_manual(self, legenda, titulo, texto, img_path, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
@@ -529,10 +533,11 @@ class AlignTool:
             reader = csv.DictReader(csv_read, fieldnames=['link', 'directory'])
             for row in reader:
                 if row['link'] == url:
-                    return f'back_app/noticias_backup/{row["directory"]}'
+                    return f'app/static/noticias/noticias_backup/{row["directory"]}'
 
     def align_backup(self, url, object_choose=None, person_choose=None):
         self.url = url
+        self.news_object.set_link(url)
         path = self.get_path_from_url(url)
         try:
             text = legenda = titulo = ''
@@ -558,8 +563,6 @@ class AlignTool:
 
     def align_from_url(self, url, person_choose, object_choose):
         """Alinha a partir de uma url fornecida pela usuario"""
-
-
         self.news_object.set_link(url)
         try:
             self.noticia_sem_imagem = False

@@ -64,17 +64,7 @@ class AlignObjects:
         self.thr = 0.82
 
     def align(self, object_choosed):
-
-        # Proposto
-        if object_choosed == 1:
-            return self._experiment_1(), self.align_group
-
-        # Baseline
-        elif object_choosed == 5:
-            return self._experiment_5()
-
-        else:
-            return None
+        return self._experiment_1(), self.align_group
 
     def read_words_visual(self, arquivo_txt):
         open_file = open(arquivo_txt, 'r')

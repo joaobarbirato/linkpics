@@ -1,12 +1,8 @@
-import shutil
 from flask import Blueprint, render_template, request, json
 from flask_login import login_required
 
-from app.src.align.align_tool import AlignTool
-from app.src.idg.align_tool_descr import AlignToolDescr
-
 from app import app
-from config import STATIC_REL
+from app.src.align.align import do_align
 
 mod_align = Blueprint('align', __name__, url_prefix='/')
 
@@ -37,45 +33,15 @@ def add_header(response):
     return response
 
 
-from app.src.util.crawlers.crawler_bbc import Crawler as crawler_bbc
-from app.src.util.crawlers.crawler import Crawler as crawler_folha
-
-
 @mod_align.route('/alinhamento', methods=['POST'])
 def alinhar():
-    _link = request.form['link']
-
-    _experimento_pessoa = int(request.form['pessoas']) + 1
-    _experimento_objeto = int(request.form['objetos']) + 1
-    if "folha" in _link:
-        alinhador = AlignTool(crawler=crawler_folha)
-    elif "bbc" in _link:
-        alinhador = AlignTool(crawler=crawler_bbc)
-    else:  # invalid url format
-        return app.response_class(
-            response=json.dumps({'message': 'Bad request'}),
-            status=400,
-            mimetype='application/json'
-        )
-
     try:
-        result_pessoas, result_objetos, img_url, titulo, legenda, texto, dic_avaliacao, grupo, _ = alinhador.align_from_url(
-            _link, _experimento_pessoa, _experimento_objeto)
-
-        if img_url != '':
-            shutil.copy2(STATIC_REL + 'alinhamento2.jpg', img_url)
-
-        response = dict(result_pessoas=result_pessoas,
-                        result_objetos=result_objetos,
-                        img_alinhamento=img_url.replace(STATIC_REL, 'static/'),
-                        texto=texto,
-                        legenda=legenda,
-                        titulo=titulo,
-                        message='',
-                        dic_avaliacao=dic_avaliacao)
-
+        _link = request.form['link']
+        response = do_align(link=_link)
         print(response)
-        print(grupo.get_list_terms())
+        print(response['grupo'].get_list_terms())
+        response.pop('news', None)
+        response.pop('grupo', None)
         return app.response_class(
             response=json.dumps(response),
             status=200,

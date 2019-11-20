@@ -88,10 +88,12 @@ class Alignment(BaseModel):
         """
         if mwe is not None:
             if self.list_mwe is None or mwe not in self.list_mwe:
-                self.list_mwe = _add(self.list_mwe, MWE(mwe))
-                self.has_mwe = self.list_mwe is not None
+                new_mwe = MWE(mwe)
+                # self.list_mwe = _add(self.list_mwe, new_mwe)
+                self.mwes_model = _add_relation(self.mwes_model, new_mwe)
+                self.has_mwe = bool(self.mwes_model)
 
-            return self.list_mwe
+            return self.mwes_model
 
     def add_mwe_model(self, mwe=None):
         """
@@ -111,9 +113,11 @@ class Alignment(BaseModel):
         """
         if syn is not None and syn:
             if self.list_syns is None or syn not in self.list_syns:
-                self.list_syns = _add(self.list_syns, Synonym(syn))
-                self.has_syns = self.list_syns is not None
-            return self.list_syns
+                new_syn = Synonym(syn)
+                # self.list_syns = _add(self.list_syns, )
+                self.syns_model = _add_relation(self.syns_model, new_syn)
+                self.has_syns = bool(self.list_syns)
+            return self.syns_model
 
     def add_color(self, color=None):
         """
@@ -226,13 +230,13 @@ class Alignment(BaseModel):
         return self.term
 
     def add_to_db(self):
-        self.colors_models_model = self.colors_model
-        self.syns_model = _add_relation(self.syns_model, self.list_syns)
-        self.mwes_model = _add_relation(self.mwes_model, self.list_mwe)
+        # self.colors_models = self.colors_model
+        # self.syns_model = _add_relation(self.syns_model, self.list_syns)
+        # self.mwes_model = _add_relation(self.mwes_model, self.list_mwe)
 
         _add_session(self.colors_model)
-        _add_session(self.list_syns)
-        _add_session(self.list_mwe)
+        _add_session(self.syns_model)
+        _add_session(self.mwes_model)
         _add_session(self)
 
     def save(self):
@@ -248,6 +252,12 @@ class AlignmentGroup(BaseModel):
 
     def __init__(self, name=None):
         self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f'<AlignmentGroup {self.name}>'
 
     def _query_term(self, x):
         return [algn for algn in self.list_alignments if

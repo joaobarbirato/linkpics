@@ -24,17 +24,7 @@ class AlignPersons:
         self.THR_DLIB = 0.55
 
     def align(self, person_choosed):
-
-        # Proposto
-        if person_choosed == 1:
-            return self._experiment_1()
-
-        # Baseline
-        elif person_choosed == 2:
-            return self._experiment_2(), self.align_group
-
-        else:
-            return None
+        return self._experiment_2(), self.align_group
 
     def _get_bounding_persons(self):
         bbox_pessoas = []

@@ -74,7 +74,8 @@ class Generator(object):
             for ((alignment, generated_amr, main_ancestral, adjacent_ancestral), _generated_text) \
                     in zip(descr_to_generate, generated_text_list):
 
-                _generated_text = self.pre_process_text(text=_generated_text)
+                # _generated_text = self.post_process_text(text=_generated_text)
+                _generated_text = self.post_process(text=_generated_text, amr=generated_amr)
                 description = create_description(text=_generated_text, method=method)
                 description.add_amr(generated_amr)
                 description.save()
@@ -259,7 +260,7 @@ class Generator(object):
             PrintException()
             print(f'Error on baseline5: {str(exc)}')
 
-    def pre_process_text(self, text):
+    def post_process_text(self, text):
         """
 
         :type text: str
@@ -284,4 +285,20 @@ class Generator(object):
 
         from nltk.tokenize.treebank import TreebankWordDetokenizer
         new_text = TreebankWordDetokenizer().detokenize(new_tokenized)
+        return new_text
+
+    def post_process(self, text, amr):
+        """
+
+        :type text: str
+        :type amr: AMRModel
+        """
+        new_text = self.post_process_text(text=text)
+        from nltk.tokenize import wordpunct_tokenize
+        tokenized_text = wordpunct_tokenize(new_text)
+        from nltk.stem import WordNetLemmatizer
+        lemmatizer = WordNetLemmatizer()
+        if amr.get_size() == 1 and \
+                amr.get_triples()[0].target not in [lemmatizer.lemmatize(token) for token in tokenized_text]:
+            new_text = amr.get_triples()[0].target
         return new_text
