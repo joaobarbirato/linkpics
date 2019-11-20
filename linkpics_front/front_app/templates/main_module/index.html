@@ -1,0 +1,92 @@
+{% extends 'helpers/base.html' %}
+
+{#{% block header %}#}
+{#    <ul class="nav justify-content-center">#}
+{#        <li class="nav-item">#}
+{#            <h1><a id="linkpics-titulo-header" class="nav-link active" href="#">LinkPICS</a></h1>#}
+{#        </li>#}
+{#    </ul>#}
+{#{% endblock %}#}
+
+{% block conteudo %}
+    {% include 'helpers/loading.html' %}
+    <h1><a id="linkpics-titulo-header" class="nav-link active custom-title" href="#">Alinhamento Texto-Imagem</a></h1>
+    <div class="modal fade" id="modal-avaliacao" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" aria-expanded="true" data-backdrop="static">
+        <div class="modal-dialog d-flex justify-content-center" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="body-modal-avaliacao" class="modal-body card">
+                    <img class="img-responsive m-4 rounded float-right img_alinhamento" id="img_alinhamento_modal" src="static/black_image.png" alt="Card image cap">
+                    <div id="col-direita">
+                        <div class="info_resultados">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Bounding Box</th>
+                                    <th>Avaliação - Alinhamento</th>
+                                </tr>
+                                </thead>
+                                <tbody id="line_resultados">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" id="btnFimAvaliacao" class="btn btn-primary">Finalizar Avaliação</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="resultado-alinhamento">
+        <div class="col-lg-12 my-4">
+            <div class="card">
+                <div class="card-header" role="tab" id="heading-alinhamento-termos">
+                    <h5 class="mb-0">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse-alinhamento-termos" aria-expanded="true" aria-controls="collapse-alinhamento-termos">
+                            Alinhamento
+                        </a>
+                        <form id="download-json-form" enctype="multipart/form-data" method="GET" action="{{ url_for('main.download_json') }}">
+                            <button id="bttn-modal-json" type="submit" class="float-right">
+                                Export data
+                            </button>
+                        </form>
+                    </h5>
+                </div>
+                <div id="collapse-alinhamento-termos" class="collapse show" role="tabpanel" aria-labelledby="heading-alinhamento-termos">
+                    <div class="m-4 rounded float-right card">
+                        <img class="card-img-top img-responsive img_alinhamento" id="img_alinhamento_acordeon" src="{{ url_for('static', filename='black_image.jpg') }}" alt="Card image cap">
+                    </div>
+                    <div class="card-block">
+                        <form class="p-2" enctype="multipart/form-data" id="align-form" action="{{ form_action }}" method="POST">
+{#                            <input name="csrf_token" type="hidden" id="align_form_csrf" value="{{ csrf_token() }}" />#}
+                            <h4 class="card-title" id="titulo">Título</h4>
+                            <h6 class="card-subtitle mb-2 pb-4 text-muted" id="legenda">Legenda</h6>
+                            <p class="card-text" id="texto" align="justify">Texto</p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'link_form.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/loading.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/forms.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/load_links.js') }}"></script>
+    <script type="text/javascript">
+        $('#bttn-modal-avaliacao').click(function(e){
+            $('#modal-avaliacao').modal('toggle');
+        });
+    </script>
+{% endblock %}

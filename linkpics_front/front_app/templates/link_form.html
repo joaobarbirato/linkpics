@@ -1,0 +1,41 @@
+{# Digitando um link #}
+<div class="row" id="row-forms">
+    <div class="col col-6 d-flex">
+        <div class="card">
+            <div class="card-block p-2">
+                <h4 class="card-title">Entre com um link para a notícia</h4>
+                <form enctype="multipart/form-data" id="linkform">
+                    <div class="form-group">
+                        <label for="input_link"></label>
+                        <input id="input_link" name="input_link" style="width: 474.667px" placeholder="Insira um link para a notícia (Folha ou BBC)"/>
+                    </div>
+                    <button type="text" id="btnAlignLink" class="btn btn-primary">{{ button }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {# Carregando um arquivo #}
+    <div class="col col-6 d-flex">
+        <div class="card">
+            <div class="card-block p-2">
+                <h4 class="card-title">Carregue um arquivo contendo URLs</h4>
+                <form enctype="multipart/form-data" id="uploadfileform">
+{#                    <input name="csrf_token" type="hidden" id="link_form_csrf" value="{{ csrf_token() }}" />#}
+                    <div class="form-group">
+                        <label for="url_folha"></label>
+                        <select class="form-control" id="url_folha">
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fileupload">Escolha o arquivo</label>
+                        <input type="file" id="choosed_file" name="choosed_file">
+                        <div style="margin-top:5px">
+                            <button type="text" id="btnCarregarLinks" class="btn btn-danger">Carregar Links</button>
+                        </div>
+                    </div>
+                    <button type="text" id="btnAlignFile" class="btn btn-primary">{{ button }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
