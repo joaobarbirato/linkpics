@@ -33,10 +33,16 @@ class Token(BaseModel):
         return self.word
 
     def __eq__(self, other):
-        return (self.lemma or self.word) == other
+        if isinstance(other, str):
+            return self.lemma == other or self.word == other
+        elif isinstance(other, Token):
+            return self.lemma == self.lemma
 
     def __hash__(self):
         return hash(self.word)
+
+    def get_sentence(self):
+        return self.sentence
 
     def save(self):
         _add_session(self)
