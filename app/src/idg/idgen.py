@@ -27,6 +27,9 @@ class Generator(object):
         self._snts_from_alignment = None
         self._current_alignment = None
 
+        self._source_sentences = None
+        self.src_focus = []
+
     def get_generated_descriptions(self):
         return [align.get_description() for align in self.news_object.alignments()]
 
@@ -54,7 +57,8 @@ class Generator(object):
 
             alignment: Alignment
             for alignment in all_alignments:
-                self._snts_from_alignment = alignment.sentences()
+                # self._snts_from_alignment = alignment.sentences()
+                self._source_sentences = self.sentence_selection(alignment=alignment)
                 self._current_alignment = alignment
                 try:
                     response = self._generate_amr(method=method)
@@ -127,26 +131,26 @@ class Generator(object):
             copy_info_list.remove(base_info)
         return base_info, copy_info_list
 
-    def _baseline3(self):
-        try:
-            amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
-            _big_amr = biggest_amr(amr_list)
-
-            amr_list.remove(_big_amr)
-            print(_big_amr)
-
-            _old_big_amr = _big_amr
-            for amr in amr_list:
-                focus_big_amr = _big_amr.get_triple(relation='instance', target=self._current_alignment.get_term())
-                focus_small_amr = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
-                if focus_big_amr is not None and focus_small_amr is not None:
-                    small_amr_subgraph = amr.get_subgraph(top=focus_small_amr)
-                    _big_amr.add(other=small_amr_subgraph, tuple_ref=(focus_big_amr.source, focus_small_amr.source))
-
-            return _big_amr # if _big_amr != _old_big_amr else None
-        except Exception as exc:
-            PrintException()
-            print(f'Error on baseline3: {str(exc)}')
+    # def _baseline3(self):
+    #     try:
+    #         amr_list = sntsmodel_to_amrmodel(self._source_sentences)
+    #         _big_amr = biggest_amr(amr_list)
+    #
+    #         amr_list.remove(_big_amr)
+    #         print(_big_amr)
+    #
+    #         _old_big_amr = _big_amr
+    #         for amr in amr_list:
+    #             focus_big_amr = _big_amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+    #             focus_small_amr = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+    #             if focus_big_amr is not None and focus_small_amr is not None:
+    #                 small_amr_subgraph = amr.get_subgraph(top=focus_small_amr)
+    #                 _big_amr.add(other=small_amr_subgraph, tuple_ref=(focus_big_amr.source, focus_small_amr.source))
+    #
+    #         return _big_amr # if _big_amr != _old_big_amr else None
+    #     except Exception as exc:
+    #         PrintException()
+    #         print(f'Error on baseline3: {str(exc)}')
 
     @staticmethod
     def _add_parent_to_base(info, base):
@@ -157,16 +161,40 @@ class Generator(object):
                 tuple_ref=(base["triple"].source, base["parent"][2].source))
         return base
 
-    def sentence_selection(self, select=0):
+    def sentence_selection(self, select=0, alignment=None):
         # alignments only
         if select == 0:
-            pass
+            self._source_sentences = alignment.sentences()
+            from itertools import cycle
+            self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([alignment.get_term()]))]
+            return self.src_focus
+
         # alignments and it's corefs
         elif select == 1:
-            pass
+            src_focus_0 = self.sentence_selection(select=0, alignment=alignment)
+
+            src_focus_1 = []
+            all_corefs = self.news_object.get_coreferences()
+            for coref in all_corefs:
+                for mention in coref.get_mentions():
+                    tokens = mention.has_terms(alignment.get_term())
+                    if tokens:
+                        src_focus_1 += [(token.lemma, token.get_sentence()) for token in tokens]
+
+            self.src_focus = list(set(src_focus_1 + src_focus_0))
+            return self.src_focus
+
         # alignments, corefs and some TODO WordNet relation
         elif select == 2:
-            pass
+            if alignment.has_syns:
+                src_focus_1 = self.sentence_selection(select=1, alignment=alignment)
+                source_sentences = alignment.sentences()
+                synonyms = alignment.get_syns()
+                # TODO: como identificar de qual sentença veio o sinônimo?
+                return self.src_focus
+            else:
+                return self.sentence_selection(select=1, alignment=alignment)
+
         else:
             return self.sentence_selection(0)
 
@@ -177,13 +205,13 @@ class Generator(object):
         :return:
         """
         try:
-            amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
+            amr_list = sntsmodel_to_amrmodel(self.src_focus[0])
             information = []
             amr: AMRModel
-            for amr in amr_list:
-                is_name = amr.is_name(self._current_alignment.get_term())
+            for focus_term, amr in zip(self.src_focus[1], amr_list):
+                is_name = amr.is_name(focus_term)
                 if not is_name:
-                    focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+                    focus_triple = amr.get_triple(relation='instance', target=focus_term)
                 else:
                     focus_triple = is_name
                 if focus_triple is not None and focus_triple:
@@ -224,13 +252,13 @@ class Generator(object):
         :return:
         """
         try:
-            amr_list = sntsmodel_to_amrmodel(self._snts_from_alignment)
+            amr_list = sntsmodel_to_amrmodel(self.src_focus[0])
             information = []
             amr: AMRModel
-            for amr in amr_list:
-                is_name = amr.is_name(self._current_alignment.get_term())
+            for focus_term, amr in zip(self.src_focus[1], amr_list):
+                is_name = amr.is_name(focus_term)
                 if not is_name:
-                    focus_triple = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
+                    focus_triple = amr.get_triple(relation='instance', target=focus_term)
                 else:
                     focus_triple = is_name
                 if focus_triple is not None and focus_triple:

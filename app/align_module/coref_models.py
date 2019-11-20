@@ -27,13 +27,17 @@ class MentionModel(BaseModel):
         self.tokens = self.add_tokens(tokens)
 
     def has_term(self, term):
-        return any(tkn == term for tkn in self.tokens)
+        if any(tkn == term for tkn in self.tokens):
+            return [tkn for tkn in self.tokens if tkn == term]
 
     def add_tokens(self, tokens):
         if tokens is not None and tokens:
             if self.tokens is not None or tokens not in self.tokens:
                 self.tokens = _add_relation(self.tokens, tokens)
             return self.tokens
+
+    def get_sentence(self):
+        return self.tokens[0].get_sentence()
 
     def save(self):
         # tokens are saved by sentences
@@ -72,6 +76,9 @@ class CoreferenceModel(BaseModel):
 
     def has_term(self, term):
         return any(self.mentions.has_term(term))
+
+    def get_mentions(self):
+        return self.mentions
 
     def save(self):
         [mention.save() for mention in self.mentions]
