@@ -23,9 +23,9 @@ rm *.tar.gz
 
 cd ..
 
-mv ${tree_tagger_dir} app/src/PLN
+mv ${tree_tagger_dir} back_app/src/PLN
 
-cd app/src/PLN/${tree_tagger_dir}
+cd back_app/src/PLN/${tree_tagger_dir}
 
 sh install-tagger.sh
 
@@ -41,6 +41,6 @@ pip install torchvision==0.2.2.post3
 pip install git+https://github.com/miotto/treetagger-python/
 pip install dlib==19.17.0
 
-mkdir ${base_dir}/app/tmp
+mkdir ${base_dir}/back_app/tmp
 
-mkdir ${base_dir}/app/src/noticia_atual
+mkdir ${base_dir}/back_app/src/noticia_atual
