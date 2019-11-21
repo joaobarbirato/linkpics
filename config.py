@@ -1,31 +1,12 @@
-# Statement for enabling the development environment
-DEBUG = True
-
-# Define the application directory
 import os
 
+HOST='127.0.0.1'
+PORT=9445
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-SRC_DIR = 'app/src/'
-STATIC_REL = 'app/static/'
 
-# Define the database - we are working with
-# SQLite for this example
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-DATABASE_CONNECT_OPTIONS = {}
+TMP_DIR = BASE_DIR + '/front_app/tmp'
 
-# Application threads. A common general assumption is
-# using 2 per available processor cores - to handle
-# incoming requests using one and performing background
-# operations using the other.
-THREADS_PER_PAGE = 2
+DEBUG=True
 
-# Enable protection agains *Cross-site Request Forgery (CSRF)*
-CSRF_ENABLED = False
-
-# Use a secure, unique and absolutely secret key for
-# signing the data.
-# CSRF_SESSION_KEY = token_urlsafe(16)
-
-# Secret key for signing cookies
-# SECRET_KEY = os.urandom(12)
+SECRET_KEY = os.urandom(32)
