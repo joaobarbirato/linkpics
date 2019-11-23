@@ -1,12 +1,12 @@
-linkpics_back/back-app/src/IA/face_recognition/boost_1_64_0/
-linkpics_back/back-app/src/IA/classificadores
-linkpics_back/back-app/src/PLN/stanfordNER/
-linkpics_back/back-app/src/PLN/TreeTagger*/
-linkpics_back/back-app/src/TreeTagger_old/
-linkpics_back/back-app/src/PLN/treetagger-python/
-linkpics_back/back-app/src/noticia_atual/*
-linkpics_back/back-app/src/noticias/
-linkpics_back/back-app/src/noticias/*
+back_app/src/IA/face_recognition/boost_1_64_0/
+back_app/src/IA/classificadores
+back_app/src/PLN/stanfordNER/
+back_app/src/PLN/TreeTagger*/
+back_app/src/TreeTagger_old/
+back_app/src/PLN/treetagger-python/
+back_app/src/noticia_atual/*
+back_app/src/noticias/
+back_app/src/noticias/*
 input.txt
 so_text.txt
 
@@ -39,8 +39,9 @@ linkpics_back/back-app/src/noticias_*/
 .idea/
 *venv/
 
-linkpics_back/back-app/src/amr/*/
-linkpics_back/back-app/src/amr/Data
-linkpics_back/back-app/src/amr/stanford-*
-linkpics_back/back-app/src/amr/glove/
-data/
+back_app/src/amr/*/
+back_app/src/amr/Data
+back_app/src/amr/stanford-*
+back_app/src/amr/glove/
+data
+data/*
