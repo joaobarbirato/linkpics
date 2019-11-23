@@ -25,6 +25,23 @@
                 <div class="form-group">
                     <input type="hidden" name="csrf_token" id="align-batch-csrf" value="{{ csrf_token() }}" />
                     <div class="row">
+                        <p>Todas as opções</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="all" id="all_options" value="0" checked>
+                                Não
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="all" id="all_options" value="1">
+                                Sim
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-4">
                             <label class="custom-control custom-checkbox">
                                 <input type="radio" class="form-check-input" name="restriction" id="restriction_all" value="all" checked>
@@ -55,6 +72,26 @@
                             <label class="custom-control custom-checkbox">
                                 <input type="radio" class="form-check-input" name="method" id="method_baseline5" value="baseline5">
                                 Desconsiderar nó pai (baseline5)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="selection" id="selection_0" value="0" checked>
+                                Apenas Alinhamento
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="selection" id="selection_1" value="1">
+                                Alinhamento e coreferências
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="custom-control custom-checkbox">
+                                <input type="radio" class="form-check-input" name="selection" id="selection_2" value="2">
+                                Alinhamento, coreferências e sinônimos
                             </label>
                         </div>
                     </div>

@@ -8,12 +8,12 @@ from app.src.idg.idgen import Generator
 mod_desc = Blueprint('desc', __name__, url_prefix='/desc')
 
 
-def do_describe(link, method):
+def do_describe(link, method, select=0):
     response = do_align(link=link)
     print(response)
     generator = Generator(news_object=response['news'])
     generator.relate_amr()
-    generator.generate(method=method)
+    generator.generate(method=method, select=select)
     print(f'Generated:\n\t{generator.get_generated_descriptions()}')
     print(response['grupo'].get_list_terms())
     return response

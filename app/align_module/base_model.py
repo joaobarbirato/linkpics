@@ -11,6 +11,12 @@ def create_token(**kwargs):
     return Token(**kwargs)
 
 
+has_syn_snt = db.Table('has_syn',
+                       db.Column('sentence_id', db.Integer, db.ForeignKey('sentence.id'), primary_key=True),
+                       db.Column('synonym_id', db.Integer, db.ForeignKey('synonym.id'), primary_key=True)
+                       )
+
+
 class Token(BaseModel):
     word = db.Column(db.String)
     lemma = db.Column(db.String)
@@ -90,6 +96,9 @@ class Synonym(BaseModel):
     approval = db.Column(db.Boolean, nullable=True)
     aligment_id = db.Column(db.Integer, db.ForeignKey('alignment.id'), nullable=False)
 
+    belongs_sentence = db.relationship('Sentence', secondary=has_syn_snt, lazy='subquery',
+                                       backref=db.backref('has_synonym', lazy=True))
+
     def __init__(self, syn):
         self.syn = syn
 
@@ -102,6 +111,12 @@ class Synonym(BaseModel):
             return True
         return False
 
+    def add_sentence(self, sentence=None):
+        return _add_relation(self.belongs_sentence, sentence)
+
+    def sentences(self):
+        return self.belongs_sentence
+
     def add_self(self):
         _add_session(self)
 
@@ -112,7 +127,7 @@ class Synonym(BaseModel):
             return self.syn == other
 
     def __repr__(self):
-        return self.sym
+        return self.syn
 
     def __str__(self):
         return self.syn
@@ -223,15 +238,23 @@ class Sentence(BaseModel):
     def get_amr(self):
         return self.amr
 
+    def get_synonyms(self):
+        return self.has_synonym
+
     def get_alignments(self):
         return self.has_alignment
 
     def as_dict(self):
         return {"label": self.label, "content": self.content, "news_id": self.news_id, "amr": self.amr}
 
+    def get_words_from_lemma(self, lemma=None):
+        if lemma is not None:
+            return [token.word for token in self.tokenized if token.lemma == lemma]
+        return []
+
     def save(self):
         [token.save() for token in self.tokenized]
 
 
 def sntsmodel_to_amrmodel(snts):
-    return InstrumentedList(set(snt.get_amr() for snt in snts))
+    return InstrumentedList(snt.get_amr() for snt in snts)

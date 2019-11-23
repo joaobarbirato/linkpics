@@ -2,9 +2,10 @@
     Image Description Generator
     @author: João Gabriel Melo Barbirato
 """
-from operator import methodcaller
+from itertools import product
 
-from app.amr_module.models import AMRModel, biggest_amr, top_from_triples_list, create_amrmodel
+from app.align_module.coref_models import CoreferenceModel, MentionModel
+from app.amr_module.models import AMRModel, biggest_amr, create_amrmodel
 from app.desc_module.models import create_description
 from app.model_utils import PrintException
 from app.align_module.models import News, Alignment
@@ -45,7 +46,7 @@ class Generator(object):
         except Exception as exc:
             PrintException()
 
-    def generate(self, method='baseline5'):
+    def generate(self, method='baseline5', select=1):
         """
 
         :return:
@@ -57,31 +58,32 @@ class Generator(object):
 
             alignment: Alignment
             for alignment in all_alignments:
-                # self._snts_from_alignment = alignment.sentences()
-                self._source_sentences = self.sentence_selection(alignment=alignment)
+                self._source_sentences = self.sentence_selection(alignment=alignment, select=select)
                 self._current_alignment = alignment
                 try:
                     response = self._generate_amr(method=method)
                     if response is not None:
-                        generated_amr, main_ancestral, adjacent_ancestral = response
-                        descr_to_generate.append((alignment, generated_amr, main_ancestral, adjacent_ancestral))
+                        generated_amr, main_ancestral, adjacent_ancestral, focus_list = response
+                        descr_to_generate.append((alignment, generated_amr, main_ancestral, adjacent_ancestral,
+                                                  focus_list))
                 except Exception as exc:
                     PrintException()
                     print(f'[{__file__}] Error while generating AMR from {alignment}: {str(exc)}')
 
             amr_to_generate_text = []
             generated_text_list = []
-            for alignment, generated_amr, _, _ in descr_to_generate:
+            for alignment, generated_amr, _, _, _ in descr_to_generate:
                 amr_to_generate_text.append(generated_amr)
 
                 generated_text_list = penman_to_text(amr_list=amr_to_generate_text)
-            for ((alignment, generated_amr, main_ancestral, adjacent_ancestral), _generated_text) \
+            for ((alignment, generated_amr, main_ancestral, adjacent_ancestral, focus_list), _generated_text) \
                     in zip(descr_to_generate, generated_text_list):
 
-                # _generated_text = self.post_process_text(text=_generated_text)
                 _generated_text = self.post_process(text=_generated_text, amr=generated_amr)
                 description = create_description(text=_generated_text, method=method)
+                description.method = f'{method}|{str(select)}'
                 description.add_amr(generated_amr)
+                description.set_used_focus(focus_list)
                 description.save()
                 main_sentence = create_sentence(copy=main_ancestral.get_sentence())
                 main_copy = create_amrmodel(copy=main_ancestral)
@@ -108,13 +110,55 @@ class Generator(object):
         :return:
         """
         try:
-            if method == 'baseline4':
-                generating_method = self._baseline4()
-            elif method == 'baseline5':
-                generating_method = self._baseline5()
-            else:
-                generating_method = None
-            return generating_method
+            try:
+                amr_list = sntsmodel_to_amrmodel([source for source, focus in self.src_focus])
+                information = []
+                amr: AMRModel
+                print(self.src_focus)
+                for focus_term, amr in zip([focus for source, focus in self.src_focus], amr_list):
+                    is_name = amr.is_name(focus_term)
+                    if not is_name:
+                        focus_triple = amr.get_triple(relation='instance', target=focus_term)
+                    else:
+                        focus_triple = is_name
+                    if focus_triple is not None and focus_triple:
+                        focus_subgraph = amr.get_subgraph(top=focus_triple)
+                        focus_parent = amr.get_parents(focus_triple)
+                        information.append(
+                            {
+                                "triple": focus_triple,
+                                "subgraph": focus_subgraph,
+                                "parent": focus_parent,
+                                "amr": amr
+                            }
+                        )
+
+                if information:
+                    base_info, information = self._choose_biggest(information)
+
+                    # consider parents
+                    if method == 'baseline4':
+                        base_info = self._add_parent_to_base(info=base_info, base=base_info)
+
+                    appended_amr_list = []
+                    before = base_info["subgraph"].get_penman(return_type='str', indent=True)
+                    if len(information) > 1:
+                        for info in information:
+                            base_info["subgraph"].add(other=info["subgraph"],
+                                                      tuple_ref=(base_info["triple"].source, info["triple"].source))
+
+                            # consider parents
+                            if method == 'baseline4':
+                                base_info = self._add_parent_to_base(info=info, base=base_info)
+
+                            if before != base_info["subgraph"].get_penman(return_type='str', indent=True):
+                                appended_amr_list.append(info)
+
+                    return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list], \
+                           [str(info["triple"]) for info in appended_amr_list]
+            except Exception as exc:
+                PrintException()
+                print(f'Error on {method}: {str(exc)}')
         except Exception as exc:
             PrintException()
             print(f'[{__file__}] Error while generating AMR: {str(exc)}')
@@ -131,34 +175,13 @@ class Generator(object):
             copy_info_list.remove(base_info)
         return base_info, copy_info_list
 
-    # def _baseline3(self):
-    #     try:
-    #         amr_list = sntsmodel_to_amrmodel(self._source_sentences)
-    #         _big_amr = biggest_amr(amr_list)
-    #
-    #         amr_list.remove(_big_amr)
-    #         print(_big_amr)
-    #
-    #         _old_big_amr = _big_amr
-    #         for amr in amr_list:
-    #             focus_big_amr = _big_amr.get_triple(relation='instance', target=self._current_alignment.get_term())
-    #             focus_small_amr = amr.get_triple(relation='instance', target=self._current_alignment.get_term())
-    #             if focus_big_amr is not None and focus_small_amr is not None:
-    #                 small_amr_subgraph = amr.get_subgraph(top=focus_small_amr)
-    #                 _big_amr.add(other=small_amr_subgraph, tuple_ref=(focus_big_amr.source, focus_small_amr.source))
-    #
-    #         return _big_amr # if _big_amr != _old_big_amr else None
-    #     except Exception as exc:
-    #         PrintException()
-    #         print(f'Error on baseline3: {str(exc)}')
-
     @staticmethod
     def _add_parent_to_base(info, base):
         if info["parent"]:
             info["parent"][1].invert()
             base["subgraph"].add(
-                other=create_amrmodel(triples=base["parent"], top=base["parent"][2].source),
-                tuple_ref=(base["triple"].source, base["parent"][2].source))
+                other=create_amrmodel(triples=info["parent"], top=info["parent"][2].source),
+                tuple_ref=(base["triple"].source, info["parent"][2].source))
         return base
 
     def sentence_selection(self, select=0, alignment=None):
@@ -172,14 +195,15 @@ class Generator(object):
         # alignments and it's corefs
         elif select == 1:
             src_focus_0 = self.sentence_selection(select=0, alignment=alignment)
-
             src_focus_1 = []
             all_corefs = self.news_object.get_coreferences()
+            coref: CoreferenceModel
             for coref in all_corefs:
+                mention: MentionModel
                 for mention in coref.get_mentions():
-                    tokens = mention.has_terms(alignment.get_term())
+                    tokens = mention.has_term(alignment.get_term())
                     if tokens:
-                        src_focus_1 += [(token.lemma, token.get_sentence()) for token in tokens]
+                        src_focus_1 += [(token.get_sentence(), token.lemma) for token in mention.get_tokens()]
 
             self.src_focus = list(set(src_focus_1 + src_focus_0))
             return self.src_focus
@@ -188,9 +212,11 @@ class Generator(object):
         elif select == 2:
             if alignment.has_syns:
                 src_focus_1 = self.sentence_selection(select=1, alignment=alignment)
-                source_sentences = alignment.sentences()
                 synonyms = alignment.get_syns()
-                # TODO: como identificar de qual sentença veio o sinônimo?
+                src_focus_2 = []
+                for synonym in synonyms:
+                    src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [synonym])]
+                self.src_focus = list(set(src_focus_2 + src_focus_1))
                 return self.src_focus
             else:
                 return self.sentence_selection(select=1, alignment=alignment)
@@ -198,107 +224,21 @@ class Generator(object):
         else:
             return self.sentence_selection(0)
 
-    def _baseline4(self):
-        """
-        - alignment
-        - with parents
-        :return:
-        """
-        try:
-            amr_list = sntsmodel_to_amrmodel(self.src_focus[0])
-            information = []
-            amr: AMRModel
-            for focus_term, amr in zip(self.src_focus[1], amr_list):
-                is_name = amr.is_name(focus_term)
-                if not is_name:
-                    focus_triple = amr.get_triple(relation='instance', target=focus_term)
-                else:
-                    focus_triple = is_name
-                if focus_triple is not None and focus_triple:
-                    focus_subgraph = amr.get_subgraph(top=focus_triple)
-                    focus_parent = amr.get_parents(focus_triple)
-                    information.append(
-                        {
-                            "triple": focus_triple,
-                            "subgraph": focus_subgraph,
-                            "parent": focus_parent,
-                            "amr": amr
-                        }
-                    )
-
-            if information:
-                base_info, information = self._choose_biggest(information)
-                base_info = self._add_parent_to_base(info=base_info, base=base_info)
-                appended_amr_list = []
-                if len(information) > 1:
-                    for info in information:
-                        _before = base_info["subgraph"]
-                        base_info["subgraph"].add(other=info["subgraph"],
-                                                  tuple_ref=(base_info["triple"].source, info["triple"].source))
-                        base_info = self._add_parent_to_base(info=info, base=base_info)
-
-                        if _before != base_info["subgraph"]:
-                            appended_amr_list.append(info)
-
-                return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list]
-        except Exception as exc:
-            PrintException()
-            print(f'Error on baseline4: {str(exc)}')
-
-    def _baseline5(self):
-        """
-        - alignment
-        - without parents
-        :return:
-        """
-        try:
-            amr_list = sntsmodel_to_amrmodel(self.src_focus[0])
-            information = []
-            amr: AMRModel
-            for focus_term, amr in zip(self.src_focus[1], amr_list):
-                is_name = amr.is_name(focus_term)
-                if not is_name:
-                    focus_triple = amr.get_triple(relation='instance', target=focus_term)
-                else:
-                    focus_triple = is_name
-                if focus_triple is not None and focus_triple:
-                    focus_subgraph = amr.get_subgraph(top=focus_triple)
-                    information.append(
-                        {
-                            "triple": focus_triple,
-                            "subgraph": focus_subgraph,
-                            "amr": amr
-                        }
-                    )
-
-            if information:
-                base_info, information = self._choose_biggest(information)
-                appended_amr_list = []
-                if len(information) > 1:
-                    for info in information:
-                        _before = base_info["subgraph"]
-                        base_info["subgraph"].add(other=info["subgraph"],
-                                                  tuple_ref=(base_info["triple"].source, info["triple"].source))
-
-                        if _before != base_info["subgraph"]:
-                            appended_amr_list.append(info)
-
-                return base_info["subgraph"], base_info["amr"], [info["amr"] for info in appended_amr_list]
-        except Exception as exc:
-            PrintException()
-            print(f'Error on baseline5: {str(exc)}')
-
     def post_process_text(self, text):
         """
 
         :type text: str
         """
-        text = text.replace(" .", "")
-        if text[-1] == '':
-            text = text[:-1]
-        text = text.replace(" :", "")
-        text = self._remove_repeated_words(text)
-        return text
+        new_text = text.replace(" .", "")
+        if new_text[-1] == ' ':
+            new_text = new_text[:-1]
+
+        if new_text[0] == ' ':
+            new_text = new_text[1:]
+
+        new_text = new_text.replace(" :", "")
+        new_text = self._remove_repeated_words(new_text)
+        return new_text
 
     def _remove_repeated_words(self, text):
         from nltk.tokenize import wordpunct_tokenize
@@ -315,6 +255,14 @@ class Generator(object):
         new_text = TreebankWordDetokenizer().detokenize(new_tokenized)
         return new_text
 
+    def generate_from_mod_sequence(self, src, amr):
+        p = list(set(amr.span(amr.get_instance(amr.top))) - set(amr.get_triples(relation='instance')))
+        if p:
+            return ' '.join([self.generate_from_mod_sequence(src=way.target, amr=amr) for way in p if way.source == src]) + \
+                   ' ' + amr.get_instance(src=src).target
+        else:
+            return amr.get_instance(src=src).target
+
     def post_process(self, text, amr):
         """
 
@@ -326,7 +274,15 @@ class Generator(object):
         tokenized_text = wordpunct_tokenize(new_text)
         from nltk.stem import WordNetLemmatizer
         lemmatizer = WordNetLemmatizer()
-        if amr.get_size() == 1 and \
+        if (amr.get_size() == 1 and len(amr.get_triples()) == 1) and \
                 amr.get_triples()[0].target not in [lemmatizer.lemmatize(token) for token in tokenized_text]:
             new_text = amr.get_triples()[0].target
+        elif (amr.get_size() == 1 and len(amr.get_triples()) > 1) and amr.get_triples()[0].target == 'name':
+            instance = amr.get_triples(relation='instance')[0]
+            names = amr.get_triples(src=instance.src)
+            names.remove(instance)
+            new_text = " ".join([t.target for t in names])
+
+        if all(triple.relation == 'mod' for triple in list(set(amr.span(amr.get_instance(amr.top))) - set(amr.get_triples(relation='instance')))):
+            new_text = self.generate_from_mod_sequence(src=amr.top, amr=amr)
         return new_text

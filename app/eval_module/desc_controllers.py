@@ -1,12 +1,12 @@
 import csv
 import re
-from typing import Optional, Any
+from typing import Optional, Any, Union
 
 from flask import render_template, request, json, Blueprint, send_from_directory
 from flask_login import login_required
 
 from app import app
-from app.align_module.models import News, Alignment
+from app.align_module.models import News, Alignment, AlignmentGroup
 from app.desc_module.controllers import do_describe
 from app.desc_module.models import Description
 from app.eval_module.desc_models import create_desc_batch, create_desc_eval, get_all_batch_desc, DescEval, DescBatch, \
@@ -33,7 +33,7 @@ def submit_desc():
 
 
 @mod_eval_desc.route('/eval')
-# @login_required
+@login_required
 def evaluation_desc():
     eval_list = get_all_desc_eval()
     eval_list.sort()
@@ -43,47 +43,95 @@ def evaluation_desc():
     )
 
 
+def _get_selection_string(selection):
+    if selection == 0:
+        return 'alinhamento'
+    elif selection == 1:
+        return 'coref'
+    elif selection == 2:
+        return 'sinonimos'
+
+
 @mod_eval_desc.route('/describe_batch', methods=["GET", "POST"])
 def describe_batch():
+    print([(k,v) for k, v in request.form.items()])
     try:
         links = list(set(request.form["batch_links"].split("\n")))
         links.sort()
         total = len(links)
         batch_name = request.form["batch_name"]
         restriction = request.form["restriction"]
-        method = request.form["method"]
         failed = []
         with open(f'{TMP_DIR}/test_description.csv', 'w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=FIELDS)
             writer.writeheader()
 
-        desc_batch = create_desc_batch(name=f'{batch_name}_method_{method}')
-
-        for i, link in enumerate(links):
-            try:
-                print(f"#####\n\t[{i + 1}/{total}]\n#####")
-                link = link.replace('\r', '')
-                response = do_describe(link=link, method=method)
-                news_object = response["news"]
-                grupo = response["grupo"]
-                for alignment in grupo.get_all_alignments():
-                    if restriction == "all" or \
-                            (restriction == "ne" and alignment.get_is_ne()) or \
-                            (restriction == "obj" and not alignment.get_is_ne()):
-                        alignment.add_to_db()
-                        desc = alignment.get_description()
-                        if desc is not None:
-                            desc_eval = create_desc_eval(desc_model=desc)
-                            desc_batch.add_desc_eval(desc_eval)
-                            desc_eval.add_self()
-                            desc_batch.add_self()
-                news_object.set_path(response["img_alinhamento"])
-                news_object.save()
-                _write_test_csv(news_object)
-                _commit_session()
-            except Exception as exc:
-                PrintException()
-                failed.append((link, f'{str(exc)}'))
+        if request.form["all"] == "1":
+            for selection in [0, 1, 2]:
+                selection_string = _get_selection_string(selection)
+                for method in ['baseline4', 'baseline5']:
+                    desc_batch = create_desc_batch(
+                        name=f'{batch_name}_method_{method}_{selection_string}')
+                    for i, link in enumerate(links):
+                        try:
+                            print(f"#####\n\tbegining [{i}/{total} | {method}-{selection_string}]\n#####")
+                            link = link.replace('\r', '')
+                            response = do_describe(link=link, method=method, select=selection)
+                            news_object = response["news"]
+                            news_object.fantasy_id = i
+                            grupo = response["grupo"]
+                            for alignment in grupo.get_all_alignments():
+                                if restriction == "all" or \
+                                        (restriction == "ne" and alignment.get_is_ne()) or \
+                                        (restriction == "obj" and not alignment.get_is_ne()):
+                                    alignment.add_to_db()
+                                    desc = alignment.get_description()
+                                    if desc is not None:
+                                        desc_eval = create_desc_eval(desc_model=desc)
+                                        desc_batch.add_desc_eval(desc_eval)
+                                        desc_eval.add_self()
+                                        desc_batch.add_self()
+                            news_object.set_path(response["img_alinhamento"])
+                            news_object.save()
+                            _write_test_csv(news_object)
+                            _commit_session()
+                            print(f"#####\n\tfinishing [{i+1}/{total} | {method}-{selection_string}]\n#####")
+                        except Exception as exc:
+                            PrintException()
+                            failed.append((link, f'{str(exc)}'))
+        else:
+            method = request.form["method"]
+            selection = int(request.form["selection"])
+            selection_string = _get_selection_string(selection)
+            desc_batch = create_desc_batch(
+                name=f'{batch_name}_method_{method}_{selection_string}')
+            for i, link in enumerate(links):
+                try:
+                    print(f"#####\n\tbegining [{i}/{total} | {method}-{_get_selection_string(selection)}]\n#####")
+                    link = link.replace('\r', '')
+                    response = do_describe(link=link, method=method, select=selection)
+                    news_object = response["news"]
+                    news_object.fantasy_id = i
+                    grupo = response["grupo"]
+                    for alignment in grupo.get_all_alignments():
+                        if restriction == "all" or \
+                                (restriction == "ne" and alignment.get_is_ne()) or \
+                                (restriction == "obj" and not alignment.get_is_ne()):
+                            alignment.add_to_db()
+                            desc = alignment.get_description()
+                            if desc is not None:
+                                desc_eval = create_desc_eval(desc_model=desc)
+                                desc_batch.add_desc_eval(desc_eval)
+                                desc_eval.add_self()
+                                desc_batch.add_self()
+                    news_object.set_path(response["img_alinhamento"])
+                    news_object.save()
+                    _write_test_csv(news_object)
+                    _commit_session()
+                    print(f"#####\n\tfinishing [{i + 1}/{total} | {method}-{selection_string}]\n#####")
+                except Exception as exc:
+                    PrintException()
+                    failed.append((link, f'{str(exc)}'))
 
         if failed:
             with open(f'{TMP_DIR}/failed_links.txt', 'w') as link_file:
@@ -129,7 +177,7 @@ def _write_test_csv(news):
 
 
 @mod_eval_desc.route('/eval_batch', methods=["POST"])
-# @login_required
+@login_required
 def eval_desc_batch():
     type_pattern = r"([a-z]*)_"
     radio_pattern = r"^(\w*)(_b)(\d*)(_e)(\d*)"
@@ -152,6 +200,13 @@ def eval_desc_batch():
                 ]
                 de: DescEval = query_by_id(DescEval, de_id)
                 de.comments = value
+                de.add_self()
+            elif str_match == "better":
+                (_, _, batch_id, _, de_id) = [
+                    t(s) for t, s in zip((str, str, int, str, int), re.search(radio_pattern, tag_id).groups())
+                ]
+                de: DescEval = query_by_id(DescEval, de_id)
+                de.set_compare_baseline(value)
                 de.add_self()
         except Exception as e:
             PrintException()

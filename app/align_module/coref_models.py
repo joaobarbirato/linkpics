@@ -26,6 +26,9 @@ class MentionModel(BaseModel):
         self.head = head
         self.tokens = self.add_tokens(tokens)
 
+    def __repr__(self):
+        return f"<Mention {' '.join(self.tokens)}>"
+
     def has_term(self, term):
         if any(tkn == term for tkn in self.tokens):
             return [tkn for tkn in self.tokens if tkn == term]
@@ -38,6 +41,9 @@ class MentionModel(BaseModel):
 
     def get_sentence(self):
         return self.tokens[0].get_sentence()
+
+    def get_tokens(self):
+        return self.tokens
 
     def save(self):
         # tokens are saved by sentences

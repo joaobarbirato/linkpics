@@ -16,7 +16,7 @@
                     <div class="card-header" role="tab" id="heading_{{ eval.id }}">
                         <h5 class="mb-0">
                             <a data-toggle="collapse" data-parent="#row_eval" href="#collapse_{{ eval.id }}" aria-expanded="true" aria-controls="collapse_{{ eval.id }}">
-                                <b>Conjunto {{ eval.DescBatch.name }}#{{ eval.desc_batch_id }}</b> | Avaliação de descrição # {{ eval.id }}
+                                <b>Noticia#{{ eval.get_news().id }} {{ eval.get_desc().get_alignment() }} | {{ eval.get_desc().get_method() }}</b> | Avaliação de descrição # {{ eval.id }}
                             </a>
                         </h5>
                     </div>
@@ -82,6 +82,20 @@
                                         </div>
                                     </div>
                                     <div class="row m-2">
+                                        <div class="col-6">
+                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_y">
+                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_y" value="1">
+                                            Melhor que alinhamento
+                                            </label>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_n">
+                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_n" value="0">
+                                            Não é melhor que alinhamento
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="row m-2">
                                         <div class="col-12">
                                             <label for="textarea_b{{ eval.desc_batch_id }}_e{{ eval.id }}">Comentários</label>
                                             <textarea class="form-control ml-1" name="comment_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="textarea_b{{ eval.desc_batch_id }}_e{{ eval.id }}"></textarea>
@@ -105,9 +119,9 @@
                                             {% if eval.get_desc().get_adjacents() %}
                                                 <div class="dropdown-divider"></div>
                                                 <div class="row ml-1 my-2">
-                                                    <p class="font-weight-bold">AMR outros parentes</p>
+                                                    <p class="font-weight-bold">AMR outros parentes</p><br/>
                                                     {% for adj in eval.get_desc().get_adjacents() %}
-                                                        <p>{{ adj.sentence_id }}</p>
+                                                        <p>{{ adj.get_sentence() }}</p>
                                                         <div id="adj_d{{ adj.id }}" class="border w-100 rounded border-secondary bg-light my-1 p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ adj }}</div>
                                                     {% endfor %}
                                                 </div>

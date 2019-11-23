@@ -105,7 +105,7 @@ class Alignment(BaseModel):
             self.mwes_model = _add_relation(self.mwes_model, mwe)
             return self.mwes_model
 
-    def add_syn(self, syn=None):
+    def add_syn(self, syn=None, snt=None):
         """
         Add syn to an alignment
         :param syn: synonym of self.term
@@ -114,6 +114,8 @@ class Alignment(BaseModel):
         if syn is not None and syn:
             if self.list_syns is None or syn not in self.list_syns:
                 new_syn = Synonym(syn)
+                if snt is not None:
+                    new_syn.add_sentence(sentence=snt)
                 # self.list_syns = _add(self.list_syns, )
                 self.syns_model = _add_relation(self.syns_model, new_syn)
                 self.has_syns = bool(self.list_syns)
@@ -291,9 +293,6 @@ class AlignmentGroup(BaseModel):
     def get_all_alignments(self):
         return self.list_alignments
 
-    def __str__(self):
-        return self.name
-
     def __exit__(self, exc_type, exc_value, traceback):
         db.session.expunge_all()
         pass
@@ -314,6 +313,12 @@ class News(BaseModel):
                                 cascade='all, delete-orphan', lazy=True)
     coreferences = db.relationship('CoreferenceModel', single_parent=True, backref='news', cascade='all, delete-orphan',
                                    lazy=True)
+    fantasy_id = db.Column(db.Integer, nullable=True)
+
+    highlighted_title = db.Column(db.String, nullable=True)
+    highlighted_subtitle = db.Column(db.String, nullable=True)
+    highlighted_text = db.Column(db.String, nullable=True)
+
     link = db.Column(db.String, nullable=False, default='')
 
     def __init__(self, path=None, link=''):
@@ -382,6 +387,11 @@ class News(BaseModel):
             self.sentences = _add_relation(self.sentences, snt_model)
             # _add_session(snt_model)
 
+    def add_highlighted(self, title, subtitle, text):
+        self.highlighted_title = title
+        self.highlighted_subtitle = subtitle
+        self.highlighted_text = text
+
     def add_from_coref_objects(self, coref_object):
         """
 
@@ -433,6 +443,13 @@ class News(BaseModel):
     def get_full_text(self):
         return f'{self.sentences[0]}\n{self.sentences[1]}\n{"".join(str(s) for s in self.sentences[2:])}'
 
+    def get_word_from_lemma(self, lemma=None):
+        words = []
+        if lemma is not None:
+            for sentence in self.sentences:
+                words += sentence.get_words_from_lemma(lemma=lemma)
+        return words
+
     def _highlight_alignments(self, text):
         """
 
@@ -440,40 +457,52 @@ class News(BaseModel):
         """
         new_text = text
         alignment: Alignment
+        _pre_char_list = ['(', ' ', '-', '"']
+        pos_tag = f'</b>'
+        from nltk import WordNetLemmatizer
+        lemmatizer = WordNetLemmatizer()
+
+        def paint_text(text, word, color):
+            pre_tag = f'<b style="color:rgb({str(color)});">'
+            new_text = text
+            for pre_char in _pre_char_list:
+                for contained_word in self.get_word_from_lemma(lemma=lemmatizer.lemmatize(word)):
+                    new_text = new_text.replace(f'{pre_char}{contained_word}', f'{pre_char}{pre_tag}{contained_word}{pos_tag}')
+            return new_text
+
         for alignment in self.alignments():
-            pre_tag = f'<b style="color:rgb({str(alignment.colors_model)});">'
-            pos_tag = f'</b>'
+            color = alignment.colors_model
             if alignment.get_mwes():
                 for mwe in alignment.get_mwes():
                     for word in mwe_with_separators(mwe.mwe):
-                        new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+                        new_text = paint_text(new_text, word=word, color=color)
             if alignment.get_syns():
                 for syn in alignment.get_syns():
                     for word in word_to_wordpoint(syn.syn):
-                        new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+                        new_text = paint_text(new_text, word=word, color=color)
 
             for word in word_to_wordpoint(alignment.get_term()):
-                new_text = new_text.replace(word, f'{pre_tag}{word}{pos_tag}')
+                new_text = paint_text(new_text, word=word, color=color)
 
         return new_text
 
     def get_title(self, highlight_alignments=False):
         if not highlight_alignments:
-            return f'{self.sentences[0]}'
+            return _treat_raw_text(f'{self.sentences[0]}')
         else:
-            return self._highlight_alignments(f'{self.sentences[0]}')
+            return _treat_raw_text(self.highlighted_title)
 
     def get_subtitle(self, highlight_alignments=False):
         if not highlight_alignments:
-            return f'{self.sentences[1]}'
+            return _treat_raw_text(f'{self.sentences[1]}')
         else:
-            return self._highlight_alignments(f'{self.sentences[1]}')
+            return _treat_raw_text(self.highlighted_subtitle)
 
     def get_text(self, highlight_alignments=False):
         if not highlight_alignments:
             return _treat_raw_text(f'{"".join(str(s) for s in self.sentences[2:])}')
         else:
-            return self._highlight_alignments(_treat_raw_text(f'{"".join(str(s) for s in self.sentences[2:])}'))
+            return _treat_raw_text(self.highlighted_text)
 
     def get_link(self):
         return self.link

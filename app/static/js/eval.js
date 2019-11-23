@@ -52,9 +52,9 @@ $('.submit-eval').each(function (index, item) {
 function radiosAreChecked(form) {
     const selector_checked = '#' + $(form).attr("id") + " :radio:checked";
     const selector_all = '#' + $(form).attr("id") + " :radio";
-    // console.log($(selector_checked).length);
-    // console.log($(selector_all).length);
-    return ($(selector_checked).length === $(selector_all).length / $(selector_all).length);
+    console.log($(selector_checked).length);
+    console.log($(selector_all).length);
+    return ($(selector_checked).length / 2 === $(selector_all).length / $(selector_all).length);
 }
 
 function submitFunction (form, item) {

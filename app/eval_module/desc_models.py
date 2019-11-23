@@ -24,24 +24,31 @@ class DescEval(Base):
         -1: "Invalid"
     }
 
+    COMPARE_BASELINE_TABLE = {
+        0: "Worse",
+        1: "Equal",
+        2: "Better"
+    }
+
     __tablename__ = 'desc_eval'
     desc_model = db.relationship('Description', uselist=False, lazy=True, backref='desc_eval',
                                  cascade="all, delete-orphan")
 
     approval = db.Column(db.Integer, nullable=True)
+    comments = db.Column(db.String, nullable=True)
+    compare_baseline = db.Column(db.Integer, nullable=True)
 
     desc_batch_id = db.Column(db.Integer, db.ForeignKey('desc_batch.id'), nullable=True)
-
-    comments = db.Column(db.String, nullable=True)
 
     def __init__(self, desc_model):
         self.desc_model = desc_model
 
     def __repr__(self):
-        return f'<DescEval {self.desc_model}'
+        return f'<DescEval {self.desc_model}>'
 
     def __lt__(self, other):
-        return self.get_desc().get_alignment() < other.get_desc().get_alignment()
+        return f'{self.get_desc().get_alignment().get_term()}{self.get_news().link}' < \
+               f'{other.get_desc().get_alignment().get_term()}{other.get_news().link}'
 
     def approve(self, value):
         """
@@ -67,6 +74,10 @@ class DescEval(Base):
         """
         return self.APPROVAL_TABLE[self.approval]
 
+    def set_compare_baseline(self, value):
+        self.compare_baseline = value
+        return self.compare_baseline
+
 
 def create_desc_batch(name):
     return DescBatch(name=name)
@@ -81,7 +92,7 @@ class DescBatch(Base):
         self.name = name
 
     def __repr__(self):
-        return f'<DescBatch {self.name}'
+        return f'<DescBatch {self.name}>'
 
     def add_desc_eval(self, desc_eval):
         """

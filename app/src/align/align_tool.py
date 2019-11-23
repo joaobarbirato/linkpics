@@ -330,8 +330,9 @@ class AlignTool:
                         for p in palavras_syns_points:
                             sentence_has_p = self._text_contains(p)
                             if sentence_has_p:
-                                alinhamento.add_syn(syn=ps)
-                                snts_to_add += [snt for snt in self.news_object.get_sentence_index(sentence_has_p) if snt not in snts_to_add]
+                                snts = self.news_object.get_sentence_index(sentence_has_p)
+                                alinhamento.add_syn(syn=ps, snt=snts)
+                                snts_to_add += [snt for snt in snts if snt not in snts_to_add]
                                 self._paint_text(p, alinhamento)
                 if snts_to_add:
                     alinhamento.add_sentence(snts_to_add)
@@ -366,12 +367,12 @@ class AlignTool:
         for snt in tokenized_split_sentences:
             tokenized_sentences += snt
 
-        self.titulo_noticia = TreebankWordDetokenizer().detokenize(
-            [str(item) for item in tokenized_sentences[:len_titulo]]).replace('``', '"')
-        self.legenda = TreebankWordDetokenizer().detokenize(
-            [str(item) for item in tokenized_sentences[len_titulo:len_titulo+len_legenda]]).replace('``', '"')
-        self.noticia = TreebankWordDetokenizer().detokenize(
-            [str(item) for item in tokenized_sentences[len_titulo+len_legenda:len_titulo+len_legenda+len_noticia]]).replace('``', '"')
+        # self.titulo_noticia = TreebankWordDetokenizer().detokenize(
+        #     [str(item) for item in tokenized_sentences[:len_titulo]]).replace('``', '"')
+        # self.legenda = TreebankWordDetokenizer().detokenize(
+        #     [str(item) for item in tokenized_sentences[len_titulo:len_titulo+len_legenda]]).replace('``', '"')
+        # self.noticia = TreebankWordDetokenizer().detokenize(
+        #     [str(item) for item in tokenized_sentences[len_titulo+len_legenda:len_titulo+len_legenda+len_noticia]]).replace('``', '"')
         return crefs
 
 
@@ -480,8 +481,8 @@ class AlignTool:
 
             self.noticia += '\n\n<ul>'
 
-            for i, cref in enumerate(crefs, start=1):
-                self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
+            # for i, cref in enumerate(crefs, start=1):
+            #     self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
 
             # reseta o indice
             self.palette.reset_colors()
@@ -509,7 +510,7 @@ class AlignTool:
             # with open(f'{TMP_DIR}/newsobject.json', 'w', encoding='utf-8') as file:
             #     file.write(self.news_object.get_text())
             # json.dump(obj=self.news_object.get_text(), fp=)
-
+            self.news_object.add_highlighted(title=self.titulo_noticia, subtitle=self.legenda, text=self.noticia)
             print("PROCESSO FINALIZADO")
             return persons_aligned, object_aligned, img_url, self.titulo_noticia, self.legenda, self.noticia, dic_avaliacao, self.group, self.news_object
         except Exception as exc:

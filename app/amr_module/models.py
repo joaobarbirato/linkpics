@@ -91,6 +91,12 @@ class Triple(BaseModel):
     def __repr__(self):
         return f"<AMR Triple ({self.source}, {self.relation}, {self.target})>"
 
+    def __str__(self):
+        if self.relation == 'instance':
+            return f'({self.source} / {self.target})'
+        else:
+            return f'{self.source} :{self.relation} {self.target}'
+
     def __contains__(self, item):
         return self.is_instance(item) or self.is_relation(item)
 
@@ -450,7 +456,7 @@ class AMRModel(BaseModel):
         if candidates is not None and candidates:
             candidate = [triple for triple in candidates if triple.target == _src][0]
             parent_node_candidate = self.get_triple(src=candidate.source, relation='instance')
-            if '-of' not in candidate.relation and candidate and parent_node_candidate:
+            if candidate and parent_node_candidate:
                 return [Triple(copy=parent_node_candidate), Triple(copy=candidate), Triple(copy=node)]
         return []
 
@@ -540,7 +546,7 @@ class AMRModel(BaseModel):
                     return_list.append(triple)
 
             if relation is not None and relation == 'instance':
-                return [triple for triple in return_list if (triple.target is not None or triple.target) and triple.target == target][0]
+                return [triple for triple in return_list if triple.target is not None][0]
             else:
                 return return_list[0]
         except Exception as exc:
