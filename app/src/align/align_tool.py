@@ -517,14 +517,17 @@ class AlignTool:
             PrintException()
 
     def align_manual(self, legenda, titulo, texto, img_path, person_choose, object_choose):
-        """Alinha a partir de uma url fornecida pela usuario"""
-        self.titulo_noticia = titulo
-        self.legenda = legenda
-        self.noticia = texto
-        self.path_imagem = img_path
+        try:
+            """Alinha a partir de uma url fornecida pela usuario"""
+            self.titulo_noticia = titulo
+            self.legenda = legenda
+            self.noticia = texto
+            self.path_imagem = img_path
 
-        self._set_manual_resources()
-        self._process_text_image()
+            self._set_manual_resources()
+            self._process_text_image()
+        except:
+            PrintException()
 
         # Alinha as pessoas
         return self.begin_alignment(person_choose=person_choose, object_choose=object_choose)

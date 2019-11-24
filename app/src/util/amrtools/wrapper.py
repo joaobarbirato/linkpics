@@ -224,7 +224,8 @@ def __test_parse_to_amr_list():
     amrs = parse_to_amr_list(snts=snt)
     print(amrs[0].nodes)
     print(amrs[0].edges)
-    print(amrs[0].nodes['n7'])
+    print(amrs[0].get_penman(return_type='str'))
+    # print(amrs[0].nodes['n7'])
 
 
 if __name__ == "__main__":

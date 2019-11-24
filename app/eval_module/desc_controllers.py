@@ -20,6 +20,11 @@ mod_eval_desc = Blueprint('eval_desc', __name__, url_prefix='/eval/desc')
 FIELDS = ['Title', 'Link', 'Alignment', 'Description', 'AMR', 'Base', 'Others']
 
 
+hcl = list(set(['http://www.bbc.com/future/story/20170818-voyager-inside-the-worlds-greatest-space-mission', 'http://www.bbc.com/news/blogs-trending-40271663', 'http://www.bbc.com/news/blogs-trending-31736316', 'http://www.bbc.com/news/blogs-trending-33224187', 'http://www.bbc.com/news/blogs-trending-35376072', 'http://www.bbc.co.uk/earth/story/20150430-the-orange-tips-search-for-a-mate', 'http://www.bbc.com/news/blogs-trending-38031629', 'http://www.bbc.com/autos/story/20161223-last-minute-gifts-for-green-minded-drivers', 'http://www.bbc.com/news/blogs-trending-39205935', 'http://www.bbc.com/future/story/20171027-the-stray-dogs-that-paved-the-way-to-the-stars', 'http://www.bbc.com/culture/story/20170428-how-one-creature-haunts-our-thoughts', 'http://www.bbc.com/news/blogs-trending-33066865', 'http://www.bbc.com/news/blogs-trending-37925961', 'http://www.bbc.com/news/blogs-trending-32481796', 'http://www.bbc.com/news/blogs-trending-39278010', 'http://www.bbc.com/news/blogs-trending-37222375', 'http://www.bbc.com/news/blogs-trending-39639834', 'http://www.bbc.com/autos/story/20161024-top-gear-drives-ferraris-spiky-spiteful-f12tdf', 'http://www.bbc.com/news/blogs-trending-38383126', 'http://www.bbc.com/news/blogs-trending-32340384', 'http://www.bbc.com/news/blogs-trending-36970535', 'http://www.bbc.com/earth/story/20170605-the-most-powerful-punches-and-kicks-of-all-time', 'http://www.bbc.com/news/blogs-trending-32417773', 'http://www.bbc.com/news/blogs-trending-40299919', 'http://www.bbc.com/future/story/20170517-the-strange-sheep-that-baffled-scientists', 'http://www.bbc.com/news/blogs-trending-38748621', 'http://www.bbc.com/news/blogs-trending-34879990', 'http://www.bbc.com/news/blogs-trending-37645992', 'http://www.bbc.com/earth/story/20170608-some-dung-beetles-have-taken-to-decapitating-millipedes', 'http://www.bbc.com/news/blogs-trending-38804499', 'http://www.bbc.com/news/blogs-trending-36985697', 'http://www.bbc.com/future/story/20170503-the-worlds-biggest-plane-may-have-a-new-mission', 'http://www.bbc.com/news/health-42009932', 'http://www.bbc.com/autos/story/20160719-hide-and-seek-on-the-us-mexico-line', 'http://www.bbc.com/news/blogs-trending-32971094', 'http://www.bbc.com/news/blogs-trending-40326003', 'http://www.bbc.com/news/blogs-trending-34967254', 'http://www.bbc.com/news/technology-38364076', 'http://www.bbc.com/news/blogs-trending-32529980', 'http://www.bbc.com/news/blogs-trending-37222517', 'http://www.bbc.com/news/blogs-trending-32723202', 'http://www.bbc.com/autos/story/20161206-driving-bentleys-bentayga-diesel', 'http://www.bbc.com/future/story/20170627-how-do-you-treat-a-dog-with-ocd', 'http://www.bbc.com/news/blogs-trending-33250663', 'http://www.bbc.com/news/technology-39803425', 'http://www.bbc.com/news/technology-15969065', 'http://www.bbc.com/news/blogs-trending-37197751', 'http://www.bbc.com/news/blogs-trending-36384312', 'http://www.bbc.com/future/story/20171027-the-magic-cakes-that-come-from-a-packet', 'http://www.bbc.com/earth/story/20141117-why-seals-have-sex-with-penguins', 'http://www.bbc.com/news/blogs-trending-40775490', 'http://www.bbc.com/news/blogs-trending-37179158', 'http://www.bbc.com/earth/story/20170608-pirate-spiders-make-a-living-by-preying-on-other-spiders', 'http://www.bbc.com/autos/story/20160927-flat-out-in-britains-fiercest-cat', 'http://www.bbc.com/culture/story/20170630-are-women-less-important-than-cows-in-india', 'http://www.bbc.com/news/blogs-trending-36499488', 'http://www.bbc.com/news/blogs-trending-32797265', 'http://www.bbc.com/news/blogs-trending-37679612', 'http://www.bbc.com/news/blogs-trending-32251712', 'http://www.bbc.com/culture/story/20170707-the-gorilla-that-loves-to-look-at-smartphones', 'http://www.bbc.com/future/story/20171025-what-if-the-vw-beetle-had-never-existed', 'http://www.bbc.com/future/story/20170404-the-british-airliner-that-changed-the-world', 'http://www.bbc.com/news/blogs-trending-39351853', 'http://www.bbc.com/autos/story/20160409-meet-darpas-long-range-autonomous-submarine-hunter', 'http://www.bbc.com/future/story/20170808-climate-change-is-disrupting-the-birds-and-the-bees', 'http://www.bbc.com/news/blogs-trending-35263200', 'http://www.bbc.com/news/blogs-trending-37752730', 'http://www.bbc.com/autos/story/20160824-how-to-roll-like-a-real-finn', 'http://www.bbc.com/news/blogs-trending-40340620', 'http://www.bbc.com/news/blogs-trending-40173553', 'http://www.bbc.com/news/blogs-trending-37233913', 'http://www.bbc.com/news/blogs-trending-37749007', 'http://www.bbc.com/earth/story/20170619-conservation-success-for-otters-on-the-brink', 'http://www.bbc.com/future/story/20171022-the-hidden-crisis-shaping-life-on-earth', 'http://www.bbc.com/news/blogs-trending-39490637', 'http://www.bbc.com/news/blogs-trending-39142260', 'http://www.bbc.com/news/blogs-trending-36085314', 'http://www.bbc.com/news/blogs-trending-39997949', 'http://www.bbc.com/autos/story/20160907-is-warsaw-the-next-motor-city', 'http://www.bbc.com/earth/story/20160314-filming-with-remotely-operated-cameras', 'http://www.bbc.com/earth/story/20141212-record-year-for-bitterns', 'http://www.bbc.com/future/story/20170822-why-its-not-surprising-that-ship-collisions-still-happen', 'http://www.bbc.com/autos/story/20160211-the-go-kart-for-helicopter-parents', 'http://www.bbc.com/news/blogs-trending-35413576', 'http://www.bbc.com/news/blogs-trending-36133936', 'http://www.bbc.com/autos/story/20160408-nasas-missing-junkyard-rover-goes-to-auction']))
+hcl.sort()
+HARD_CODED_LINKS = hcl
+TOTAL = len(HARD_CODED_LINKS)
+
 @mod_eval_desc.route('/view', methods=["GET", "POST"])
 def view_desc():
     return render_template("desc_module/view.html", batch_list=get_all_batch_desc())
@@ -33,7 +38,7 @@ def submit_desc():
 
 
 @mod_eval_desc.route('/eval')
-@login_required
+# @login_required
 def evaluation_desc():
     eval_list = get_all_desc_eval()
     eval_list.sort()
@@ -67,15 +72,16 @@ def describe_batch():
             writer.writeheader()
 
         if request.form["all"] == "1":
-            for selection in [0, 1, 2]:
-                selection_string = _get_selection_string(selection)
-                for method in ['baseline4', 'baseline5']:
-                    desc_batch = create_desc_batch(
-                        name=f'{batch_name}_method_{method}_{selection_string}')
-                    for i, link in enumerate(links):
+            for i, link in enumerate(HARD_CODED_LINKS):
+                desc_batch = create_desc_batch(
+                    name=f'{batch_name}_{link}')
+                print(f"#####\n\tbegining [{i}/{TOTAL}]\n#####")
+                link = link.replace('\r', '')
+                for selection in [0, 1, 2]:
+                    selection_string = _get_selection_string(selection)
+                    for method in ['baseline4', 'baseline5']:
                         try:
-                            print(f"#####\n\tbegining [{i}/{total} | {method}-{selection_string}]\n#####")
-                            link = link.replace('\r', '')
+                            print(f"#####\n\tbegining [{i}/{TOTAL} | {method}-{selection_string}]\n#####")
                             response = do_describe(link=link, method=method, select=selection)
                             news_object = response["news"]
                             news_object.fantasy_id = i
@@ -95,10 +101,14 @@ def describe_batch():
                             news_object.save()
                             _write_test_csv(news_object)
                             _commit_session()
-                            print(f"#####\n\tfinishing [{i+1}/{total} | {method}-{selection_string}]\n#####")
+                            print(f"#####\n\tfinishing [{i+1}/{TOTAL} | {method}-{selection_string}]\n#####")
                         except Exception as exc:
                             PrintException()
                             failed.append((link, f'{str(exc)}'))
+
+                print(f"#####\n\tfinishing [{i + 1}/{TOTAL}]\n#####")
+                if len(desc_batch.desc_eval_list) != 6:
+                    failed.append((link, f'len != 6: {", ".join([de.get_method() for de in desc_batch.desc_eval_list])}'))
         else:
             method = request.form["method"]
             selection = int(request.form["selection"])

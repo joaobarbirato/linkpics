@@ -78,6 +78,9 @@ class DescEval(Base):
         self.compare_baseline = value
         return self.compare_baseline
 
+    def get_method(self):
+        return self.desc_model.get_method()
+
 
 def create_desc_batch(name):
     return DescBatch(name=name)
