@@ -33,7 +33,7 @@ def submit_desc():
 
 
 @mod_eval_desc.route('/eval')
-@login_required
+# @login_required
 def evaluation_desc():
     eval_list = get_all_desc_eval()
     eval_list.sort()

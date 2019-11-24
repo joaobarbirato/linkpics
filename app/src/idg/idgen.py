@@ -190,6 +190,7 @@ class Generator(object):
             self._source_sentences = alignment.sentences()
             from itertools import cycle
             self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([alignment.get_term()]))]
+            self.src_focus.sort()
             return self.src_focus
 
         # alignments and it's corefs
@@ -203,9 +204,10 @@ class Generator(object):
                 for mention in coref.get_mentions():
                     tokens = mention.has_term(alignment.get_term())
                     if tokens:
-                        src_focus_1 += [(token.get_sentence(), token.lemma) for token in mention.get_tokens()]
+                        src_focus_1 += [(token.get_sentence(), token.lemma) for token in mention.get_tokens() if 'NN' in token.pos or 'PP' in token.pos]
 
             self.src_focus = list(set(src_focus_1 + src_focus_0))
+            self.src_focus.sort()
             return self.src_focus
 
         # alignments, corefs and some TODO WordNet relation
@@ -217,6 +219,7 @@ class Generator(object):
                 for synonym in synonyms:
                     src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [synonym])]
                 self.src_focus = list(set(src_focus_2 + src_focus_1))
+                self.src_focus.sort()
                 return self.src_focus
             else:
                 return self.sentence_selection(select=1, alignment=alignment)
