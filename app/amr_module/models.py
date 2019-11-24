@@ -370,6 +370,10 @@ class AMRModel(BaseModel):
         :param other:
         :return:
         """
+        old_penman = self.penman
+        top = self.get_triple(src=self.top, relation='instance')
+        if any(triple.target == top.target and triple.source != tuple_ref[1] for triple in other.list_triples):
+            return self.list_triples
         try:
             other_top = other.get_top()
             old_triples = other.get_triples()
@@ -383,14 +387,16 @@ class AMRModel(BaseModel):
                     elif old_triple.target == tuple_ref[1]:
                         new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=tuple_ref[0])
                         new_triples.add(new_triple)
-                    elif old_triple.is_instance():
+                    elif old_triple.is_instance() and old_triple.target != top.target:
                         new_triples.add(old_triple)
 
-                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)))
-                self.list_triples = organize_triples_list(self.list_triples, self.get_triple(src=self.top, relation='instance'))
+                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)).union([top]))
+                self.list_triples = organize_triples_list(self.list_triples, top)
                 self.penman = triple_model_list_to_penman(self.list_triples, self.top)
             return self.list_triples
         except Exception as exc:
+            print(old_penman)
+            print(self.list_triples)
             PrintException()
 
     def delete(self, node_source):
@@ -454,10 +460,12 @@ class AMRModel(BaseModel):
             _src = node.source
         candidates = self.get_triples(target=_src)
         if candidates is not None and candidates:
-            candidate = [triple for triple in candidates if triple.target == _src][0]
-            parent_node_candidate = self.get_triple(src=candidate.source, relation='instance')
-            if candidate and parent_node_candidate:
-                return [Triple(copy=parent_node_candidate), Triple(copy=candidate), Triple(copy=node)]
+            exists_candidates = [triple for triple in candidates if triple.target == _src]
+            if exists_candidates:
+                candidate = [triple for triple in candidates if triple.target == _src][0]
+                parent_node_candidate = self.get_triple(src=candidate.source, relation='instance')
+                if candidate and parent_node_candidate:
+                    return [Triple(copy=parent_node_candidate), Triple(copy=candidate), Triple(copy=node)]
         return []
 
     def is_instance(self, item):
@@ -545,12 +553,16 @@ class AMRModel(BaseModel):
                 if _match_triple(src, relation, target, triple):
                     return_list.append(triple)
 
-            if relation is not None and relation == 'instance':
-                return [triple for triple in return_list if triple.target is not None][0]
+            if return_list:
+                if relation is not None and relation == 'instance':
+                    return [triple for triple in return_list if triple.target is not None][0]
+                else:
+                    return return_list[0]
             else:
-                return return_list[0]
+                return None
         except Exception as exc:
             PrintException()
+            return None
 
     def role(self, src=None, target=None):
         return_list = InstrumentedList([])

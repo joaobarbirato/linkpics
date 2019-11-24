@@ -208,6 +208,12 @@ class Sentence(BaseModel):
     def __hash__(self):
         return hash(_treat_raw_text(self.content))
 
+    def __lt__(self, other):
+        if isinstance(other, str):
+            return self.content < other
+        elif isinstance(other, Sentence):
+            return self.content < other.content
+
     def get_tokens(self, start, end):
         return self.tokenized[start-1:end-1]
 
