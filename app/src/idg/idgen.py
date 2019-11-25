@@ -167,10 +167,12 @@ class Generator(object):
         found = False
         copy_info_list = info_list
         base_info = None
+        from nltk.stem import WordNetLemmatizer
+        lemmatizer = WordNetLemmatizer()
         while not found and copy_info_list:
             biggest_subgraph = biggest_amr([info["subgraph"] for info in copy_info_list])
             base_info = [info for info in copy_info_list if info["subgraph"] == biggest_subgraph][0]
-            if self._current_alignment.get_term() == base_info["triple"].target:
+            if lemmatizer.lemmatize(self._current_alignment.get_term()).upper() == base_info["triple"].target.upper():
                 found = True
             copy_info_list.remove(base_info)
         return base_info, copy_info_list
