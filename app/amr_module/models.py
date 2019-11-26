@@ -387,10 +387,13 @@ class AMRModel(BaseModel):
                     elif old_triple.target == tuple_ref[1]:
                         new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=tuple_ref[0])
                         new_triples.add(new_triple)
-                    elif old_triple.is_instance() and old_triple.target != top.target:
-                        new_triples.add(old_triple)
+                    elif (old_triple.is_instance() and old_triple.target) or \
+                            ((not old_triple.is_instance() or not old_triple.target) and
+                             old_triple.source != tuple_ref[1] and old_triple.target != tuple_ref[1]):
+                        new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=old_triple.target)
+                        new_triples.add(new_triple)
 
-                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)).union([top]))
+                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)))
                 self.list_triples = organize_triples_list(self.list_triples, top)
                 self.penman = triple_model_list_to_penman(self.list_triples, self.top)
             return self.list_triples

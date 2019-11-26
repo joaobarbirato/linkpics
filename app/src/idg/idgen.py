@@ -127,7 +127,7 @@ class Generator(object):
                         information.append(
                             {
                                 "triple": focus_triple,
-                                "subgraph": focus_subgraph,
+                                "subgraph": create_amrmodel(copy=focus_subgraph),
                                 "parent": focus_parent,
                                 "amr": amr
                             }
@@ -187,11 +187,13 @@ class Generator(object):
         return base
 
     def sentence_selection(self, select=0, alignment=None):
+        from nltk.stem import WordNetLemmatizer
+        lemmatizer = WordNetLemmatizer()
         # alignments only
         if select == 0:
             self._source_sentences = alignment.sentences()
             from itertools import cycle
-            self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([alignment.get_term()]))]
+            self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([lemmatizer.lemmatize(alignment.get_term())]))]
             self.src_focus.sort()
             return self.src_focus
 
@@ -219,7 +221,7 @@ class Generator(object):
                 synonyms = alignment.get_syns()
                 src_focus_2 = []
                 for synonym in synonyms:
-                    src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [synonym])]
+                    src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [lemmatizer.lemmatize(synonym)])]
                 self.src_focus = list(set(src_focus_2 + src_focus_1))
                 self.src_focus.sort()
                 return self.src_focus
@@ -284,7 +286,7 @@ class Generator(object):
             new_text = amr.get_triples()[0].target
         elif (amr.get_size() == 1 and len(amr.get_triples()) > 1) and amr.get_triples()[0].target == 'name':
             instance = amr.get_triples(relation='instance')[0]
-            names = amr.get_triples(src=instance.src)
+            names = amr.get_triples(src=instance.source)
             names.remove(instance)
             new_text = " ".join([t.target for t in names])
 
