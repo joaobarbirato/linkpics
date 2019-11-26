@@ -187,11 +187,13 @@ class Generator(object):
         return base
 
     def sentence_selection(self, select=0, alignment=None):
+        from nltk.stem import WordNetLemmatizer
+        lemmatizer = WordNetLemmatizer()
         # alignments only
         if select == 0:
             self._source_sentences = alignment.sentences()
             from itertools import cycle
-            self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([alignment.get_term()]))]
+            self.src_focus = [(sentence, focus) for sentence, focus in zip(self._source_sentences, cycle([lemmatizer.lemmatize(alignment.get_term())]))]
             self.src_focus.sort()
             return self.src_focus
 
@@ -219,7 +221,7 @@ class Generator(object):
                 synonyms = alignment.get_syns()
                 src_focus_2 = []
                 for synonym in synonyms:
-                    src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [synonym])]
+                    src_focus_2 += [(src, focus) for src, focus in product(synonym.sentences(), [lemmatizer.lemmatize(synonym)])]
                 self.src_focus = list(set(src_focus_2 + src_focus_1))
                 self.src_focus.sort()
                 return self.src_focus
@@ -242,6 +244,7 @@ class Generator(object):
             new_text = new_text[1:]
 
         new_text = new_text.replace(" :", "")
+        new_text = new_text.replace(" ;", "")
         new_text = self._remove_repeated_words(new_text)
         return new_text
 

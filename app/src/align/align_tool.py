@@ -481,8 +481,8 @@ class AlignTool:
 
             self.noticia += '\n\n<ul>'
 
-            for i, cref in enumerate(crefs, start=1):
-                self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
+            # for i, cref in enumerate(crefs, start=1):
+            #     self.noticia += f'<sub>[{i}] {" | ".join([mention.text for mention in cref])}</sub><br/>'
 
             # reseta o indice
             self.palette.reset_colors()

@@ -138,9 +138,9 @@ def describe_batch():
                                 desc_eval.add_self()
                                 desc_batch.add_self()
                     news_object.set_path(response["img_alinhamento"])
-                    # news_object.save()
-                    # _write_test_csv(news_object)
-                    # _commit_session()
+                    news_object.save()
+                    _write_test_csv(news_object)
+                    _commit_session()
                     print(f"#####\n\tfinishing [{i + 1}/{total} | {method}-{selection_string}]\n#####")
                 except Exception as exc:
                     PrintException()
