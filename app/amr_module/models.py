@@ -1,6 +1,8 @@
 """
     AMR database model
 """
+import re
+
 import penman as pm
 from sqlalchemy.orm.collections import InstrumentedList
 from operator import methodcaller
@@ -31,6 +33,18 @@ def organize_triples_list(triples_list, top):
         PrintException()
 
 
+def increase_variable(variable, variable_list):
+    pattern = r"(\D*)(\d*)"
+    re.search(pattern, 'a12').groups()
+    nond, digit = [t(s) for t, s in zip((str, int), re.search(pattern, variable).groups())]
+    new_variable = variable
+    while new_variable in variable_list:
+        digit += 1
+        new_variable = f'{nond}{digit}'
+    return new_variable
+
+
+
 def top_from_triples_list(triples_list, ancestral):
     """
 
@@ -56,6 +70,10 @@ def top_from_triples_list(triples_list, ancestral):
 def triple_model_list_to_penman(triple_model_list, top_id):
     return pm.encode(pm.Graph(data=[(triple.source, triple.relation, triple.target) for triple in triple_model_list]),
                      top=top_id)
+
+
+def create_triple(**kwargs):
+    return Triple(**kwargs)
 
 
 class Triple(BaseModel):
@@ -361,6 +379,9 @@ class AMRModel(BaseModel):
     def __hash__(self):
         return hash(self.penman)
 
+    def get_variable_list(self):
+        return [t.source for t in self.get_triples(relation='instance')]
+
     def add(self, other, tuple_ref):
         """
 
@@ -377,6 +398,7 @@ class AMRModel(BaseModel):
         try:
             other_top = other.get_top()
             old_triples = other.get_triples()
+            change_variable_list = []
             if old_triples:
                 new_triples = set()
                 for old_triple in old_triples:
@@ -387,10 +409,28 @@ class AMRModel(BaseModel):
                     elif old_triple.target == tuple_ref[1]:
                         new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=tuple_ref[0])
                         new_triples.add(new_triple)
-                    elif old_triple.is_instance() and old_triple.target != top.target:
-                        new_triples.add(old_triple)
+                    elif old_triple.is_instance() and old_triple.target:
+                        old_source = old_triple.source
+                        new_source = increase_variable(old_triple.source, self.get_variable_list())
+                        new_triple = Triple(src=new_source, rel=old_triple.relation, tgt=old_triple.target)
+                        new_triples.add(new_triple)
+                        change_variable_list.append((old_source, new_source))
+                    elif not old_triple.is_instance() or not old_triple.target and old_triple.target != tuple_ref[1] and \
+                            old_triple.source != tuple_ref[1]:
+                        new_triple = Triple(src=old_triple.source, rel=old_triple.relation, tgt=old_triple.target)
+                        new_triples.add(new_triple)
 
-                self.list_triples = InstrumentedList(new_triples.union(set(self.list_triples)).union([top]))
+                newer_triples = set()
+                if change_variable_list:
+                    for old, new in change_variable_list:
+                        for triple in newer_triples:
+                            if triple.source == old:
+                                triple.source = new
+                                newer_triples.add(triple)
+                else:
+                    newer_triples = new_triples
+
+                self.list_triples = InstrumentedList(newer_triples.union(set(self.list_triples)))
                 self.list_triples = organize_triples_list(self.list_triples, top)
                 self.penman = triple_model_list_to_penman(self.list_triples, self.top)
             return self.list_triples

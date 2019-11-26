@@ -82,16 +82,22 @@
                                         </div>
                                     </div>
                                     <div class="row m-2">
-                                        <div class="col-6">
-                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_y">
-                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_y" value="1">
-                                            Melhor que alinhamento
+                                        <div class="col-4">
+                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_b">
+                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_b" value="2">
+                                            Melhor que o baseline
                                             </label>
                                         </div>
-                                        <div class="col-6">
-                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_n">
-                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_n" value="0">
-                                            Não é melhor que alinhamento
+                                        <div class="col-4">
+                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_e">
+                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_e" value="1">
+                                            Igual ao baseline
+                                            </label>
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-check-label" for="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_w">
+                                            <input class="form-check-input" type="radio" name="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}" id="better_b{{ eval.desc_batch_id }}_e{{ eval.id }}_w" value="0">
+                                            Pior que o baseline
                                             </label>
                                         </div>
                                     </div>

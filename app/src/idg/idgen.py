@@ -5,7 +5,7 @@
 from itertools import product
 
 from app.align_module.coref_models import CoreferenceModel, MentionModel
-from app.amr_module.models import AMRModel, biggest_amr, create_amrmodel
+from app.amr_module.models import AMRModel, biggest_amr, create_amrmodel, create_triple
 from app.desc_module.models import create_description
 from app.model_utils import PrintException
 from app.align_module.models import News, Alignment
@@ -126,8 +126,8 @@ class Generator(object):
                         focus_parent = amr.get_parents(focus_triple)
                         information.append(
                             {
-                                "triple": focus_triple,
-                                "subgraph": focus_subgraph,
+                                "triple": create_triple(copy=focus_triple),
+                                "subgraph": create_amrmodel(copy=focus_subgraph),
                                 "parent": focus_parent,
                                 "amr": amr
                             }
@@ -284,9 +284,10 @@ class Generator(object):
             new_text = amr.get_triples()[0].target
         elif (amr.get_size() == 1 and len(amr.get_triples()) > 1) and amr.get_triples()[0].target == 'name':
             instance = amr.get_triples(relation='instance')[0]
-            names = amr.get_triples(src=instance.src)
+            names = amr.get_triples(src=instance.source)
             names.remove(instance)
-            new_text = " ".join([t.target for t in names])
+            new_text = '"' + " ".join([t.target for t in names]).replace('"', '') + '"'
+
 
         if all(triple.relation == 'mod' for triple in list(set(amr.span(amr.get_instance(amr.top))) - set(amr.get_triples(relation='instance')))):
             new_text = self.generate_from_mod_sequence(src=amr.top, amr=amr)

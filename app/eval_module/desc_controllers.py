@@ -25,12 +25,14 @@ hcl.sort()
 HARD_CODED_LINKS = hcl
 TOTAL = len(HARD_CODED_LINKS)
 
+
 @mod_eval_desc.route('/view', methods=["GET", "POST"])
 def view_desc():
     return render_template("desc_module/view.html", batch_list=get_all_batch_desc())
 
 
 @mod_eval_desc.route('/submit', methods=["GET", "POST"])
+# @login_required
 def submit_desc():
     return render_template(
         "desc_module/submit.html"
@@ -38,7 +40,7 @@ def submit_desc():
 
 
 @mod_eval_desc.route('/eval')
-# @login_required
+@login_required
 def evaluation_desc():
     eval_list = get_all_desc_eval()
     eval_list.sort()
@@ -58,6 +60,7 @@ def _get_selection_string(selection):
 
 
 @mod_eval_desc.route('/describe_batch', methods=["GET", "POST"])
+# @login_required
 def describe_batch():
     print([(k,v) for k, v in request.form.items()])
     try:
@@ -135,9 +138,9 @@ def describe_batch():
                                 desc_eval.add_self()
                                 desc_batch.add_self()
                     news_object.set_path(response["img_alinhamento"])
-                    news_object.save()
-                    _write_test_csv(news_object)
-                    _commit_session()
+                    # news_object.save()
+                    # _write_test_csv(news_object)
+                    # _commit_session()
                     print(f"#####\n\tfinishing [{i + 1}/{total} | {method}-{selection_string}]\n#####")
                 except Exception as exc:
                     PrintException()
@@ -230,7 +233,7 @@ def eval_desc_batch():
     except Exception as exc:
         PrintException()
         return app.response_class(
-            response=json.dumps({"error": str(e)}),
+            response=json.dumps({"error": str(exc)}),
             status=621,
             mimetype="application/json"
         )
