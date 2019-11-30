@@ -37,57 +37,137 @@
                 </div>
                 {% for batch in batch_list %}
                     <div id="div-of-check-{{ batch.id }}">
-                        <div class="row d-table w-100 mb-3">
-                            <div class="col col-6 my-2 d-table-cell">
-                                <div class="ml-3">
-                                    <input class="check-batch" type="checkbox" id="check-{{ batch.id }}"/>
-                                    <label  id="label-check-{{ batch.id }}" for="check-{{ batch.id }}">Marcar todos {{ batch.name }}</label>
-                                </div>
+                    <div class="row d-table w-100 mb-3">
+                        <div class="col col-6 my-2 d-table-cell">
+                            <div class="ml-3">
+                                <input class="check-batch" type="checkbox" id="check-{{ batch.id }}"/>
+                                <label  id="label-check-{{ batch.id }}" for="check-{{ batch.id }}">Marcar todos {{ batch.name }}</label>
                             </div>
                         </div>
-                        {% for em in batch.desc_eval_list %}
-                            {% if em.was_eval() %}
-                                <div class="card">
-                                    <div class="card-header" id="heading_eval_{{ em.id }}">
-                                        <h2 class="mb-0">
-                                            <input class="checkbox" name="checkbox_e{{ em.id }}" id="checkbox_e{{ em.id }}" type="checkbox" aria-label="Marcar">
-                                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ em.id }}" aria-expanded="true" aria-controls="collapse_{{ em.id }}">
-                                                <b>Avaliação #{{ em.id }}</b>
+                    </div>
+                    {% for em in batch.desc_eval_list %}
+                        {% if em.was_eval() %}
+                            <div class="card">
+                            <div class="card-header" id="heading_eval_{{ em.id }}">
+                                <h2 class="mb-0">
+                                    <input class="checkbox" name="checkbox_e{{ em.id }}" id="checkbox_e{{ em.id }}" type="checkbox" aria-label="Marcar">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ em.id }}" aria-expanded="true" aria-controls="collapse_{{ em.id }}">
+                                        <b>Avaliação #{{ em.id }}</b>
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse_{{ em.id }}" class="collapse" aria-labelledby="heading_eval_{{ em.id }}" data-parent="#accordion-evaluated">
+                                <div class="card-block">
+                                    <div class="row">
+                                        <div class="col col-5 pl-4">
+                                            <img class="img-fluid rounded img-responsive my-2 ml-2" style="border: solid;" alt="image_{{ em.eval_id }}_{{ em.DescBatch.name }}"
+                                                 src="/{{ em.get_news().img_path.replace("app/", "/") }}" />
+                                            <!-- Button trigger modal -->
+                                            <button type="button" class="btn btn-primary modal-btn-eval ml-2 mb-2" id="activate_modal_btn_{{ em.id }}">
+                                                Exibir texto
                                             </button>
-                                        </h2>
-                                    </div>
-                                    <div id="collapse_{{ em.id }}" class="collapse" aria-labelledby="heading_eval_{{ em.id }}" data-parent="#accordion-evaluated">
-                                        <div class="card-block">
-                                            {% if em.get_desc() %}
-                                                <table class="table table-hover table-bordered">
-                                                    <thead>
-                                                        <tr class="table-dark">
-                                                            <th scope="col">#</th>
-                                                            <th scope="col">#Notícia</th>
-                                                            <th scope="col">Termo</th>
-                                                            <th scope="col">Descrição</th>
-                                                            <th scope="col">Corretude</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <th scope="row">{{ em.id }}</th>
-                                                            <th>{{ em.get_news().id }}</th>
-                                                            <th>{{ em.get_desc().get_alignment() }}</th>
-                                                            <th>{{ em.get_desc() }}</th>
-                                                            <th>{{ em.get_approval_string() }}</th>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            {% else %}
-                                                <h4 class="text-center my-4">Alinhamentos não encontrados</h4>
-                                            {% endif %}
+                                            <div class="hidden-news-text border border-primary m-2 p-2" id="news_for_activate_modal_btn_{{ em.id }}">
+                                                <div class="flask-text" id="title_for_news_for_activate_modal_btn_{{ em.id }}">
+                                                    <h4 class="font-weight-bold">{{ em.get_news().get_title(True) }}</h4>
+                                                </div>
+                                                <div class="flask-text" id="subt_for_news_for_activate_modal_btn_{{ em.id }}">
+                                                    <h5 class="text-secondary">{{ em.get_news().get_subtitle(True) }}</h5>
+                                                </div>
+                                                <div class="dropdown-divider"></div>
+                                                <div class="flask-text" id="text_for_news_for_activate_modal_btn_{{ em.id }}">
+                                                    <p class="text-justify">{{ em.get_news().get_text(True) }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-block col col-7 p-2 pr-4">
+                                                <input type="hidden" name="csrf_token" id="csrf_b{{ em.desc_batch_id }}_e{{ em.id }}" value="{{ csrf_token() }}" />
+                                                <a target="_blank" href="{{ em.get_news().link }}">{{ em.get_news().link }}</a>
+                                                {# 1ª linha #}
+                                                <div class="row m-2">
+                                                    {# Desccrição #}
+                                                    <div class="col-8">
+                                                        <b>Descrição</b> | <b style="color: rgb({{ em.get_desc().get_alignment().colors_model }});">{{ em.get_desc().get_alignment() }}</b>
+                                                        <div class="border rounded bg-light border-secondary p-2 text-muted" id="desc_{{ em.get_desc().id }}">{{ em.get_desc() }}</div>
+                                                    </div>
+                                                    {# Classificação da avaliação #}
+                                                    <div class="col-4">
+                                                        <div class="row pl-4 my-2">
+                                                            {{ em.get_approval_string() }}
+                                                        </div>
+                                                        <div class="row pl-4 my-2">
+                                                            {{ em.get_compare_baseline() }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row m-2">
+                                                    <div class="col-12">
+                                                        <label for="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}">Comentários</label>
+                                                        <textarea class="form-control ml-1" name="comment_b{{ em.desc_batch_id }}_e{{ em.id }}" id="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}" disabled>{{ em.get_comment() }}</textarea>
+                                                    </div>
+                                                </div>
+                                                {# 3ª linha #}
+                                                <div class="row m-2">
+                                                    <div class="col-12">
+                                                        {# AMR gerada #}
+                                                        <div class="row ml-1 my-2">
+                                                            <p class="font-weight-bold">AMR Gerada</p>
+                                                            <div class="border rounded border-dark w-100 pre-scrollable font-weight-bold p-2" style="color: rgb({{ em.get_desc().get_alignment().colors_model }}); font-family: monospace; white-space: pre-wrap;">{{ em.get_desc().get_amr() }}</div>
+                                                        </div>
+                                                        {# AMR main #}
+                                                        <div class="row ml-1 my-2">
+                                                            <p class="font-weight-bold">AMR parente principal</p>
+                                                            <p>{{ em.get_desc().get_main().get_sentence() }}</p>
+                                                            <div id="main_d{{ em.get_desc().id }}" class="border w-100 rounded border-secondary bg-light p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ em.get_desc().get_main() }}</div>
+                                                        </div>
+                                                        {# AMR outras #}
+                                                        {% if em.get_desc().get_adjacents() %}
+                                                            <div class="dropdown-divider"></div>
+                                                            <div class="row ml-1 my-2">
+                                                                <p class="font-weight-bold">AMR outros parentes</p><br/>
+                                                                {% for adj in em.get_desc().get_adjacents() %}
+                                                                    <p>{{ adj.get_sentence() }}</p>
+                                                                    <div id="adj_d{{ adj.id }}" class="border w-100 rounded border-secondary bg-light my-1 p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ adj }}</div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
                                         </div>
                                     </div>
+                                    {#                                            {% if em.get_desc() %}#}
+                                    {#                                                <table class="table table-hover table-bordered">#}
+                                    {#                                                    <thead>#}
+                                    {#                                                        <tr class="table-dark">#}
+                                    {#                                                            <th scope="col">#</th>#}
+                                    {#                                                            <th scope="col">Notícia</th>#}
+                                    {#                                                            <th scope="col">Termo</th>#}
+                                    {#                                                            <th scope="col">Modelo</th>#}
+                                    {#                                                            <th scope="col">Descrição</th>#}
+                                    {#                                                            <th scope="col">Corretude</th>#}
+                                    {#                                                            <th scope="col">Comparação alinhamento</th>#}
+                                    {#                                                        </tr>#}
+                                    {#                                                    </thead>#}
+                                    {#                                                    <tbody>#}
+                                    {#                                                        <tr>#}
+                                    {#                                                            <th scope="row">{{ em.id }}</th>#}
+                                    {#                                                            <th>{{ em.get_news().link }}</th>#}
+                                    {#                                                            <th>{{ em.get_desc().get_alignment() }}</th>#}
+                                    {#                                                            <th>{{ em.get_method() }}</th>#}
+                                    {#                                                            <th>{{ em.get_desc() }}</th>#}
+                                    {#                                                            <th>{{ em.get_approval_string() }}</th>#}
+                                    {#                                                            <th>{{ em.get_compare_baseline() }}</th>#}
+                                    {#                                                        </tr>#}
+                                    {#                                                    </tbody>#}
+                                    {#                                                </table>#}
+                                    {#                                            {% else %}#}
+                                    {#                                                <h4 class="text-center my-4">Alinhamentos não encontrados</h4>#}
+                                    {#                                            {% endif %}#}
+                                                                            </div>
                                 </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
                 {% endfor %}
             </form>
         </div>

@@ -382,6 +382,9 @@ class AMRModel(BaseModel):
     def get_variable_list(self):
         return [t.source for t in self.get_triples(relation='instance')]
 
+    def has_variable(self, variable):
+        return self.get_triples(src=variable, relation='instance')
+
     def add(self, other, tuple_ref):
         """
 
@@ -423,10 +426,13 @@ class AMRModel(BaseModel):
                 newer_triples = set()
                 if change_variable_list:
                     for old, new in change_variable_list:
-                        for triple in newer_triples:
+                        for triple in new_triples:
                             if triple.source == old:
                                 triple.source = new
                                 newer_triples.add(triple)
+                            else:
+                                newer_triples.add(triple)
+
                 else:
                     newer_triples = new_triples
 

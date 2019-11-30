@@ -4,6 +4,47 @@ form = $('#evaluated_actions');
 
 select_input = $('#select-actions');
 
+$(document).ready(function () {
+    $('.modal-btn-eval').each(function (index, item) {
+        $object = $("#news_for_" + $(item).attr("id"));
+        $object.toggle();
+        if ($object.is(":visible")){
+            $(item).text("Esconder texto")
+        }else {
+            $(item).text("Exibir texto")
+        }
+    });
+
+    function flaskTextToHTML (index, item) {
+        $(item).html($(item).text());
+    }
+    $('.flask-text h4').each(function (index, item) {
+        flaskTextToHTML(index, item)
+    });
+    $('.flask-text h5').each(function (index, item) {
+        flaskTextToHTML(index, item)
+    });
+    $('.flask-text p').each(function (index, item) {
+        flaskTextToHTML(index, item)
+    });
+
+    checkbox_class.each(function (index, item) {
+        $(item).prop('checked', false);
+    })
+});
+
+$('.modal-btn-eval').each(function (index, item) {
+    $(item).click(function(){
+        $object = $("#news_for_" + $(item).attr("id"));
+        $object.toggle();
+        if ($object.is(":visible")){
+            $(item).text("Esconder texto")
+        }else {
+            $(item).text("Exibir texto")
+        }
+    });
+});
+
 $('#check-all').click(function() {
     const checked = $(this).prop('checked');
     $('.checkbox').prop('checked', checked);

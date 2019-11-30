@@ -7,6 +7,10 @@ def get_all_batch_desc():
     return DescBatch.query.all()
 
 
+def get_filtered_batch_desc(**kwargs):
+    return DescEval.query.filter_by(**kwargs)
+
+
 def get_all_desc_eval():
     return DescEval.query.all()
 
@@ -78,8 +82,14 @@ class DescEval(Base):
         self.compare_baseline = value
         return self.compare_baseline
 
+    def get_compare_baseline(self):
+        return self.COMPARE_BASELINE_TABLE[self.compare_baseline]
+
     def get_method(self):
         return self.desc_model.get_method()
+
+    def get_comment(self):
+        return self.comments
 
 
 def create_desc_batch(name):

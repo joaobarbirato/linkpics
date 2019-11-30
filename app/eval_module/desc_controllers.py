@@ -1,3 +1,4 @@
+import codecs
 import csv
 import re
 from typing import Optional, Any, Union
@@ -75,16 +76,16 @@ def describe_batch():
             writer.writeheader()
 
         if request.form["all"] == "1":
-            for i, link in enumerate(HARD_CODED_LINKS):
+            for i, link in enumerate(links):
                 desc_batch = create_desc_batch(
                     name=f'{batch_name}_{link}')
-                print(f"#####\n\tbegining [{i}/{TOTAL}]\n#####")
+                print(f"#####\n\tbegining [{i}/{total}]\n#####")
                 link = link.replace('\r', '')
                 for selection in [0, 1, 2]:
                     selection_string = _get_selection_string(selection)
                     for method in ['baseline4', 'baseline5']:
                         try:
-                            print(f"#####\n\tbegining [{i}/{TOTAL} | {method}-{selection_string}]\n#####")
+                            print(f"#####\n\tbegining [{i}/{total} | {method}-{selection_string}]\n#####")
                             response = do_describe(link=link, method=method, select=selection)
                             news_object = response["news"]
                             news_object.fantasy_id = i
@@ -104,7 +105,7 @@ def describe_batch():
                             news_object.save()
                             _write_test_csv(news_object)
                             _commit_session()
-                            print(f"#####\n\tfinishing [{i+1}/{TOTAL} | {method}-{selection_string}]\n#####")
+                            print(f"#####\n\tfinishing [{i+1}/{total} | {method}-{selection_string}]\n#####")
                         except Exception as exc:
                             PrintException()
                             failed.append((link, f'{str(exc)}'))
@@ -247,54 +248,104 @@ def eval_desc_batch():
 def _download_csv(eval_list):
     file_name = 'avaliacao_desc.csv'
     with open(file=STATIC_REL + file_name, encoding='utf-8', mode='w+') as csv_file:
-        fields = FIELDS
-        fields.append('Approval')
+        fields = ['Link', 'Alignment', 'Description', 'AMR', 'Approval', 'Compare', 'Comment']
         writer = csv.DictWriter(csv_file, fieldnames=fields)
         writer.writeheader()
 
         eval: DescEval
         for eval in eval_list:
             writer.writerow({
-                'Title': eval.get_news().get_title(),
+                # 'Title': eval.get_news().get_title(),
                 'Link': eval.get_news().get_link(),
                 'Alignment': eval.get_desc().get_alignment(),
                 'Description': eval.get_desc(),
                 'AMR': eval.get_desc().get_amr(),
-                'Base': eval.get_desc().get_main().get_penman(return_type='str'),
-                'Others': "\n".join(
-                    [amr.get_penman(return_type='str') for amr in eval.get_desc().get_adjacents()]),
+                # 'Base': eval.get_desc().get_main().get_penman(return_type='str'),
+                # 'Others': "\n".join(
+                #     [amr.get_penman(return_type='str') for amr in eval.get_desc().get_adjacents()]),
                 'Approval': eval.get_approval_string(),
+                'Compare': eval.get_compare_baseline(),
+                'Comment': eval.get_comment()
             })
 
     return send_from_directory(BASE_DIR + "/" + STATIC_REL, file_name, as_attachment=True)
 
 
 def _download_metrics(eval_list):
+
+    def is_valid():
+        pass
+
     file_name = 'metrics_desc.csv'
     with open(file=STATIC_REL + file_name, encoding='utf-8', mode='w+') as metrics_file:
-        writer = csv.DictWriter(metrics_file, fieldnames=['Medida', 'Medição'])
+        writer = csv.DictWriter(metrics_file, fieldnames=['Medida', 'Medição', 'Instâncias'])
         writer.writeheader()
-        correct = 0
-        p_correct = 0
-        incorrect = 0
-        invalid = 0
 
+        correct = p_correct = incorrect = invalid = 0
+        better = equal = worse = 0
+        better_v = equal_v = worse_v = 0
+
+        total = len(eval_list)
         e: DescEval
         for e in eval_list:
-            if e.approval == 2:
-                correct += 1
-            elif e.approval == 1:
-                p_correct += 1
-            elif e.approval == 0:
-                incorrect += 1
-            elif e.approval == -1:
-                invalid += 1
+            if e.compare_baseline == 2:
+                better += 1
+            elif e.compare_baseline == 1:
+                equal += 1
+            elif e.compare_baseline == 0:
+                worse += 1
+            if e.approval == -1:
+                invalid +=1
+            else:
+                if e.approval == 2:
+                    correct += 1
+                elif e.approval == 1:
+                    p_correct += 1
+                elif e.approval == 0:
+                    incorrect += 1
 
-        writer.writerow({'Medida': 'TOTAL DE DESCRIÇÕES', 'Medição': str(len(eval_list))})
-        writer.writerow({'Medida': 'CORRETAS', 'Medição': str(correct)})
-        writer.writerow({'Medida': 'PARCIALMENTE CORRETAS', 'Medição': str(p_correct)})
-        writer.writerow({'Medida': 'INCORRETAS', 'Medição': str(incorrect)})
-        writer.writerow({'Medida': 'INVÁLIDAS', 'Medição': str(invalid)})
+                if e.compare_baseline == 2:
+                    better_v += 1
+                elif e.compare_baseline == 1:
+                    equal_v += 1
+                elif e.compare_baseline == 0:
+                    worse_v += 1
+
+        valid = total - invalid
+
+        writer.writerow({'Medida': 'TOTAL DE DESCRIÇÕES', 'Medição': str(total), 'Instâncias': ''})
+
+        writer.writerow({'Medida': 'CORRETAS', 'Medição': f'{str(correct)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=2)])})
+        writer.writerow({'Medida': 'CORRETAS % válidas', 'Medição': f'{str(correct * 100. / valid)}%',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=2)])})
+
+        writer.writerow({'Medida': 'PARCIALMENTE CORRETAS', 'Medição': f'{str(p_correct)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=1)])})
+        writer.writerow({'Medida': 'PARCIALMENTE CORRETAS % válidas', 'Medição': f'{str(p_correct * 100. / valid)}%',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=1)])})
+
+        writer.writerow({'Medida': 'INCORRETAS', 'Medição': f'{str(incorrect)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=0)])})
+        writer.writerow({'Medida': 'INCORRETAS % válidas', 'Medição': f'{str(incorrect * 100. / valid)}%',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=0)])})
+
+        writer.writerow({'Medida': 'INVÁLIDAS', 'Medição': f'{str(invalid)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(approval=-1)])})
+
+        writer.writerow({'Medida': 'MELHOR QUE O ALINHAMENTO', 'Medição': f'{str(better)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=2)])})
+        writer.writerow({'Medida': 'IGUAL AO ALINHAMENTO', 'Medição': f'{str(equal)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=1)])})
+        writer.writerow({'Medida': 'PIOR QUE O ALINHAMENTO', 'Medição': f'{str(worse)}', 'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=0)])})
+
+        writer.writerow({'Medida': 'MELHOR QUE O ALINHAMENTO VÁLIDO', 'Medição': f'{str(better_v)}',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=2) if de.approval > 0])})
+        writer.writerow({'Medida': 'IGUAL AO ALINHAMENTO VÁLIDO', 'Medição': f'{str(equal_v)}',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=1) if de.approval > 0])})
+        writer.writerow({'Medida': 'PIOR QUE O ALINHAMENTO VÁLIDO', 'Medição': f'{str(worse_v)}',
+                         'Instâncias': ', '.join([str(de.id) for de in DescEval.query.filter_by(compare_baseline=0) if de.approval > 0])})
+
+        comments = set([de.comments for de in DescEval.query.all()])
+        comments.remove('')
+
+        for c in comments:
+            instances = [str(de.id) for de in DescEval.query.filter_by(comments=c)]
+            writer.writerow({'Medida': c, 'Medição': str(len(instances)), 'Instâncias': ', '.join(instances)})
 
     return send_from_directory(BASE_DIR + "/" + STATIC_REL, file_name, as_attachment=True)
 
