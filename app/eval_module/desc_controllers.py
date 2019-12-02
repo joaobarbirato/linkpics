@@ -88,7 +88,7 @@ def describe_batch():
                             print(f"#####\n\tbegining [{i}/{total} | {method}-{selection_string}]\n#####")
                             response = do_describe(link=link, method=method, select=selection)
                             news_object = response["news"]
-                            news_object.fantasy_id = i
+                            news_object.fantasy_id = HARD_CODED_LINKS.index(link)
                             grupo = response["grupo"]
                             for alignment in grupo.get_all_alignments():
                                 if restriction == "all" or \
