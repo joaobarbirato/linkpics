@@ -51,6 +51,17 @@ def evaluation_desc():
     )
 
 
+@mod_eval_desc.route('/edit')
+@login_required
+def edition_desc():
+    eval_list = get_all_desc_eval()
+    eval_list.sort()
+    return render_template(
+        "desc_module/edit.html",
+        eval_list=eval_list
+    )
+
+
 def _get_selection_string(selection):
     if selection == 0:
         return 'alinhamento'

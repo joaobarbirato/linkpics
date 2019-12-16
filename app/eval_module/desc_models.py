@@ -22,16 +22,16 @@ def create_desc_eval(desc_model):
 class DescEval(Base):
 
     APPROVAL_TABLE = {
-        2: "Correct",
-        1: "Partially correct",
-        0: "Incorrect",
-        -1: "Invalid"
+        2: "Correto",
+        1: "Parcialmente correto",
+        0: "Incorreto",
+        -1: "Inválido"
     }
 
     COMPARE_BASELINE_TABLE = {
-        0: "Worse",
-        1: "Equal",
-        2: "Better"
+        0: "Pior",
+        1: "Igual",
+        2: "Melhor"
     }
 
     __tablename__ = 'desc_eval'
