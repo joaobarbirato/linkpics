@@ -99,35 +99,41 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="row m-2">
-                                                    <div class="col-12">
-                                                        <label for="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}">Comentários</label>
-                                                        <textarea class="form-control ml-1" name="comment_b{{ em.desc_batch_id }}_e{{ em.id }}" id="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}" disabled>{{ em.get_comment() }}</textarea>
-                                                    </div>
-                                                </div>
+{#                                                <div class="row m-2">#}
+{#                                                    <div class="col-12">#}
+{#                                                        <label for="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}">Comentários</label>#}
+{#                                                        <textarea class="form-control ml-1" name="comment_b{{ em.desc_batch_id }}_e{{ em.id }}" id="textarea_b{{ em.desc_batch_id }}_e{{ em.id }}" disabled>{{ em.get_comment() }}</textarea>#}
+{#                                                    </div>#}
+{#                                                </div>#}
                                                 {# 3ª linha #}
                                                 <div class="row m-2">
                                                     <div class="col-12">
                                                         {# AMR gerada #}
                                                         <div class="row ml-1 my-2">
-                                                            <p class="font-weight-bold">AMR Gerada</p>
-                                                            <div class="border rounded border-dark w-100 pre-scrollable font-weight-bold p-2" style="color: rgb({{ em.get_desc().get_alignment().colors_model }}); font-family: monospace; white-space: pre-wrap;">{{ em.get_desc().get_amr() }}</div>
+                                                            <div class="col-12">
+                                                                <p class="font-weight-bold">AMR Gerada</p>
+                                                                <div class="border rounded border-dark w-100 pre-scrollable font-weight-bold p-2" style="color: rgb({{ em.get_desc().get_alignment().colors_model }}); font-family: monospace; white-space: pre-wrap;">{{ em.get_desc().get_amr() }}</div>
+                                                            </div>
                                                         </div>
                                                         {# AMR main #}
                                                         <div class="row ml-1 my-2">
-                                                            <p class="font-weight-bold">AMR parente principal</p>
-                                                            <p>{{ em.get_desc().get_main().get_sentence() }}</p>
-                                                            <div id="main_d{{ em.get_desc().id }}" class="border w-100 rounded border-secondary bg-light p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ em.get_desc().get_main() }}</div>
+                                                            <div class="col-12">
+                                                                <div class="row"><p class="font-weight-bold">AMR parente principal</p></div>
+                                                                <div class="row"><p>{{ em.get_desc().get_main().get_sentence() }}</p></div>
+                                                                <div id="main_d{{ em.get_desc().id }}" class="border w-100 rounded border-secondary bg-light p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ em.get_desc().get_main() }}</div>
+                                                            </div>
                                                         </div>
                                                         {# AMR outras #}
                                                         {% if em.get_desc().get_adjacents() %}
                                                             <div class="dropdown-divider"></div>
                                                             <div class="row ml-1 my-2">
-                                                                <p class="font-weight-bold">AMR outros parentes</p><br/>
+                                                                <div class="col-12">
+                                                                <div class="row"><p class="font-weight-bold">AMR outros parentes</p></div>
                                                                 {% for adj in em.get_desc().get_adjacents() %}
-                                                                    <p>{{ adj.get_sentence() }}</p>
+                                                                    <div class="row"><p>{{ adj.get_sentence() }}</p></div>
                                                                     <div id="adj_d{{ adj.id }}" class="border w-100 rounded border-secondary bg-light my-1 p-2 pre-scrollable" style="font-family: monospace; white-space: pre;">{{ adj }}</div>
                                                                 {% endfor %}
+                                                                </div>
                                                             </div>
                                                         {% endif %}
                                                     </div>
