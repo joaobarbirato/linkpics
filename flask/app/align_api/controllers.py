@@ -72,6 +72,7 @@ def all_json():
 def alinhar():
     # try:
     link = request.args.get('link')
+    print(request.args)
     response = do_alignment(link)
     return app.response_class(
         response=json.dumps(response),
